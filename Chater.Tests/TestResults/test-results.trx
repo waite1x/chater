@@ -1,0 +1,214 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="fae4d400-8708-4b94-b983-34d5dea09006" name="@Mac 2026-07-22 20:45:05" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-07-22T20:45:06.3100160+08:00" queuing="2026-07-22T20:45:06.3100160+08:00" start="2026-07-22T20:45:05.1218290+08:00" finish="2026-07-22T20:45:06.3855150+08:00" />
+  <TestSettings name="default" id="dcd03544-9f1d-4830-892a-c7034134b852">
+    <Deployment runDeploymentRoot="_Mac_2026-07-22_20_45_05" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="8337a5dd-f849-4757-9e6c-955cc0b64503" testId="2209b751-b16d-592e-a7bf-f2a3960e7ef7" testName="Chater.Tests.ChatServiceTests.SendStreamingAsync_UsesMafAgentAndRejectsUnsupportedProvider" computerName="Mac" duration="00:00:00.4216472" startTime="2026-07-22T20:45:05.9289920+08:00" endTime="2026-07-22T20:45:06.3167430+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8337a5dd-f849-4757-9e6c-955cc0b64503" />
+    <UnitTestResult executionId="e5ca6407-9a25-481b-abf4-4690031bb7c6" testId="025d4f53-4013-b9fe-b431-80401d21522f" testName="Chater.Tests.ProviderConnectionTesterTests.TestAsync_MapsProviderHttpFailures(statusCode: ServiceUnavailable, expectedCode: &quot;service_unavailable&quot;)" computerName="Mac" duration="00:00:00.0002573" startTime="2026-07-22T20:45:05.9177370+08:00" endTime="2026-07-22T20:45:05.9179730+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e5ca6407-9a25-481b-abf4-4690031bb7c6" />
+    <UnitTestResult executionId="53b65013-de6f-48b6-8e16-579ff8ea8fd5" testId="61b71217-9356-1e0a-2f47-94f7021551c5" testName="Chater.Tests.ProviderConnectionTesterTests.TestAsync_UsesOllamaTagsEndpointWithoutAuthorizationHeader" computerName="Mac" duration="00:00:00.0004055" startTime="2026-07-22T20:45:05.9284830+08:00" endTime="2026-07-22T20:45:05.9286000+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="53b65013-de6f-48b6-8e16-579ff8ea8fd5" />
+    <UnitTestResult executionId="ea70819f-ef33-4b49-b702-d2a603ce2464" testId="fc8e4020-9891-dc64-f69b-81a1802049f0" testName="Chater.Tests.SessionRunLockTests.AcquireAsync_SerializesOperationsForTheSameConversation" computerName="Mac" duration="00:00:00.0289364" startTime="2026-07-22T20:45:05.9035510+08:00" endTime="2026-07-22T20:45:05.9290710+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ea70819f-ef33-4b49-b702-d2a603ce2464" />
+    <UnitTestResult executionId="67cafa95-150a-49a9-a17e-c7c1bb5ad0d5" testId="730246e0-ee97-410f-10fa-9ae850192e28" testName="Chater.Tests.CompositionTests.InitializeChaterDatabase_RegistersAndInitializesDataServices" computerName="Mac" duration="00:00:00.0484939" startTime="2026-07-22T20:45:05.9166530+08:00" endTime="2026-07-22T20:45:05.9402190+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="67cafa95-150a-49a9-a17e-c7c1bb5ad0d5" />
+    <UnitTestResult executionId="cf62ae70-ea30-461b-bcd5-1f081609effc" testId="f32ea7d6-523f-5cfb-b950-8b2d147dcac7" testName="Chater.Tests.SkillServiceTests.SaveCustomAsync_CreatesAndVersionsCustomSkill" computerName="Mac" duration="00:00:00.0186769" startTime="2026-07-22T20:45:06.2749510+08:00" endTime="2026-07-22T20:45:06.2932800+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf62ae70-ea30-461b-bcd5-1f081609effc" />
+    <UnitTestResult executionId="3d5c296c-3a1e-450f-8e9f-992840847a79" testId="3e4a9411-258f-9a6b-43d1-1b06e31923a7" testName="Chater.Tests.SessionStateValidatorTests.CanRestore_RequiresExactAgentConfigurationMatch" computerName="Mac" duration="00:00:00.0050121" startTime="2026-07-22T20:45:05.9035330+08:00" endTime="2026-07-22T20:45:05.9072630+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3d5c296c-3a1e-450f-8e9f-992840847a79" />
+    <UnitTestResult executionId="2737a779-c3e5-47ac-b235-4eac65784d06" testId="ef575061-9c60-85ac-5153-4a713ee670c7" testName="Chater.Tests.RepositoryTests.SaveAsync_MakesOnlyLatestDefaultProviderDefault" computerName="Mac" duration="00:00:00.0071637" startTime="2026-07-22T20:45:06.2960870+08:00" endTime="2026-07-22T20:45:06.3021120+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2737a779-c3e5-47ac-b235-4eac65784d06" />
+    <UnitTestResult executionId="4519ec12-0f47-4c31-8669-daaa8be5a765" testId="e6888238-0f05-1425-5a70-45ad61c2dc11" testName="Chater.Tests.ConversationServiceTests.CreateAsync_PersistsSkillPromptInProviderSnapshot" computerName="Mac" duration="00:00:00.0056758" startTime="2026-07-22T20:45:06.3198550+08:00" endTime="2026-07-22T20:45:06.3253730+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4519ec12-0f47-4c31-8669-daaa8be5a765" />
+    <UnitTestResult executionId="6b85fc7f-8a80-4a82-b33b-cce06d267466" testId="08378c24-8243-383a-20cb-9ef5ae626c4e" testName="Chater.Tests.ConversationServiceTests.CreateTitle_TruncatesLongFirstMessage" computerName="Mac" duration="00:00:00.0000636" startTime="2026-07-22T20:45:06.3254980+08:00" endTime="2026-07-22T20:45:06.3255590+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6b85fc7f-8a80-4a82-b33b-cce06d267466" />
+    <UnitTestResult executionId="1c5d0df8-b973-4862-b1db-f702d99a0f01" testId="dfd8e8b8-d71b-7681-2cc6-49ec3d55c63e" testName="Chater.Tests.ProviderConnectionTesterTests.TestAsync_MapsProviderHttpFailures(statusCode: Unauthorized, expectedCode: &quot;authentication_failed&quot;)" computerName="Mac" duration="00:00:00.0000201" startTime="2026-07-22T20:45:05.9181700+08:00" endTime="2026-07-22T20:45:05.9182130+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1c5d0df8-b973-4862-b1db-f702d99a0f01" />
+    <UnitTestResult executionId="1666ce8c-473d-4894-82a1-d25f3839941e" testId="035f0ec6-b6dd-4385-bbd6-cc9c62c7d819" testName="Chater.Tests.ProviderServiceTests.SaveAsync_StoresValidatedProvider" computerName="Mac" duration="00:00:00.4099139" startTime="2026-07-22T20:45:05.9166790+08:00" endTime="2026-07-22T20:45:06.3011600+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1666ce8c-473d-4894-82a1-d25f3839941e" />
+    <UnitTestResult executionId="c090f928-fb4f-4f8b-831a-a48d8688b6c8" testId="07c0a634-d1b9-81d5-594c-d8120077149a" testName="Chater.Tests.DatabaseMigratorTests.MigrateAsync_CreatesSchemaAndSeedsBuiltInSkills_Idempotently" computerName="Mac" duration="00:00:00.0283676" startTime="2026-07-22T20:45:05.9428080+08:00" endTime="2026-07-22T20:45:05.9716880+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c090f928-fb4f-4f8b-831a-a48d8688b6c8" />
+    <UnitTestResult executionId="0297b2e0-f703-4c79-8d89-4c14ae9bb9b1" testId="3b86a92d-fc0f-e36b-2b84-836eed14bfae" testName="Chater.Tests.RepositoryTests.ConversationAndMessageQueries_ReturnPersistentHistoryInDisplayOrder" computerName="Mac" duration="00:00:00.0174956" startTime="2026-07-22T20:45:06.3022790+08:00" endTime="2026-07-22T20:45:06.3197220+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0297b2e0-f703-4c79-8d89-4c14ae9bb9b1" />
+    <UnitTestResult executionId="7ceaa95a-1070-43a7-8c19-215ac681a3d4" testId="32af70ab-a8d8-f8da-6a8f-fc02974d438c" testName="Chater.Tests.SkillServiceTests.SaveCustomAsync_RejectsBuiltInSkillChanges" computerName="Mac" duration="00:00:00.3914651" startTime="2026-07-22T20:45:05.9036070+08:00" endTime="2026-07-22T20:45:06.2746620+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7ceaa95a-1070-43a7-8c19-215ac681a3d4" />
+    <UnitTestResult executionId="8b5fd2c7-d015-4c48-bd44-e68c561e6488" testId="3b886303-48ac-1a66-4df0-798df247e442" testName="Chater.Tests.ProviderConnectionTesterTests.TestAsync_MapsProviderHttpFailures(statusCode: TooManyRequests, expectedCode: &quot;rate_limited&quot;)" computerName="Mac" duration="00:00:00.0113549" startTime="2026-07-22T20:45:05.9036320+08:00" endTime="2026-07-22T20:45:05.9167410+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8b5fd2c7-d015-4c48-bd44-e68c561e6488" />
+    <UnitTestResult executionId="4e832eda-d1cb-4591-a8de-41ffd9817960" testId="810a01b1-5037-008b-8861-5666e47dfbb5" testName="Chater.Tests.MainWindowViewModelTests.NavigationCommands_OpenCorrespondingWorkspaceWindows" computerName="Mac" duration="00:00:00.0561360" startTime="2026-07-22T20:45:05.9035040+08:00" endTime="2026-07-22T20:45:05.9399710+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4e832eda-d1cb-4591-a8de-41ffd9817960" />
+    <UnitTestResult executionId="d0439e63-f93c-477e-83bb-d41343caa5d5" testId="46382bb8-58d5-1eb7-2d94-1bb5f476ffa6" testName="Chater.Tests.ConversationServiceTests.CreateAsync_PersistsImmutableProviderAndSkillSnapshot" computerName="Mac" duration="00:00:00.4275973" startTime="2026-07-22T20:45:05.9165770+08:00" endTime="2026-07-22T20:45:06.3187190+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d0439e63-f93c-477e-83bb-d41343caa5d5" />
+    <UnitTestResult executionId="7e4eadc1-7c0a-4477-9581-0d9d8fb1fea0" testId="a53eab6f-69f0-ab4c-204e-d1fe634443ec" testName="Chater.Tests.BuildSmokeTests.ApplicationAssembly_IsLoadable" computerName="Mac" duration="00:00:00.0052159" startTime="2026-07-22T20:45:05.9025650+08:00" endTime="2026-07-22T20:45:05.9052090+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7e4eadc1-7c0a-4477-9581-0d9d8fb1fea0" />
+    <UnitTestResult executionId="d3f32bf6-90f7-4d05-8b03-e65d6b650e0a" testId="6e464674-dc8f-2d21-a1e4-7a60d35f64ef" testName="Chater.Tests.MainWindowViewModelTests.SettingsTabCommands_SelectApiKeyAndSkillPages" computerName="Mac" duration="00:00:00.0018079" startTime="2026-07-22T20:45:05.9401520+08:00" endTime="2026-07-22T20:45:05.9412810+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d3f32bf6-90f7-4d05-8b03-e65d6b650e0a" />
+    <UnitTestResult executionId="2618790d-d0fa-48e8-a008-b382056d7b75" testId="537a7355-9510-7ca4-6051-ae2cd3fb243f" testName="Chater.Tests.MainWindowViewModelTests.SaveProviderCommand_LeavesExistingApiKeyUntouchedWhenInputIsBlank" computerName="Mac" duration="00:00:00.3824247" startTime="2026-07-22T20:45:05.9421560+08:00" endTime="2026-07-22T20:45:06.3235440+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2618790d-d0fa-48e8-a008-b382056d7b75" />
+    <UnitTestResult executionId="c40891f3-f1af-4314-b50e-29a3a38339ab" testId="c23a8f2a-12ec-9f50-d2d5-5e12929c7157" testName="Chater.Tests.RepositoryTests.SaveAsync_PersistsMultipleModelsForOneProvider" computerName="Mac" duration="00:00:00.0238681" startTime="2026-07-22T20:45:06.2711400+08:00" endTime="2026-07-22T20:45:06.2959290+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c40891f3-f1af-4314-b50e-29a3a38339ab" />
+    <UnitTestResult executionId="8ddd715c-ff29-424e-8719-47072517fe2d" testId="fa0b5b88-9236-46cc-0587-3953138b767d" testName="Chater.Tests.RepositoryTests.GetEnabledAsync_ReturnsSeededSkillsInDisplayOrder" computerName="Mac" duration="00:00:00.3877979" startTime="2026-07-22T20:45:05.9036200+08:00" endTime="2026-07-22T20:45:06.2707900+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8ddd715c-ff29-424e-8719-47072517fe2d" />
+    <UnitTestResult executionId="9c0f5e13-3d05-478f-9999-d831671bbbb0" testId="77749a22-d01a-bbcb-4d06-6750c934edc4" testName="Chater.Tests.ConversationServiceTests.SessionSnapshots_DetectProviderModelChangeBeforeRestore" computerName="Mac" duration="00:00:00.0007973" startTime="2026-07-22T20:45:06.3195450+08:00" endTime="2026-07-22T20:45:06.3196300+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9c0f5e13-3d05-478f-9999-d831671bbbb0" />
+    <UnitTestResult executionId="593583bb-b62f-407e-956e-d12dc387fea0" testId="ad8ed4d6-389a-edc8-fa78-913731b212b9" testName="Chater.Tests.StartupRecoveryServiceTests.RecoverAsync_CancelsOnlyIncompleteMessages" computerName="Mac" duration="00:00:00.0895798" startTime="2026-07-22T20:45:05.9035800+08:00" endTime="2026-07-22T20:45:05.9741580+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="593583bb-b62f-407e-956e-d12dc387fea0" />
+    <UnitTestResult executionId="bf6c761f-9976-462d-8d61-2b08dfaf05c4" testId="1e8a9bc5-c848-dcdb-f837-caa3415f18ff" testName="Chater.Tests.MainWindowViewModelTests.SaveSkillCommand_AddsCustomSkillToSelectionList" computerName="Mac" duration="00:00:00.0083767" startTime="2026-07-22T20:45:06.3289430+08:00" endTime="2026-07-22T20:45:06.3372910+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bf6c761f-9976-462d-8d61-2b08dfaf05c4" />
+    <UnitTestResult executionId="42c7e73b-0c1d-4a23-81b3-5ab9051693fd" testId="537d3275-9dec-91ff-eff3-44c8d93b5ba9" testName="Chater.Tests.AppPathsTests.EnsureCreated_CreatesApplicationLogAndExportDirectories" computerName="Mac" duration="00:00:00.0062001" startTime="2026-07-22T20:45:05.9035930+08:00" endTime="2026-07-22T20:45:05.9146700+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="42c7e73b-0c1d-4a23-81b3-5ab9051693fd" />
+    <UnitTestResult executionId="460560f3-a5d1-4df1-86f8-3d43d4c95200" testId="a79b4efd-5897-4f6a-829f-574df10136f6" testName="Chater.Tests.MainWindowViewModelTests.LoadAsync_SelectsDefaultEnabledProviderAndBuiltInSkill" computerName="Mac" duration="00:00:00.0045855" startTime="2026-07-22T20:45:06.3374940+08:00" endTime="2026-07-22T20:45:06.3424820+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="460560f3-a5d1-4df1-86f8-3d43d4c95200" />
+    <UnitTestResult executionId="ec6d2db1-6723-48ce-b231-ed7e8be19c98" testId="6c690376-48c3-0725-ef2f-6eb143c167f9" testName="Chater.Tests.MainWindowViewModelTests.LoadAsync_ExposesAllModelsAndSelectsTheActiveModel" computerName="Mac" duration="00:00:00.0051805" startTime="2026-07-22T20:45:06.3237340+08:00" endTime="2026-07-22T20:45:06.3288010+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ec6d2db1-6723-48ce-b231-ed7e8be19c98" />
+    <UnitTestResult executionId="9ea355c6-75aa-472f-8e40-d37416830a88" testId="ccf7bdcd-1714-40bc-5364-b32214baa0a1" testName="Chater.Tests.DatabaseMigratorTests.OpenConnectionAsync_EnforcesForeignKeys" computerName="Mac" duration="00:00:00.0595368" startTime="2026-07-22T20:45:05.9035650+08:00" endTime="2026-07-22T20:45:05.9425820+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9ea355c6-75aa-472f-8e40-d37416830a88" />
+    <UnitTestResult executionId="8859a11c-0ac2-4d16-acc5-dba2368b8daa" testId="13bec7b8-b50f-c1ff-60fc-095adaafe4e0" testName="Chater.Tests.ProviderServiceTests.Validate_RequiresEndpointForOllamaAndCompatibleProviders" computerName="Mac" duration="00:00:00.0003378" startTime="2026-07-22T20:45:06.3014830+08:00" endTime="2026-07-22T20:45:06.3015940+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8859a11c-0ac2-4d16-acc5-dba2368b8daa" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Chater.Tests.ConversationServiceTests.CreateAsync_PersistsImmutableProviderAndSkillSnapshot" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="46382bb8-58d5-1eb7-2d94-1bb5f476ffa6">
+      <Execution id="d0439e63-f93c-477e-83bb-d41343caa5d5" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ConversationServiceTests" name="CreateAsync_PersistsImmutableProviderAndSkillSnapshot" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.BuildSmokeTests.ApplicationAssembly_IsLoadable" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="a53eab6f-69f0-ab4c-204e-d1fe634443ec">
+      <Execution id="7e4eadc1-7c0a-4477-9581-0d9d8fb1fea0" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.BuildSmokeTests" name="ApplicationAssembly_IsLoadable" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.SkillServiceTests.SaveCustomAsync_RejectsBuiltInSkillChanges" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="32af70ab-a8d8-f8da-6a8f-fc02974d438c">
+      <Execution id="7ceaa95a-1070-43a7-8c19-215ac681a3d4" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.SkillServiceTests" name="SaveCustomAsync_RejectsBuiltInSkillChanges" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ConversationServiceTests.CreateTitle_TruncatesLongFirstMessage" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="08378c24-8243-383a-20cb-9ef5ae626c4e">
+      <Execution id="6b85fc7f-8a80-4a82-b33b-cce06d267466" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ConversationServiceTests" name="CreateTitle_TruncatesLongFirstMessage" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ProviderConnectionTesterTests.TestAsync_MapsProviderHttpFailures(statusCode: ServiceUnavailable, expectedCode: &quot;service_unavailable&quot;)" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="025d4f53-4013-b9fe-b431-80401d21522f">
+      <Execution id="e5ca6407-9a25-481b-abf4-4690031bb7c6" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ProviderConnectionTesterTests" name="TestAsync_MapsProviderHttpFailures" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ProviderConnectionTesterTests.TestAsync_UsesOllamaTagsEndpointWithoutAuthorizationHeader" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="61b71217-9356-1e0a-2f47-94f7021551c5">
+      <Execution id="53b65013-de6f-48b6-8e16-579ff8ea8fd5" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ProviderConnectionTesterTests" name="TestAsync_UsesOllamaTagsEndpointWithoutAuthorizationHeader" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.RepositoryTests.SaveAsync_PersistsMultipleModelsForOneProvider" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="c23a8f2a-12ec-9f50-d2d5-5e12929c7157">
+      <Execution id="c40891f3-f1af-4314-b50e-29a3a38339ab" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.RepositoryTests" name="SaveAsync_PersistsMultipleModelsForOneProvider" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.MainWindowViewModelTests.SaveProviderCommand_LeavesExistingApiKeyUntouchedWhenInputIsBlank" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="537a7355-9510-7ca4-6051-ae2cd3fb243f">
+      <Execution id="2618790d-d0fa-48e8-a008-b382056d7b75" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.MainWindowViewModelTests" name="SaveProviderCommand_LeavesExistingApiKeyUntouchedWhenInputIsBlank" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ConversationServiceTests.SessionSnapshots_DetectProviderModelChangeBeforeRestore" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="77749a22-d01a-bbcb-4d06-6750c934edc4">
+      <Execution id="9c0f5e13-3d05-478f-9999-d831671bbbb0" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ConversationServiceTests" name="SessionSnapshots_DetectProviderModelChangeBeforeRestore" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ConversationServiceTests.CreateAsync_PersistsSkillPromptInProviderSnapshot" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="e6888238-0f05-1425-5a70-45ad61c2dc11">
+      <Execution id="4519ec12-0f47-4c31-8669-daaa8be5a765" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ConversationServiceTests" name="CreateAsync_PersistsSkillPromptInProviderSnapshot" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ProviderConnectionTesterTests.TestAsync_MapsProviderHttpFailures(statusCode: Unauthorized, expectedCode: &quot;authentication_failed&quot;)" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="dfd8e8b8-d71b-7681-2cc6-49ec3d55c63e">
+      <Execution id="1c5d0df8-b973-4862-b1db-f702d99a0f01" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ProviderConnectionTesterTests" name="TestAsync_MapsProviderHttpFailures" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.RepositoryTests.SaveAsync_MakesOnlyLatestDefaultProviderDefault" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="ef575061-9c60-85ac-5153-4a713ee670c7">
+      <Execution id="2737a779-c3e5-47ac-b235-4eac65784d06" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.RepositoryTests" name="SaveAsync_MakesOnlyLatestDefaultProviderDefault" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.MainWindowViewModelTests.SettingsTabCommands_SelectApiKeyAndSkillPages" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="6e464674-dc8f-2d21-a1e4-7a60d35f64ef">
+      <Execution id="d3f32bf6-90f7-4d05-8b03-e65d6b650e0a" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.MainWindowViewModelTests" name="SettingsTabCommands_SelectApiKeyAndSkillPages" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.MainWindowViewModelTests.LoadAsync_ExposesAllModelsAndSelectsTheActiveModel" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="6c690376-48c3-0725-ef2f-6eb143c167f9">
+      <Execution id="ec6d2db1-6723-48ce-b231-ed7e8be19c98" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.MainWindowViewModelTests" name="LoadAsync_ExposesAllModelsAndSelectsTheActiveModel" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.MainWindowViewModelTests.NavigationCommands_OpenCorrespondingWorkspaceWindows" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="810a01b1-5037-008b-8861-5666e47dfbb5">
+      <Execution id="4e832eda-d1cb-4591-a8de-41ffd9817960" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.MainWindowViewModelTests" name="NavigationCommands_OpenCorrespondingWorkspaceWindows" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.DatabaseMigratorTests.OpenConnectionAsync_EnforcesForeignKeys" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="ccf7bdcd-1714-40bc-5364-b32214baa0a1">
+      <Execution id="9ea355c6-75aa-472f-8e40-d37416830a88" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.DatabaseMigratorTests" name="OpenConnectionAsync_EnforcesForeignKeys" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ChatServiceTests.SendStreamingAsync_UsesMafAgentAndRejectsUnsupportedProvider" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="2209b751-b16d-592e-a7bf-f2a3960e7ef7">
+      <Execution id="8337a5dd-f849-4757-9e6c-955cc0b64503" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ChatServiceTests" name="SendStreamingAsync_UsesMafAgentAndRejectsUnsupportedProvider" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.MainWindowViewModelTests.LoadAsync_SelectsDefaultEnabledProviderAndBuiltInSkill" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="a79b4efd-5897-4f6a-829f-574df10136f6">
+      <Execution id="460560f3-a5d1-4df1-86f8-3d43d4c95200" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.MainWindowViewModelTests" name="LoadAsync_SelectsDefaultEnabledProviderAndBuiltInSkill" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ProviderServiceTests.Validate_RequiresEndpointForOllamaAndCompatibleProviders" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="13bec7b8-b50f-c1ff-60fc-095adaafe4e0">
+      <Execution id="8859a11c-0ac2-4d16-acc5-dba2368b8daa" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ProviderServiceTests" name="Validate_RequiresEndpointForOllamaAndCompatibleProviders" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ProviderServiceTests.SaveAsync_StoresValidatedProvider" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="035f0ec6-b6dd-4385-bbd6-cc9c62c7d819">
+      <Execution id="1666ce8c-473d-4894-82a1-d25f3839941e" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ProviderServiceTests" name="SaveAsync_StoresValidatedProvider" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.SessionRunLockTests.AcquireAsync_SerializesOperationsForTheSameConversation" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="fc8e4020-9891-dc64-f69b-81a1802049f0">
+      <Execution id="ea70819f-ef33-4b49-b702-d2a603ce2464" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.SessionRunLockTests" name="AcquireAsync_SerializesOperationsForTheSameConversation" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.CompositionTests.InitializeChaterDatabase_RegistersAndInitializesDataServices" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="730246e0-ee97-410f-10fa-9ae850192e28">
+      <Execution id="67cafa95-150a-49a9-a17e-c7c1bb5ad0d5" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.CompositionTests" name="InitializeChaterDatabase_RegistersAndInitializesDataServices" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.DatabaseMigratorTests.MigrateAsync_CreatesSchemaAndSeedsBuiltInSkills_Idempotently" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="07c0a634-d1b9-81d5-594c-d8120077149a">
+      <Execution id="c090f928-fb4f-4f8b-831a-a48d8688b6c8" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.DatabaseMigratorTests" name="MigrateAsync_CreatesSchemaAndSeedsBuiltInSkills_Idempotently" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.ProviderConnectionTesterTests.TestAsync_MapsProviderHttpFailures(statusCode: TooManyRequests, expectedCode: &quot;rate_limited&quot;)" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="3b886303-48ac-1a66-4df0-798df247e442">
+      <Execution id="8b5fd2c7-d015-4c48-bd44-e68c561e6488" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.ProviderConnectionTesterTests" name="TestAsync_MapsProviderHttpFailures" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.RepositoryTests.GetEnabledAsync_ReturnsSeededSkillsInDisplayOrder" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="fa0b5b88-9236-46cc-0587-3953138b767d">
+      <Execution id="8ddd715c-ff29-424e-8719-47072517fe2d" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.RepositoryTests" name="GetEnabledAsync_ReturnsSeededSkillsInDisplayOrder" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.AppPathsTests.EnsureCreated_CreatesApplicationLogAndExportDirectories" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="537d3275-9dec-91ff-eff3-44c8d93b5ba9">
+      <Execution id="42c7e73b-0c1d-4a23-81b3-5ab9051693fd" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.AppPathsTests" name="EnsureCreated_CreatesApplicationLogAndExportDirectories" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.StartupRecoveryServiceTests.RecoverAsync_CancelsOnlyIncompleteMessages" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="ad8ed4d6-389a-edc8-fa78-913731b212b9">
+      <Execution id="593583bb-b62f-407e-956e-d12dc387fea0" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.StartupRecoveryServiceTests" name="RecoverAsync_CancelsOnlyIncompleteMessages" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.MainWindowViewModelTests.SaveSkillCommand_AddsCustomSkillToSelectionList" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="1e8a9bc5-c848-dcdb-f837-caa3415f18ff">
+      <Execution id="bf6c761f-9976-462d-8d61-2b08dfaf05c4" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.MainWindowViewModelTests" name="SaveSkillCommand_AddsCustomSkillToSelectionList" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.SessionStateValidatorTests.CanRestore_RequiresExactAgentConfigurationMatch" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="3e4a9411-258f-9a6b-43d1-1b06e31923a7">
+      <Execution id="3d5c296c-3a1e-450f-8e9f-992840847a79" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.SessionStateValidatorTests" name="CanRestore_RequiresExactAgentConfigurationMatch" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.SkillServiceTests.SaveCustomAsync_CreatesAndVersionsCustomSkill" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="f32ea7d6-523f-5cfb-b950-8b2d147dcac7">
+      <Execution id="cf62ae70-ea30-461b-bcd5-1f081609effc" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.SkillServiceTests" name="SaveCustomAsync_CreatesAndVersionsCustomSkill" />
+    </UnitTest>
+    <UnitTest name="Chater.Tests.RepositoryTests.ConversationAndMessageQueries_ReturnPersistentHistoryInDisplayOrder" storage="/users/waite/files/private/chater/chater.tests/bin/release/net10.0/chater.tests.dll" id="3b86a92d-fc0f-e36b-2b84-836eed14bfae">
+      <Execution id="0297b2e0-f703-4c79-8d89-4c14ae9bb9b1" />
+      <TestMethod codeBase="/Users/waite/files/private/Chater/Chater.Tests/bin/Release/net10.0/Chater.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Chater.Tests.RepositoryTests" name="ConversationAndMessageQueries_ReturnPersistentHistoryInDisplayOrder" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="2209b751-b16d-592e-a7bf-f2a3960e7ef7" executionId="8337a5dd-f849-4757-9e6c-955cc0b64503" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="025d4f53-4013-b9fe-b431-80401d21522f" executionId="e5ca6407-9a25-481b-abf4-4690031bb7c6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="61b71217-9356-1e0a-2f47-94f7021551c5" executionId="53b65013-de6f-48b6-8e16-579ff8ea8fd5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fc8e4020-9891-dc64-f69b-81a1802049f0" executionId="ea70819f-ef33-4b49-b702-d2a603ce2464" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="730246e0-ee97-410f-10fa-9ae850192e28" executionId="67cafa95-150a-49a9-a17e-c7c1bb5ad0d5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f32ea7d6-523f-5cfb-b950-8b2d147dcac7" executionId="cf62ae70-ea30-461b-bcd5-1f081609effc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3e4a9411-258f-9a6b-43d1-1b06e31923a7" executionId="3d5c296c-3a1e-450f-8e9f-992840847a79" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ef575061-9c60-85ac-5153-4a713ee670c7" executionId="2737a779-c3e5-47ac-b235-4eac65784d06" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e6888238-0f05-1425-5a70-45ad61c2dc11" executionId="4519ec12-0f47-4c31-8669-daaa8be5a765" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08378c24-8243-383a-20cb-9ef5ae626c4e" executionId="6b85fc7f-8a80-4a82-b33b-cce06d267466" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dfd8e8b8-d71b-7681-2cc6-49ec3d55c63e" executionId="1c5d0df8-b973-4862-b1db-f702d99a0f01" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="035f0ec6-b6dd-4385-bbd6-cc9c62c7d819" executionId="1666ce8c-473d-4894-82a1-d25f3839941e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="07c0a634-d1b9-81d5-594c-d8120077149a" executionId="c090f928-fb4f-4f8b-831a-a48d8688b6c8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3b86a92d-fc0f-e36b-2b84-836eed14bfae" executionId="0297b2e0-f703-4c79-8d89-4c14ae9bb9b1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="32af70ab-a8d8-f8da-6a8f-fc02974d438c" executionId="7ceaa95a-1070-43a7-8c19-215ac681a3d4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3b886303-48ac-1a66-4df0-798df247e442" executionId="8b5fd2c7-d015-4c48-bd44-e68c561e6488" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="810a01b1-5037-008b-8861-5666e47dfbb5" executionId="4e832eda-d1cb-4591-a8de-41ffd9817960" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46382bb8-58d5-1eb7-2d94-1bb5f476ffa6" executionId="d0439e63-f93c-477e-83bb-d41343caa5d5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a53eab6f-69f0-ab4c-204e-d1fe634443ec" executionId="7e4eadc1-7c0a-4477-9581-0d9d8fb1fea0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6e464674-dc8f-2d21-a1e4-7a60d35f64ef" executionId="d3f32bf6-90f7-4d05-8b03-e65d6b650e0a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="537a7355-9510-7ca4-6051-ae2cd3fb243f" executionId="2618790d-d0fa-48e8-a008-b382056d7b75" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c23a8f2a-12ec-9f50-d2d5-5e12929c7157" executionId="c40891f3-f1af-4314-b50e-29a3a38339ab" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fa0b5b88-9236-46cc-0587-3953138b767d" executionId="8ddd715c-ff29-424e-8719-47072517fe2d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="77749a22-d01a-bbcb-4d06-6750c934edc4" executionId="9c0f5e13-3d05-478f-9999-d831671bbbb0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ad8ed4d6-389a-edc8-fa78-913731b212b9" executionId="593583bb-b62f-407e-956e-d12dc387fea0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1e8a9bc5-c848-dcdb-f837-caa3415f18ff" executionId="bf6c761f-9976-462d-8d61-2b08dfaf05c4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="537d3275-9dec-91ff-eff3-44c8d93b5ba9" executionId="42c7e73b-0c1d-4a23-81b3-5ab9051693fd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a79b4efd-5897-4f6a-829f-574df10136f6" executionId="460560f3-a5d1-4df1-86f8-3d43d4c95200" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6c690376-48c3-0725-ef2f-6eb143c167f9" executionId="ec6d2db1-6723-48ce-b231-ed7e8be19c98" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ccf7bdcd-1714-40bc-5364-b32214baa0a1" executionId="9ea355c6-75aa-472f-8e40-d37416830a88" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="13bec7b8-b50f-c1ff-60fc-095adaafe4e0" executionId="8859a11c-0ac2-4d16-acc5-dba2368b8daa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="列表中未列出的结果" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="所有已加载的结果" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="31" executed="31" passed="31" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.0.2+dd36e86129 (64-bit .NET 10.0.9)
+[xUnit.net 00:00:00.05]   Discovering: Chater.Tests
+[xUnit.net 00:00:00.09]   Discovered:  Chater.Tests
+[xUnit.net 00:00:00.11]   Starting:    Chater.Tests
+[xUnit.net 00:00:00.60]   Finished:    Chater.Tests
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

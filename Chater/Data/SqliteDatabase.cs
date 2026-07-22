@@ -18,7 +18,8 @@ public sealed class SqliteDatabase
         {
             DataSource = databasePath,
             Mode = SqliteOpenMode.ReadWriteCreate,
-            ForeignKeys = true
+            ForeignKeys = true,
+            Pooling = false
         }.ToString();
     }
 
