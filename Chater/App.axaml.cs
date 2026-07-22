@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls;
 using Avalonia.Diagnostics;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
@@ -13,6 +14,7 @@ namespace Chater;
 public partial class App : Application
 {
     private ServiceProvider? _services;
+    internal bool IsExiting { get; private set; }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -29,12 +31,39 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = _services.GetRequiredService<Chater.Views.MainWindow>();
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             var viewModel = _services.GetRequiredService<Chater.ViewModels.MainWindowViewModel>();
             desktop.MainWindow.DataContext = viewModel;
-            desktop.MainWindow.Opened += async (_, _) => await viewModel.LoadAsync();
-            desktop.Exit += (_, _) => _services.Dispose();
+            desktop.MainWindow.Opened += async (_, _) =>
+            {
+                await viewModel.LoadAsync();
+                var globalHotKeys = _services.GetRequiredService<Services.IGlobalHotKeyService>();
+                if (!globalHotKeys.Start(viewModel.ChatShortcut) && globalHotKeys.LastError is not null)
+                {
+                    viewModel.StatusMessage = globalHotKeys.LastError;
+                }
+            };
+            desktop.Exit += (_, _) =>
+            {
+                IsExiting = true;
+                _services.GetRequiredService<Services.IGlobalHotKeyService>().Dispose();
+                _services.Dispose();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void OnTrayShowChat(object? sender, EventArgs e) => _services?.GetRequiredService<Services.IWindowNavigationService>().ShowChat();
+
+    private void OnTrayShowSettings(object? sender, EventArgs e) => _services?.GetRequiredService<Services.IWindowNavigationService>().ShowSettings();
+
+    private void OnTrayExit(object? sender, EventArgs e)
+    {
+        IsExiting = true;
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown();
+        }
     }
 }

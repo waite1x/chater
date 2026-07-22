@@ -1,5 +1,8 @@
 using Avalonia.Controls;
+using Avalonia;
+using Avalonia.Input;
 using Chater.ViewModels;
+using Chater;
 
 namespace Chater.Views;
 
@@ -16,5 +19,31 @@ public partial class MainWindow : Window
         {
             viewModel.Draft = textBox.Text ?? string.Empty;
         }
+    }
+
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            Hide();
+            e.Handled = true;
+            return;
+        }
+
+        if (DataContext is MainWindowViewModel viewModel && viewModel.IsChatShortcut(e.Key, e.KeyModifiers))
+        {
+            viewModel.ShowChatCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        if (Application.Current is not App { IsExiting: true })
+        {
+            e.Cancel = true;
+            Hide();
+        }
+        base.OnClosing(e);
     }
 }

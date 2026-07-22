@@ -4,6 +4,7 @@
         xmlns:models="using:Chater.Models"
         xmlns:local="using:Chater.Views"
         x:Class="Chater.Views.MainWindow"
+        KeyDown="OnWindowKeyDown"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Chater · AI 助手" Width="520" Height="700" MinWidth="420" MinHeight="500">

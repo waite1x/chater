@@ -4,6 +4,21 @@
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
+    <TrayIcon.Icons>
+        <TrayIcons>
+            <TrayIcon Icon="/Assets/avalonia-logo.ico" ToolTipText="Chater">
+                <TrayIcon.Menu>
+                    <NativeMenu>
+                        <NativeMenuItem Header="打开聊天" Click="OnTrayShowChat"/>
+                        <NativeMenuItem Header="打开设置" Click="OnTrayShowSettings"/>
+                        <NativeMenuItemSeparator/>
+                        <NativeMenuItem Header="退出 Chater" Click="OnTrayExit"/>
+                    </NativeMenu>
+                </TrayIcon.Menu>
+            </TrayIcon>
+        </TrayIcons>
+    </TrayIcon.Icons>
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml" />

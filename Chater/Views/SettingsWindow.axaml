@@ -3,20 +3,44 @@
         xmlns:vm="using:Chater.ViewModels"
         x:Class="Chater.Views.SettingsWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="Chater · 设置" Width="960" Height="640" MinWidth="760" MinHeight="520">
+        Title="Chater · 设置" Width="960" Height="640" MinWidth="760" MinHeight="520"
+        KeyDown="OnWindowKeyDown">
     <Grid ColumnDefinitions="180,*">
         <Border Padding="16" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="0,0,1,0">
             <StackPanel Spacing="10">
                 <TextBlock Text="设置" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
-                <Button Content="⚙  通用设置" HorizontalContentAlignment="Left"/>
+                <Button Content="⚙  通用设置" HorizontalContentAlignment="Left" Command="{Binding ShowGeneralSettingsCommand}"/>
                 <Button Content="◇  模型配置" HorizontalContentAlignment="Left"/>
                 <Button Content="⚿  API Key" HorizontalContentAlignment="Left" Command="{Binding ShowApiKeySettingsCommand}"/>
-                <Button Content="⌨  快捷键" HorizontalContentAlignment="Left"/>
+                <Button Content="⌨  快捷键" HorizontalContentAlignment="Left" Command="{Binding ShowShortcutSettingsCommand}"/>
                 <Button Content="▦  技能" HorizontalContentAlignment="Left" Command="{Binding ShowSkillSettingsCommand}"/>
                 <Button Content="ⓘ  关于" HorizontalContentAlignment="Left"/>
             </StackPanel>
         </Border>
         <Grid Grid.Column="1" Margin="24">
+            <Grid IsVisible="{Binding IsGeneralSettingsVisible}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="通用设置" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock Text="选择 Chater 的界面主题。" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <Border Padding="14" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="8">
+                        <Grid ColumnDefinitions="*,240" ColumnSpacing="16">
+                            <StackPanel>
+                                <TextBlock Text="主题" FontWeight="SemiBold"/>
+                                <TextBlock Text="跟随系统、浅色或深色模式。" FontSize="12" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+                    <Button HorizontalAlignment="Left" Content="保存通用设置" Command="{Binding SaveGeneralSettingsCommand}"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
+            </Grid>
             <Grid IsVisible="{Binding IsApiKeySettingsVisible}">
                 <Grid RowDefinitions="Auto,Auto,*" RowSpacing="16">
                     <Grid ColumnDefinitions="*,Auto">
@@ -83,6 +107,21 @@
                     </Grid>
                     <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                 </Grid>
+            </Grid>
+            <Grid IsVisible="{Binding IsShortcutSettingsVisible}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="快捷键设置" FontSize="22" FontWeight="Bold"/>
+                    <TextBlock Text="设置应用内唤起聊天窗口的快捷键。" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <Border Padding="14" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="8">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="聊天窗口快捷键" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding ChatShortcut, Mode=OneWay}" KeyDown="OnShortcutKeyDown" PlaceholderText="点击后按下组合键，例如 Ctrl+Shift+Space"/>
+                            <TextBlock Text="点击输入框后按下组合键完成设置。快捷键在主窗口和设置窗口中生效。" FontSize="12" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    <Button HorizontalAlignment="Left" Content="保存快捷键" Command="{Binding SaveShortcutSettingsCommand}"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </StackPanel>
             </Grid>
         </Grid>
     </Grid>

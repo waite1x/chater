@@ -109,6 +109,22 @@ public sealed class MainWindowViewModelTests : IDisposable
         Assert.Equal(0, viewModel.SettingsTabIndex);
     }
 
+    [Fact]
+    public async Task LoadAsync_LoadsPersistedThemeAndShortcut()
+    {
+        var database = new SqliteDatabase(_path);
+        await new DatabaseMigrator(database).MigrateAsync();
+        var settings = new AppSettingRepository(database);
+        await settings.SaveAsync(AppSettingsService.ThemeKey, "dark");
+        await settings.SaveAsync(AppSettingsService.ChatShortcutKey, "Ctrl+Alt+C");
+
+        var viewModel = CreateViewModel(database);
+        await viewModel.LoadAsync();
+
+        Assert.Equal("dark", viewModel.SelectedTheme?.Key);
+        Assert.Equal("Ctrl+Alt+C", viewModel.ChatShortcut);
+    }
+
     public void Dispose()
     {
         if (File.Exists(_path))
@@ -125,6 +141,7 @@ public sealed class MainWindowViewModelTests : IDisposable
         new ConversationRepository(database),
         new MessageRepository(database),
         new SkillService(new SkillRepository(database)),
+        new AppSettingsService(new AppSettingRepository(database)),
         navigation);
 
     private sealed class RecordingNavigation : IWindowNavigationService
@@ -134,5 +151,6 @@ public sealed class MainWindowViewModelTests : IDisposable
 
         public void ShowSettings() => SettingsCount++;
         public void ShowSkillSettings() => SkillSettingsCount++;
+        public void ShowChat() { }
     }
 }

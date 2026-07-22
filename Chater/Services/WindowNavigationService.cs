@@ -1,5 +1,6 @@
 using Chater.ViewModels;
 using Chater.Views;
+using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Chater.Services;
@@ -14,6 +15,15 @@ public sealed class WindowNavigationService(IServiceProvider services) : IWindow
     public void ShowSkillSettings()
     {
         ShowSettings(1);
+    }
+
+    public void ShowChat()
+    {
+        var window = services.GetRequiredService<MainWindow>();
+        if (!window.IsVisible) window.Show();
+        window.WindowState = WindowState.Normal;
+        window.Activate();
+        window.Focus();
     }
 
     private void ShowSettings(int tabIndex)

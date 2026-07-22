@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
         });
         services.AddSingleton<DatabaseMigrator>();
         services.AddSingleton<MessageRepository>();
+        services.AddSingleton<AppSettingRepository>();
         services.AddSingleton<ApiProviderRepository>();
         services.AddSingleton<SkillRepository>();
         services.AddSingleton<ConversationRepository>();
@@ -27,8 +28,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProviderConnectionTester, ProviderConnectionTester>();
         services.AddSingleton<ProviderService>();
         services.AddSingleton<SkillService>();
+        services.AddSingleton<AppSettingsService>();
         services.AddSingleton<ConversationService>();
         services.AddSingleton<IWindowNavigationService, WindowNavigationService>();
+        services.AddSingleton<IGlobalHotKeyService, GlobalHotKeyService>();
         services.AddSingleton<SessionRunLock>();
         services.AddSingleton<ChatService>();
         services.AddSingleton<MainWindowViewModel>();

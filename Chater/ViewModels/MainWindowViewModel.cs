@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text.Json;
+using Avalonia.Input;
 using Chater.Data;
 using Chater.Models;
 using Chater.Models.Enums;
@@ -19,11 +20,13 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private readonly MessageRepository _messageRepository;
     private readonly SkillService _skillService;
     private readonly IWindowNavigationService? _navigation;
+    private readonly AppSettingsService _settings;
+    private readonly IGlobalHotKeyService? _globalHotKeys;
     private Conversation? _conversation;
     private CancellationTokenSource? _sendCancellation;
     private bool _openingConversation;
 
-    public MainWindowViewModel(ProviderService providerService, SkillRepository skills, ConversationService conversations, ChatService chat, ConversationRepository conversationRepository, MessageRepository messageRepository, SkillService skillService, IWindowNavigationService? navigation = null)
+    public MainWindowViewModel(ProviderService providerService, SkillRepository skills, ConversationService conversations, ChatService chat, ConversationRepository conversationRepository, MessageRepository messageRepository, SkillService skillService, AppSettingsService settings, IWindowNavigationService? navigation = null, IGlobalHotKeyService? globalHotKeys = null)
     {
         _providerService = providerService;
         _skills = skills;
@@ -33,6 +36,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _messageRepository = messageRepository;
         _skillService = skillService;
         _navigation = navigation;
+        _settings = settings;
+        _globalHotKeys = globalHotKeys;
     }
 
     public ObservableCollection<ApiProvider> Providers { get; } = [];
@@ -42,6 +47,13 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public IReadOnlyList<ProviderType> ProviderTypes { get; } = Enum.GetValues<ProviderType>();
 
     public IReadOnlyList<string> AvailableModels => SelectedProvider?.ModelIds ?? [];
+    public IReadOnlyList<ThemeOption> ThemeOptions { get; } = [new("system", "跟随系统"), new("light", "浅色"), new("dark", "深色")];
+
+    [ObservableProperty]
+    private ThemeOption? _selectedTheme;
+
+    [ObservableProperty]
+    private string _chatShortcut = AppSettingsService.DefaultChatShortcut;
 
     [ObservableProperty]
     private ApiProvider? _selectedProvider;
@@ -91,13 +103,21 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsApiKeySettingsVisible))]
     [NotifyPropertyChangedFor(nameof(IsSkillSettingsVisible))]
+    [NotifyPropertyChangedFor(nameof(IsGeneralSettingsVisible))]
+    [NotifyPropertyChangedFor(nameof(IsShortcutSettingsVisible))]
     private int _settingsTabIndex;
 
     public bool IsApiKeySettingsVisible => SettingsTabIndex == 0;
     public bool IsSkillSettingsVisible => SettingsTabIndex == 1;
+    public bool IsGeneralSettingsVisible => SettingsTabIndex == 2;
+    public bool IsShortcutSettingsVisible => SettingsTabIndex == 3;
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
+        var theme = await _settings.GetAsync(AppSettingsService.ThemeKey, cancellationToken).ConfigureAwait(false) ?? AppSettingsService.DefaultTheme;
+        SelectedTheme = ThemeOptions.FirstOrDefault(item => item.Key == theme) ?? ThemeOptions[0];
+        ChatShortcut = await _settings.GetAsync(AppSettingsService.ChatShortcutKey, cancellationToken).ConfigureAwait(false) ?? AppSettingsService.DefaultChatShortcut;
+        AppSettingsService.ApplyTheme(SelectedTheme.Key);
         Providers.Clear();
         foreach (var provider in await _providerService.GetAllAsync(cancellationToken).ConfigureAwait(false))
         {
@@ -143,6 +163,39 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     [RelayCommand]
     private void ShowSkillSettings() => SettingsTabIndex = 1;
+
+    [RelayCommand]
+    private void ShowGeneralSettings() => SettingsTabIndex = 2;
+
+    [RelayCommand]
+    private void ShowShortcutSettings() => SettingsTabIndex = 3;
+
+    [RelayCommand]
+    private async Task SaveGeneralSettingsAsync()
+    {
+        var theme = SelectedTheme?.Key ?? AppSettingsService.DefaultTheme;
+        await _settings.SaveAsync(AppSettingsService.ThemeKey, theme).ConfigureAwait(false);
+        AppSettingsService.ApplyTheme(theme);
+        StatusMessage = "通用设置已保存。";
+    }
+
+    [RelayCommand]
+    private async Task SaveShortcutSettingsAsync()
+    {
+        if (!ShortcutFormatter.TryParse(ChatShortcut, out _))
+        {
+            StatusMessage = "快捷键格式无效，请点击输入框后按下组合键。";
+            return;
+        }
+        await _settings.SaveAsync(AppSettingsService.ChatShortcutKey, ChatShortcut).ConfigureAwait(false);
+        _globalHotKeys?.UpdateShortcut(ChatShortcut);
+        StatusMessage = "快捷键已保存。";
+    }
+
+    [RelayCommand]
+    private void ShowChat() => _navigation?.ShowChat();
+
+    public bool IsChatShortcut(Key key, KeyModifiers modifiers) => ShortcutFormatter.Matches(ChatShortcut, key, modifiers);
 
     [RelayCommand]
     private void AddProvider()
