@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <mask id="assistant-mask">
+      <rect width="64" height="64" fill="white"/>
+      <ellipse cx="22" cy="29" rx="5" ry="8" fill="black"/>
+      <ellipse cx="42" cy="29" rx="5" ry="8" fill="black"/>
+      <path d="M21 41c5.5 5 16.5 5 22 0" fill="none" stroke="black" stroke-width="3.2" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <rect x="0" y="7" width="64" height="50" rx="21" fill="#000" mask="url(#assistant-mask)"/>
+</svg>

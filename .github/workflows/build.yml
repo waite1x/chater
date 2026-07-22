@@ -1,0 +1,270 @@
+name: test-and-release
+
+on:
+  pull_request:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore Chater.slnx
+      - run: dotnet build Chater.slnx --configuration Release --no-restore
+      - run: dotnet test Chater.slnx --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: "**/TestResults/*.trx"
+
+  sync-version:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - name: Sync project version from tag
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          version_file="Chater/Chater.csproj"
+          tag_version="${GITHUB_REF_NAME#v}"
+
+          if [[ ! "$tag_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release version: $tag_version"
+            exit 1
+          fi
+
+          sed -E -i "s#(<Version>)[^<]*(</Version>)#\\1${tag_version}\\2#" "$version_file"
+          if ! grep -q "<Version>${tag_version}</Version>" "$version_file"; then
+            echo "Could not update the project version in $version_file"
+            exit 1
+          fi
+
+          if git diff --quiet -- "$version_file"; then
+            echo "Project version is already ${tag_version}."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$version_file"
+          git commit -m "chore: sync project version to v${tag_version}"
+          git push origin "HEAD:${DEFAULT_BRANCH}"
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [test, sync-version]
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: windows-11-arm
+            rid: win-arm64
+          - os: macos-15
+            rid: osx-arm64
+          - os: macos-15-intel
+            rid: osx-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+      - name: Validate version tag
+        id: version
+        shell: bash
+        run: |
+          TAG_NAME="$GITHUB_REF_NAME"
+          if [[ ! "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release tag: $TAG_NAME. Expected vX.Y.Z."
+            exit 1
+          fi
+          echo "version=${TAG_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore Chater/Chater.csproj --runtime ${{ matrix.rid }} --property:Configuration=Release -p:SelfContained=true -p:PublishAot=true -p:PublishTrimmed=true
+      - run: dotnet publish Chater/Chater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true --no-restore --output artifacts/${{ matrix.rid }}/publish -p:Version=${{ steps.version.outputs.version }} -p:PublishAot=true -p:PublishTrimmed=true -p:DebugSymbols=false -p:DebugType=None -p:StripSymbols=true
+      - name: Create macOS application bundle
+        if: startsWith(matrix.rid, 'osx-')
+        shell: bash
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          publish_dir="artifacts/${{ matrix.rid }}/publish"
+          app_dir="artifacts/${{ matrix.rid }}/Chater.app"
+          mkdir -p "$app_dir/Contents/MacOS"
+          mkdir -p "$app_dir/Contents/Resources"
+          cp -R "$publish_dir"/. "$app_dir/Contents/MacOS/"
+          cp "$GITHUB_WORKSPACE/Chater/Assets/Chater.icns" "$app_dir/Contents/Resources/Chater.icns"
+          cat > "$app_dir/Contents/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleDisplayName</key>
+              <string>Chater</string>
+              <key>CFBundleExecutable</key>
+              <string>Chater</string>
+              <key>CFBundleIconFile</key>
+              <string>Chater.icns</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.chater.app</string>
+              <key>CFBundleName</key>
+              <string>Chater</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>${APP_VERSION}</string>
+              <key>CFBundleVersion</key>
+              <string>${APP_VERSION}</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>11.0</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          chmod +x "$app_dir/Contents/MacOS/Chater"
+          rm -rf "$publish_dir"
+      - name: Package macOS application
+        if: startsWith(matrix.rid, 'osx-')
+        shell: bash
+        run: ditto -c -k --sequesterRsrc --keepParent "artifacts/${{ matrix.rid }}/Chater.app" "artifacts/chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}.zip"
+      - name: Create macOS disk image
+        if: startsWith(matrix.rid, 'osx-')
+        shell: bash
+        run: |
+          staging_dir="$(mktemp -d "${RUNNER_TEMP}/chater-dmg.XXXXXX")"
+          cp -R "artifacts/${{ matrix.rid }}/Chater.app" "$staging_dir/Chater.app"
+          ln -s "/Applications" "$staging_dir/Applications"
+          hdiutil create \
+            -volname "Chater" \
+            -srcfolder "$staging_dir" \
+            -ov \
+            -format UDZO \
+            "artifacts/chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}.dmg"
+      - name: Install Inno Setup
+        if: startsWith(matrix.rid, 'win-')
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc.exe -ErrorAction SilentlyContinue) -and
+              -not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") -and
+              -not (Test-Path "$env:ProgramFiles\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --no-progress --yes
+          }
+      - name: Package Windows application
+        if: startsWith(matrix.rid, 'win-')
+        shell: pwsh
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          $publishDir = Join-Path $env:GITHUB_WORKSPACE "artifacts\${{ matrix.rid }}\publish"
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "artifacts\${{ matrix.rid }}"
+          $portableZip = Join-Path $env:GITHUB_WORKSPACE "artifacts\chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}.zip"
+          $appExecutable = Join-Path $publishDir "Chater.exe"
+          $issPath = Join-Path $env:GITHUB_WORKSPACE "Chater\Installer\Chater.iss"
+          $setupIcon = Join-Path $env:GITHUB_WORKSPACE "Chater\Assets\chater.ico"
+
+          if (-not (Test-Path $appExecutable)) {
+            Get-ChildItem -Path $publishDir -Force | Format-Table Name, Length, Mode
+            throw "Native AOT executable was not found: $appExecutable"
+          }
+          if (-not (Test-Path $issPath)) {
+            throw "Inno Setup configuration was not found: $issPath"
+          }
+          if (-not (Test-Path $setupIcon)) {
+            throw "Windows application icon was not found: $setupIcon"
+          }
+
+          Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $portableZip -Force
+
+          $iscc = @(
+            (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source,
+            (Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"),
+            (Join-Path $env:ProgramFiles "Inno Setup 6\ISCC.exe")
+          ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup compiler was not found."
+          }
+
+          & $iscc `
+            "/DAppVersion=$env:APP_VERSION" `
+            "/DSourceDir=$publishDir" `
+            "/DOutputDir=$artifactDir" `
+            "/DOutputBaseName=chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}-setup" `
+            "/DSetupIcon=$setupIcon" `
+            $issPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE."
+          }
+      - name: Upload Windows packages
+        if: startsWith(matrix.rid, 'win-')
+        uses: actions/upload-artifact@v6
+        with:
+          name: chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}
+          path: |
+            artifacts/chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}.zip
+          if-no-files-found: error
+      - name: Upload Windows setup packages
+        if: startsWith(matrix.rid, 'win-')
+        uses: actions/upload-artifact@v6
+        with:
+          name: chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}-setup
+          path: |
+            artifacts/${{ matrix.rid }}/chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}-setup.exe
+          if-no-files-found: error
+      - name: Upload macOS packages
+        if: startsWith(matrix.rid, 'osx-')
+        uses: actions/upload-artifact@v6
+        with:
+          name: chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}
+          path: |
+            artifacts/chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}.zip
+            artifacts/chater-${{ matrix.rid }}-${{ steps.version.outputs.tag }}.dmg
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: chater-*
+          path: release-assets
+          merge-multiple: true
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: gh release create "$TAG_NAME" release-assets/* --repo "$GITHUB_REPOSITORY" --title "Chater $TAG_NAME" --generate-notes

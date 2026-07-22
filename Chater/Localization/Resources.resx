@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0</value></resheader>
+  <data name="AppTitle"><value>Chater</value></data>
+  <data name="Settings"><value>Main Window</value></data>
+  <data name="GeneralSettings"><value>General</value></data>
+  <data name="ApiKey"><value>API Key</value></data>
+  <data name="Skills"><value>Skills</value></data>
+  <data name="Shortcut"><value>Shortcuts</value></data>
+  <data name="NewConversation"><value>New chat</value></data>
+  <data name="HistoryPlaceholder"><value>Select conversation</value></data>
+  <data name="History"><value>History</value></data>
+  <data name="HistoryDescription"><value>View all past conversations and continue a selected one in a new chat window.</value></data>
+  <data name="StartConversation"><value>Start conversation</value></data>
+  <data name="SkillPlaceholder"><value>Select skill</value></data>
+  <data name="ModelPlaceholder"><value>Select model</value></data>
+  <data name="InputPlaceholder"><value>Type a message, press Enter to send…</value></data>
+  <data name="Send"><value>Send</value></data><data name="Stop"><value>Stop</value></data>
+  <data name="ThemeDescription"><value>Choose Chater's interface theme. Changes apply and save immediately.</value></data>
+  <data name="Theme"><value>Theme</value></data><data name="ThemeDescriptionShort"><value>Follow system, light, or dark mode.</value></data>
+  <data name="Language"><value>Language</value></data><data name="LanguageDescription"><value>Choose the interface language. Changes apply and save immediately.</value></data>
+  <data name="Startup"><value>Launch at startup</value></data><data name="StartupDescription"><value>Start Chater automatically when you sign in.</value></data>
+  <data name="System"><value>System</value></data><data name="Light"><value>Light</value></data><data name="Dark"><value>Dark</value></data>
+  <data name="ApiKeyManagement"><value>API Key management</value></data><data name="ProviderDescription"><value>Manage providers and switch between API keys.</value></data>
+  <data name="AddProvider"><value>Add provider</value></data><data name="NamePlaceholder"><value>Name</value></data>
+  <data name="ModelListPlaceholder"><value>Models: one per line, comma, or semicolon separated</value></data>
+  <data name="EndpointPlaceholder"><value>Endpoint (optional for OpenAI)</value></data><data name="ApiKeyPlaceholder"><value>API Key (leave blank to keep existing key)</value></data>
+  <data name="Save"><value>Save</value></data><data name="TestConnection"><value>Test connection</value></data>
+  <data name="SkillManagement"><value>Skill management</value></data><data name="SkillDescription"><value>Choose a built-in skill or create and edit a custom one.</value></data>
+  <data name="CustomSkill"><value>Custom skill</value></data><data name="SkillNamePlaceholder"><value>Skill name</value></data>
+  <data name="SkillPromptPlaceholder"><value>System prompt (built-in skills are read-only)</value></data><data name="SaveSkill"><value>Save skill</value></data>
+  <data name="ShortcutDescription"><value>Set the shortcut to show the chat window. Changes apply and save immediately.</value></data>
+  <data name="ChatShortcut"><value>Chat window shortcut</value></data><data name="ShortcutHint"><value>Focus the input and press a key combination. The shortcut works in the chat and settings windows.</value></data>
+  <data name="ShortcutPlaceholder"><value>Click and press a combination, e.g. Ctrl+Shift+Space</value></data><data name="SelectApiKey"><value>Select API key</value></data>
+  <data name="Ready"><value>Ready.</value></data><data name="NoProvider"><value>Add and enable a provider in SQLite first.</value></data>
+  <data name="NewConversationStatus"><value>A new conversation will be created when you send the first message.</value></data><data name="Generating"><value>Generating response…</value></data>
+  <data name="Completed"><value>Completed.</value></data><data name="Stopped"><value>Generation stopped.</value></data>
+  <data name="ProviderSaved"><value>Provider saved.</value></data><data name="SkillSaved"><value>Skill saved.</value></data>
+  <data name="AddingProvider"><value>Enter provider settings and save.</value></data><data name="AddingSkill"><value>Enter a custom skill and save.</value></data>
+  <data name="SelectProviderFirst"><value>Select an enabled provider first.</value></data><data name="Testing"><value>Testing connection…</value></data>
+  <data name="BuiltInSkillReadOnly"><value>Built-in skills cannot be edited; add a custom skill instead.</value></data><data name="Loading"><value>Loading settings…</value></data>
+  <data name="Delete"><value>Delete</value></data>
+  <data name="ProviderDeleted"><value>Provider deleted.</value></data>
+  <data name="SkillDeleted"><value>Skill deleted.</value></data>
+  <data name="ShortcutCleared"><value>Shortcut cleared.</value></data>
+  <data name="StartupEnabled"><value>Launch at startup enabled.</value></data><data name="StartupDisabled"><value>Launch at startup disabled.</value></data><data name="StartupPermissionRequired"><value>Permission is required. System startup settings have been opened.</value></data>
+  <data name="AccentColor"><value>Accent color</value></data><data name="AccentColorDescription"><value>Choose a preset or use the color picker to customize Chater's accent color.</value></data><data name="CustomAccentColor"><value>Custom color</value></data>
+  <data name="About"><value>About</value></data><data name="CurrentVersionLabel"><value>Current version</value></data><data name="CheckForUpdates"><value>Check for updates</value></data>
+  <data name="CheckingForUpdates"><value>Checking for updates…</value></data><data name="NoUpdates"><value>You are using the latest version.</value></data><data name="UpdateAvailable"><value>An update is available.</value></data><data name="UpdateReady"><value>Update downloaded. Waiting for confirmation.</value></data><data name="UpdateCheckFailed"><value>Update error: {0}</value></data>
+  <data name="UpdateDownloadTitle"><value>Chater update available</value></data><data name="UpdateDownloadMessage"><value>A new version of Chater is available. Download it now?</value></data><data name="UpdateInstallTitle"><value>Chater update ready</value></data><data name="UpdateInstallMessage"><value>The update package is ready. Start installation now?</value></data><data name="UpdateVersionDetails"><value>Current version: {0}&#xA;New version: {1}</value></data><data name="ReleaseDetails"><value>Release: {0}</value></data><data name="Later"><value>Later</value></data><data name="DownloadNow"><value>Download now</value></data><data name="UpdateNow"><value>Install now</value></data><data name="DownloadingUpdate"><value>Downloading update…</value></data><data name="UpdateDownloadFailed"><value>Update failed: {0}</value></data>
+  <data name="NewChatWindowShortcut"><value>New chat window shortcut</value></data>
+  <data name="NewChatWindowShortcutHint"><value>Focus the input and press a key combination. This shortcut always opens a new chat window.</value></data>
+  <data name="HistoryDeleted"><value>Conversation deleted.</value></data>
+  <data name="Cancel"><value>Cancel</value></data>
+  <data name="ConfirmDeleteTitle"><value>Confirm deletion</value></data>
+  <data name="ConfirmDeleteMessage"><value>Delete "{0}"? This action cannot be undone from the app.</value></data>
+</root>

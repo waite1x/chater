@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Chater.Tests/Chater.Tests.csproj" />
+  <Project Path="Chater/Chater.csproj" />
+</Solution>

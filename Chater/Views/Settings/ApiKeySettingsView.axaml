@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chater.ViewModels"
+             xmlns:models="using:Chater.Models"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Chater.Views.Settings.ApiKeySettingsView"
+             x:DataType="vm:MainWindowViewModel">
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="16">
+        <Grid ColumnDefinitions="*,Auto">
+            <StackPanel>
+                <TextBlock Text="{Binding Localization[ApiKeyManagement]}" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Localization[ProviderDescription]}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </StackPanel>
+            <Button Classes="primary-button" Grid.Column="1" Command="{Binding AddProviderCommand}" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8"><materialIcons:MaterialIcon Kind="Plus" Width="18" Height="18"/><TextBlock Text="{Binding Localization[AddProvider]}"/></StackPanel>
+            </Button>
+        </Grid>
+        <Border Classes="card" Grid.Row="1" Padding="12">
+            <Grid ColumnDefinitions="*,*,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                <TextBox Text="{Binding ProviderName}" PlaceholderText="{Binding Localization[NamePlaceholder]}"/>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding ProviderTypes}" SelectedItem="{Binding ProviderType}"/>
+                <TextBox Grid.Column="2" Text="{Binding ProviderModelId}" PlaceholderText="{Binding Localization[ModelListPlaceholder]}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="42"/>
+                <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding ProviderEndpoint}" PlaceholderText="{Binding Localization[EndpointPlaceholder]}"/>
+                <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding ProviderApiKey}" PasswordChar="●" PlaceholderText="{Binding Localization[ApiKeyPlaceholder]}"/>
+                <StackPanel Grid.Column="3" Grid.RowSpan="2" Spacing="8">
+                    <Button Classes="primary-button" Command="{Binding SaveProviderCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="18" Height="18"/><TextBlock Text="{Binding Localization[Save]}"/></StackPanel>
+                    </Button>
+                    <Button Classes="primary-button"
+                            Command="{Binding DeleteProviderCommand}"
+                            CommandParameter="{Binding SelectedProvider}"
+                            ToolTip.Tip="{Binding Localization[Delete]}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <materialIcons:MaterialIcon Kind="Delete" Width="18" Height="18"/>
+                            <TextBlock Text="{Binding Localization[Delete]}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="primary-button" Command="{Binding TestProviderConnectionCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><materialIcons:MaterialIcon Kind="TestTube" Width="18" Height="18"/><TextBlock Text="{Binding Localization[TestConnection]}"/></StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <ListBox Grid.Row="2"
+                 ItemsSource="{Binding Providers}"
+                 Background="Transparent"
+                 SelectedItem="{Binding SelectedProvider}"
+                 BorderThickness="1"
+                 CornerRadius="8">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding ModelId}"/>
+                            <TextBlock Text="{Binding ModelSummary}" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                            <TextBlock Text="{Binding Endpoint}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</UserControl>

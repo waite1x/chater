@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Chater.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="Chater.Views.Settings.SkillSettingsView"
+             x:DataType="vm:MainWindowViewModel">
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+        <Grid ColumnDefinitions="*,Auto">
+            <StackPanel>
+                <TextBlock Text="{Binding Localization[SkillManagement]}" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Localization[SkillDescription]}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </StackPanel>
+            <Button Classes="primary-button" Grid.Column="1" Command="{Binding AddSkillCommand}" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="8"><materialIcons:MaterialIcon Kind="Plus" Width="18" Height="18"/><TextBlock Text="{Binding Localization[CustomSkill]}"/></StackPanel>
+            </Button>
+        </Grid>
+        <Grid Grid.Row="1" ColumnDefinitions="230,*" ColumnSpacing="16">
+            <ListBox ItemsSource="{Binding Skills}"
+                     SelectedItem="{Binding SelectedSkill}"
+                     Background="Transparent"
+                     BorderThickness="1"
+                     CornerRadius="8">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="4">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding Description}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Border Classes="card" Grid.Column="1" Padding="14">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
+                    <TextBox Text="{Binding SkillName}" PlaceholderText="{Binding Localization[SkillNamePlaceholder]}"/>
+                    <TextBox Grid.Row="1" Text="{Binding SkillPrompt}" AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="{Binding Localization[SkillPromptPlaceholder]}"/>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Classes="primary-button" Command="{Binding SaveSkillCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8"><materialIcons:MaterialIcon Kind="ContentSaveOutline" Width="18" Height="18"/><TextBlock Text="{Binding Localization[SaveSkill]}"/></StackPanel>
+                        </Button>
+                        <Button Classes="primary-button"
+                                Command="{Binding DeleteSkillCommand}"
+                                CommandParameter="{Binding SelectedSkill}"
+                                ToolTip.Tip="{Binding Localization[Delete]}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <materialIcons:MaterialIcon Kind="Delete" Width="18" Height="18"/>
+                                <TextBlock Text="{Binding Localization[Delete]}"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+    </Grid>
+</UserControl>
