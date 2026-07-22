@@ -66,9 +66,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet restore Chater/Chater.csproj --runtime ${{ matrix.rid }} --property:Configuration=Release -p:SelfContained=true
-      # Markdown.Avalonia currently emits trim warnings under Native AOT.
-      # Keep the release self-contained and single-file, but disable AOT/trimming.
-      - run: dotnet publish Chater/Chater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true --no-restore --output artifacts/${{ matrix.rid }} -p:Version=${{ steps.version.outputs.version }} -p:PublishAot=false -p:PublishTrimmed=false
+      - run: dotnet publish Chater/Chater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true --no-restore --output artifacts/${{ matrix.rid }} -p:Version=${{ steps.version.outputs.version }}
       - name: Package application
         shell: pwsh
         run: Compress-Archive -Path "artifacts/${{ matrix.rid }}/*" -DestinationPath "artifacts/chater-${{ matrix.rid }}.zip"

@@ -11,8 +11,8 @@
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishAot>true</PublishAot>
-        <PublishSingleFile>true</PublishSingleFile>
-        <StripSymbols>false</StripSymbols>
+        <IsAotCompatible>true</IsAotCompatible>
+        <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,7 +26,7 @@
         <PackageReference Include="Avalonia.Desktop" />
         <PackageReference Include="Avalonia.Themes.Fluent" />
         <PackageReference Include="Avalonia.Fonts.Inter" />
-        <PackageReference Include="Markdown.Avalonia" />
+        <PackageReference Include="LiveMarkdown.Avalonia" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
