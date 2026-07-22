@@ -1,0 +1,55 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore Chater.sln
+      - run: dotnet build Chater.sln --configuration Release --no-restore
+      - run: dotnet test Chater.sln --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: "**/TestResults/*.trx"
+
+  publish:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: windows-11-arm
+            rid: win-arm64
+          - os: macos-13
+            rid: osx-x64
+          - os: macos-14
+            rid: osx-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore Chater/Chater.csproj --runtime ${{ matrix.rid }} --property:Configuration=Release -p:SelfContained=true
+      - run: dotnet publish Chater/Chater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true --no-restore --output artifacts/${{ matrix.rid }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chater-${{ matrix.rid }}
+          path: artifacts/${{ matrix.rid }}

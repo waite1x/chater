@@ -1,0 +1,27 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Avalonia" Version="12.0.5" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.0.5" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.0.5" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.0.5" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
+    <PackageVersion Include="Markdown.Avalonia" Version="12.0.0-a3" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.1" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.13.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.13.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.8.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.2" />
+  </ItemGroup>
+</Project>

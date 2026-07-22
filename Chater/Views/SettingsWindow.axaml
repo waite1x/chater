@@ -1,0 +1,89 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Chater.ViewModels"
+        x:Class="Chater.Views.SettingsWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Chater · 设置" Width="960" Height="640" MinWidth="760" MinHeight="520">
+    <Grid ColumnDefinitions="180,*">
+        <Border Padding="16" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="0,0,1,0">
+            <StackPanel Spacing="10">
+                <TextBlock Text="设置" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
+                <Button Content="⚙  通用设置" HorizontalContentAlignment="Left"/>
+                <Button Content="◇  模型配置" HorizontalContentAlignment="Left"/>
+                <Button Content="⚿  API Key" HorizontalContentAlignment="Left" Command="{Binding ShowApiKeySettingsCommand}"/>
+                <Button Content="⌨  快捷键" HorizontalContentAlignment="Left"/>
+                <Button Content="▦  技能" HorizontalContentAlignment="Left" Command="{Binding ShowSkillSettingsCommand}"/>
+                <Button Content="ⓘ  关于" HorizontalContentAlignment="Left"/>
+            </StackPanel>
+        </Border>
+        <Grid Grid.Column="1" Margin="24">
+            <Grid IsVisible="{Binding IsApiKeySettingsVisible}">
+                <Grid RowDefinitions="Auto,Auto,*" RowSpacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel>
+                            <TextBlock Text="API Key 管理" FontSize="22" FontWeight="Bold"/>
+                            <TextBlock Text="管理服务商配置，支持多服务商与 Key 切换。" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="＋ 新增配置" Command="{Binding AddProviderCommand}" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Border Grid.Row="1" Padding="12" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="8">
+                        <Grid ColumnDefinitions="*,*,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                            <TextBox Text="{Binding ProviderName}" PlaceholderText="名称"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding ProviderTypes}" SelectedItem="{Binding ProviderType}"/>
+                            <TextBox Grid.Column="2" Text="{Binding ProviderModelId}" PlaceholderText="模型列表：每行一个，也可用逗号或分号分隔" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="42"/>
+                            <Button Grid.Column="3" Content="保存" Command="{Binding SaveProviderCommand}"/>
+                            <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding ProviderEndpoint}" PlaceholderText="端点（OpenAI 可留空）"/>
+                            <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding ProviderApiKey}" PasswordChar="●" PlaceholderText="API Key（留空保留已有密钥）"/>
+                            <Button Grid.Row="1" Grid.Column="3" Content="测试连接" Command="{Binding TestProviderConnectionCommand}"/>
+                        </Grid>
+                    </Border>
+                    <ListBox Grid.Row="2" ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,10" Padding="14" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="8">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding ModelId}"/>
+                                        <TextBlock Text="{Binding ModelSummary}" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <TextBlock Text="{Binding Endpoint}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Grid>
+            <Grid IsVisible="{Binding IsSkillSettingsVisible}">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel>
+                            <TextBlock Text="技能管理" FontSize="22" FontWeight="Bold"/>
+                            <TextBlock Text="选择内置技能，或创建、编辑自定义技能。" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="＋ 自定义技能" Command="{Binding AddSkillCommand}" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Grid Grid.Row="1" ColumnDefinitions="230,*" ColumnSpacing="16">
+                        <ListBox ItemsSource="{Binding Skills}" SelectedItem="{Binding SelectedSkill}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="6" Spacing="2">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Description}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Border Grid.Column="1" Padding="14" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="8">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="10">
+                                <TextBox Text="{Binding SkillName}" PlaceholderText="技能名称"/>
+                                <TextBox Grid.Row="1" Text="{Binding SkillPrompt}" AcceptsReturn="True" TextWrapping="Wrap" PlaceholderText="System prompt（内置技能只读）"/>
+                                <Button Grid.Row="2" HorizontalAlignment="Right" Content="保存技能" Command="{Binding SaveSkillCommand}"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

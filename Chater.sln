@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chater", "Chater\Chater.csproj", "{07834A04-0E45-4D29-BA31-6F3638B697F6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chater.Tests", "Chater.Tests\Chater.Tests.csproj", "{D2A680C5-2C0B-4CC1-84F4-582848712D7C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{07834A04-0E45-4D29-BA31-6F3638B697F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07834A04-0E45-4D29-BA31-6F3638B697F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07834A04-0E45-4D29-BA31-6F3638B697F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07834A04-0E45-4D29-BA31-6F3638B697F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2A680C5-2C0B-4CC1-84F4-582848712D7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2A680C5-2C0B-4CC1-84F4-582848712D7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2A680C5-2C0B-4CC1-84F4-582848712D7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2A680C5-2C0B-4CC1-84F4-582848712D7C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
