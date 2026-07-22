@@ -2,6 +2,8 @@
 
 Chater 的发布工件必须针对以下 RID 分别构建：`win-x64`、`win-arm64`、`osx-x64`、`osx-arm64`。
 
+GitHub Actions 规则：Pull Request 只执行多平台测试；只有推送严格匹配 `vX.Y.Z`（例如 `v1.1.0`）的 Tag 才会构建发布包并创建 GitHub Release。每个平台的 zip 应用包会作为 Release 附件上传。
+
 本地回归命令：
 
 ```bash

@@ -1,10 +1,13 @@
-name: build
+name: test-and-release
 
 on:
   pull_request:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -28,7 +31,10 @@ jobs:
           path: "**/TestResults/*.trx"
 
   publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: test
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -44,12 +50,41 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate version tag
+        id: version
+        shell: bash
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release tag: $GITHUB_REF_NAME. Expected vX.Y.Z."
+            exit 1
+          fi
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
       - run: dotnet restore Chater/Chater.csproj --runtime ${{ matrix.rid }} --property:Configuration=Release -p:SelfContained=true
-      - run: dotnet publish Chater/Chater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true --no-restore --output artifacts/${{ matrix.rid }}
+      - run: dotnet publish Chater/Chater.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true --no-restore --output artifacts/${{ matrix.rid }} -p:Version=${{ steps.version.outputs.version }}
+      - name: Package application
+        shell: pwsh
+        run: Compress-Archive -Path "artifacts/${{ matrix.rid }}/*" -DestinationPath "artifacts/chater-${{ matrix.rid }}.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: chater-${{ matrix.rid }}
-          path: artifacts/${{ matrix.rid }}
+          path: artifacts/chater-${{ matrix.rid }}.zip
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: chater-*
+          path: release-assets
+          merge-multiple: true
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release-assets/*.zip --title "Chater $GITHUB_REF_NAME" --generate-notes
