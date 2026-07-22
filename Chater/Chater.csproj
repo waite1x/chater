@@ -11,6 +11,9 @@
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishAot>true</PublishAot>
+        <DebugSymbols>false</DebugSymbols>
+        <DebugType>None</DebugType>
+        <StripSymbols>true</StripSymbols>
         <IsAotCompatible>true</IsAotCompatible>
         <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
     </PropertyGroup>
