@@ -66,6 +66,28 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task ProviderModelMenu_SelectsProviderAndModelTogether()
+    {
+        var database = new SqliteDatabase(_path);
+        await new DatabaseMigrator(database).MigrateAsync();
+        var now = DateTimeOffset.UtcNow;
+        await new ApiProviderRepository(database).SaveAsync(new ApiProvider("provider", "Default", ProviderType.OpenAi, "secret", null, "model-a", true, true, now, now)
+        {
+            ModelIds = ["model-a", "model-b"]
+        });
+        var viewModel = CreateViewModel(database);
+        await viewModel.LoadAsync();
+
+        var model = Assert.Single(viewModel.ProviderModelMenuItems).Models.Single(item => item.ModelId == "model-b");
+        model.SelectCommand.Execute(null);
+
+        Assert.Equal("provider", viewModel.SelectedProvider?.Id);
+        Assert.Equal("model-b", viewModel.SelectedModelId);
+        Assert.Equal("Default", viewModel.SelectedProviderDisplayName);
+        Assert.Equal("model-b", viewModel.SelectedModelDisplayName);
+    }
+
+    [Fact]
     public async Task SaveSkillCommand_AddsCustomSkillToSelectionList()
     {
         var database = new SqliteDatabase(_path);

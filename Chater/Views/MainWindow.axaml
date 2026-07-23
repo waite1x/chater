@@ -8,41 +8,65 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Chater · AI 助手" Width="520" Height="700" MinWidth="420" MinHeight="500">
-    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" RowSpacing="12">
-        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="🤖" FontSize="24"/>
-                <TextBlock Text="AI 助手" FontSize="19" FontWeight="Bold" VerticalAlignment="Center"/>
-            </StackPanel>
-            <Button Grid.Column="1" Content="技能" Command="{Binding OpenSkillWorkbenchCommand}"/>
-            <Button Grid.Column="2" Content="⚙" Command="{Binding OpenSettingsCommand}"/>
-        </Grid>
-        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="8">
-            <ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}" PlaceholderText="选择 API Key">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="models:ApiProvider"><TextBlock Text="{Binding Name}"/></DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableModels}" SelectedItem="{Binding SelectedModelId}" PlaceholderText="选择模型"/>
-            <ComboBox Grid.Column="2" ItemsSource="{Binding Skills}" SelectedItem="{Binding SelectedSkill}" PlaceholderText="选择技能">
+    <DockPanel Margin="12" LastChildFill="True" VerticalSpacing="8">
+        <DockPanel DockPanel.Dock="Top" HorizontalSpacing="4">
+            <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding Skills}" SelectedItem="{Binding SelectedSkill}" PlaceholderText="选择技能">
                 <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="models:Skill"><TextBlock Text="{Binding Name}"/></DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-        </Grid>
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <ComboBox ItemsSource="{Binding Conversations}" SelectedItem="{Binding SelectedConversation}" PlaceholderText="选择历史会话">
+            <Menu Padding="0" Margin="0" DockPanel.Dock="Right">
+                <MenuItem Padding="0" Margin="0">
+                    <MenuItem.Header>
+                        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                BorderThickness="1" Padding="6,2" CornerRadius="4">
+                            <StackPanel Spacing="0">
+                                <TextBlock Text="{Binding SelectedProviderDisplayName}" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SelectedModelDisplayName}" FontSize="10" Opacity="0.7"/>
+                            </StackPanel>
+                        </Border>
+                    </MenuItem.Header>
+                    <MenuItem.ItemsSource>
+                        <Binding Path="ProviderModelMenuItems"/>
+                    </MenuItem.ItemsSource>
+                    <MenuItem.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ProviderModelMenuItem">
+                            <MenuItem Header="{Binding Name}" ItemsSource="{Binding Models}">
+                                <MenuItem.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ModelMenuItem">
+                                        <MenuItem Header="{Binding ModelId}" Click="OnModelMenuItemClick"/>
+                                    </DataTemplate>
+                                </MenuItem.ItemTemplate>
+                            </MenuItem>
+                        </DataTemplate>
+                    </MenuItem.ItemTemplate>
+                </MenuItem>
+            </Menu>
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="🤖" FontSize="24"/>
+                <TextBlock Text="AI 助手" FontSize="19" FontWeight="Bold" VerticalAlignment="Center"/>
+            </StackPanel>
+        </DockPanel>
+        <DockPanel DockPanel.Dock="Top" LastChildFill="True">
+            <Button DockPanel.Dock="Right" Content="新会话" Command="{Binding NewConversationCommand}"/>
+            <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding Conversations}"
+                      SelectedItem="{Binding SelectedConversation}"
+                      PlaceholderText="选择历史会话">
                 <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="models:Conversation">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="{Binding Title}"/>
-                            <TextBlock Text="{Binding DisplayUpdatedAt}" FontSize="11" Opacity="0.65"/>
                         </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
-            <Button Grid.Column="1" Content="新会话" Command="{Binding NewConversationCommand}"/>
+        </DockPanel>
+
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox Text="{Binding Draft, Mode=OneWay}" TextChanged="OnDraftTextChanged" PlaceholderText="输入内容，按 Enter 发送…" AcceptsReturn="True" MinHeight="46" TextWrapping="Wrap"/>
+            <Button Grid.Column="1" Content="{Binding SendButtonText}" Command="{Binding SendOrStopCommand}" IsDefault="True" MinWidth="64"/>
         </Grid>
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
         <Border Grid.Row="3" Padding="12" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}" BorderThickness="1" CornerRadius="8">
             <ScrollViewer>
                 <ItemsControl ItemsSource="{Binding Messages}">
@@ -50,7 +74,9 @@
                         <DataTemplate>
                             <Border Margin="0,0,0,10" Padding="10" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" CornerRadius="6">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="{Binding Sender}" FontWeight="SemiBold"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Sender}" FontWeight="SemiBold"/>
+                                    </StackPanel>
                                     <local:MarkdownView Markdown="{Binding Content}"/>
                                 </StackPanel>
                             </Border>
@@ -59,11 +85,5 @@
                 </ItemsControl>
             </ScrollViewer>
         </Border>
-        <TextBlock Grid.Row="4" Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-        <Grid Grid.Row="5" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-            <TextBox Text="{Binding Draft, Mode=OneWay}" TextChanged="OnDraftTextChanged" PlaceholderText="输入内容，按 Enter 发送…" AcceptsReturn="True" MinHeight="46" TextWrapping="Wrap"/>
-            <Button Grid.Column="1" Content="停止" Command="{Binding StopCommand}"/>
-            <Button Grid.Column="2" Content="发送" Command="{Binding SendCommand}" IsDefault="True"/>
-        </Grid>
-    </Grid>
+    </DockPanel>
 </Window>

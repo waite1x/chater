@@ -41,12 +41,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     public ObservableCollection<ApiProvider> Providers { get; } = [];
+    public ObservableCollection<ProviderModelMenuItem> ProviderModelMenuItems { get; } = [];
     public ObservableCollection<Skill> Skills { get; } = [];
     public ObservableCollection<ChatMessageViewModel> Messages { get; } = [];
     public ObservableCollection<Conversation> Conversations { get; } = [];
     public IReadOnlyList<ProviderType> ProviderTypes { get; } = Enum.GetValues<ProviderType>();
 
     public IReadOnlyList<string> AvailableModels => SelectedProvider?.ModelIds ?? [];
+    public string SelectedProviderDisplayName => SelectedProvider?.Name ?? "选择 API Key";
+    public string SelectedModelDisplayName => SelectedModelId ?? SelectedProvider?.ModelId ?? "选择模型";
     public IReadOnlyList<ThemeOption> ThemeOptions { get; } = [new("system", "跟随系统"), new("light", "浅色"), new("dark", "深色")];
 
     [ObservableProperty]
@@ -70,6 +73,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SendOrStopCommand))]
     private string _draft = string.Empty;
 
     [ObservableProperty]
@@ -77,7 +81,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SendOrStopCommand))]
     private bool _isSending;
+
+    public string SendButtonText => IsSending ? "停止" : "发送";
 
     [ObservableProperty]
     private string _providerName = string.Empty;
@@ -119,11 +126,18 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         ChatShortcut = await _settings.GetAsync(AppSettingsService.ChatShortcutKey, cancellationToken).ConfigureAwait(false) ?? AppSettingsService.DefaultChatShortcut;
         AppSettingsService.ApplyTheme(SelectedTheme.Key);
         Providers.Clear();
+        ProviderModelMenuItems.Clear();
         foreach (var provider in await _providerService.GetAllAsync(cancellationToken).ConfigureAwait(false))
         {
             if (provider.IsEnabled)
             {
                 Providers.Add(provider);
+                ProviderModelMenuItems.Add(new ProviderModelMenuItem(
+                    provider,
+                    provider.ModelIds
+                        .Where(model => !string.IsNullOrWhiteSpace(model))
+                        .Select(model => new ModelMenuItem(model, new RelayCommand(() => SelectModel(provider, model))))
+                        .ToArray()));
             }
         }
 
@@ -196,6 +210,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private void ShowChat() => _navigation?.ShowChat();
 
     public bool IsChatShortcut(Key key, KeyModifiers modifiers) => ShortcutFormatter.Matches(ChatShortcut, key, modifiers);
+
+    private void SelectModel(ApiProvider provider, string model)
+    {
+        SelectedProvider = provider;
+        SelectedModelId = model;
+    }
 
     [RelayCommand]
     private void AddProvider()
@@ -335,8 +355,21 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanStop))]
     private void Stop() => _sendCancellation?.Cancel();
 
+    [RelayCommand(CanExecute = nameof(CanSendOrStop))]
+    private void SendOrStop()
+    {
+        if (IsSending)
+        {
+            Stop();
+            return;
+        }
+
+        _ = SendAsync();
+    }
+
     private bool CanSend() => !IsSending && !string.IsNullOrWhiteSpace(Draft);
     private bool CanStop() => IsSending;
+    private bool CanSendOrStop() => IsSending || !string.IsNullOrWhiteSpace(Draft);
 
     private ApiProvider BuildEditedProvider()
     {
@@ -387,11 +420,17 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    partial void OnIsSendingChanged(bool value) => StopCommand.NotifyCanExecuteChanged();
+    partial void OnIsSendingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(SendButtonText));
+        StopCommand.NotifyCanExecuteChanged();
+    }
 
     partial void OnSelectedProviderChanged(ApiProvider? value)
     {
         OnPropertyChanged(nameof(AvailableModels));
+        OnPropertyChanged(nameof(SelectedProviderDisplayName));
+        OnPropertyChanged(nameof(SelectedModelDisplayName));
         if (!_openingConversation)
         {
             NewConversation();
@@ -411,6 +450,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     partial void OnSelectedModelIdChanged(string? value)
     {
+        OnPropertyChanged(nameof(SelectedModelDisplayName));
         if (!_openingConversation && !string.IsNullOrWhiteSpace(value))
         {
             NewConversation();
