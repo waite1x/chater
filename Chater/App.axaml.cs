@@ -6,6 +6,8 @@ using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using Chater.Composition;
 using Chater.Services;
@@ -15,7 +17,11 @@ namespace Chater;
 
 public partial class App : Application
 {
+    private const string DarkTrayIconUri = "avares://Chater/Assets/chater-tray.png";
+    private const string LightTrayIconUri = "avares://Chater/Assets/chater-tray-light.png";
     private ServiceProvider? _services;
+    private IPlatformSettings? _platformSettings;
+    private TrayIcon? _trayIcon;
     private bool _updateDialogOpen;
     internal bool IsExiting { get; private set; }
     public override void Initialize()
@@ -28,9 +34,16 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        _platformSettings = TryGetFeature(typeof(IPlatformSettings)) as IPlatformSettings;
+        if (_platformSettings is not null)
+        {
+            _platformSettings.ColorValuesChanged += (_, _) => UpdateTrayIcon();
+        }
+
         _services = new ServiceCollection().AddChaterApplication().BuildServiceProvider();
         _services.InitializeChaterDatabase();
         ApplyStoredTheme(_services.GetRequiredService<AppSettingsService>());
+        UpdateTrayIcon();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -68,6 +81,21 @@ public partial class App : Application
         var theme = settings.GetAsync(AppSettingsService.ThemeKey).GetAwaiter().GetResult()
             ?? AppSettingsService.DefaultTheme;
         AppSettingsService.ApplyTheme(theme);
+    }
+
+    private void UpdateTrayIcon()
+    {
+        _trayIcon ??= TrayIcon.GetIcons(this)?.FirstOrDefault();
+        if (_trayIcon is null)
+        {
+            return;
+        }
+
+        // Native trays do not inherit Avalonia brushes. Use the OS theme rather than the application's selected theme.
+        var systemTheme = _platformSettings?.GetColorValues().ThemeVariant;
+        var iconUri = systemTheme == PlatformThemeVariant.Dark ? LightTrayIconUri : DarkTrayIconUri;
+        using var stream = AssetLoader.Open(new Uri(iconUri));
+        _trayIcon.Icon = new WindowIcon(new Bitmap(stream));
     }
 
     private static async Task CheckForUpdatesAsync(IUpdateService updateService)
