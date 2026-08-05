@@ -17,7 +17,7 @@ public sealed class AppSettingsService(AppSettingRepository repository)
     public const string DefaultTheme = "system";
     public const string DefaultAccentColor = "#0EA5E9";
     public const string DefaultLanguage = "zh-CN";
-    public const string DefaultChatShortcut = "Ctrl+Shift+Space";
+    public static string DefaultChatShortcut => OperatingSystem.IsMacOS() ? "Meta+Shift+Space" : "Ctrl+Shift+Space";
     public const string DefaultNewChatWindowShortcut = "";
 
     /// <summary>Gets a raw setting value, or <see langword="null"/> when the setting has not been saved.</summary>
