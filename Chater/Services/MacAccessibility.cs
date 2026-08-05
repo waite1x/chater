@@ -24,7 +24,9 @@ internal static partial class MacAccessibility
 
     public static void OpenSettings()
     {
-        if (!OperatingSystem.IsMacOS())
+        // Keep this guard here as well as at the call site. Never open Settings
+        // for a process that already has Accessibility permission.
+        if (!OperatingSystem.IsMacOS() || IsTrusted())
         {
             return;
         }

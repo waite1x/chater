@@ -67,6 +67,24 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task ReorderSkills_MakesTheFirstSkillTheDefaultForANewConversation()
+    {
+        var database = new SqliteDatabase(_path);
+        await new DatabaseMigrator(database).MigrateAsync();
+        var viewModel = CreateViewModel(database);
+        await viewModel.LoadAsync();
+
+        var first = viewModel.Skills[0];
+        var second = viewModel.Skills[1];
+        await viewModel.ReorderSkillsAsync(second, first, insertAfter: false);
+        viewModel.NewConversationCommand.Execute(null);
+
+        Assert.Equal(second.Id, viewModel.Skills[0].Id);
+        Assert.Equal(second.Id, viewModel.SelectedSkill?.Id);
+        Assert.Equal(second.Id, (await new SkillRepository(database).GetEnabledAsync())[0].Id);
+    }
+
+    [Fact]
     public async Task ProviderModelMenu_SelectsProviderAndModelTogether()
     {
         var database = new SqliteDatabase(_path);

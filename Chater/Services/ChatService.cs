@@ -62,6 +62,7 @@ public sealed class ChatService(
         var agent = CreateAgent(provider, snapshot.SystemPrompt);
         var session = await RestoreOrCreateSessionAsync(agent, conversation, cancellationToken).ConfigureAwait(false);
         var content = string.Empty;
+        var announcedToolCalls = new HashSet<string>(StringComparer.Ordinal);
         try
         {
             await using var updates = agent.RunStreamingAsync(message, session, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
@@ -89,6 +90,23 @@ public sealed class ChatService(
                 }
 
                 var update = updates.Current;
+
+                // Tool calls are represented as structured content and therefore
+                // have no Text. Surface them in the same assistant message so the
+                // user can see why the model is temporarily working without text.
+                foreach (var toolCall in update.Contents.OfType<FunctionCallContent>())
+                {
+                    if (!announcedToolCalls.Add(toolCall.CallId))
+                    {
+                        continue;
+                    }
+
+                    var toolNotice = $"\n\n> 🔧 正在调用工具：`{toolCall.Name}`…\n\n";
+                    content += toolNotice;
+                    await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    yield return toolNotice;
+                }
+
                 if (string.IsNullOrEmpty(update.Text))
                 {
                     continue;

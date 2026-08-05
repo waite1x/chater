@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text;
 using System.Text.Json;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -306,7 +307,53 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _conversation = null;
         SelectedConversation = null;
         Messages.Clear();
+        SelectedSkill = Skills.FirstOrDefault();
         StatusMessage = T("NewConversationStatus");
+    }
+
+    private void ResetConversation()
+    {
+        _conversation = null;
+        SelectedConversation = null;
+        Messages.Clear();
+    }
+
+    public async Task ReorderSkillsAsync(Skill draggedSkill, Skill? targetSkill, bool insertAfter, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(draggedSkill);
+        var draggedIndex = Skills.IndexOf(draggedSkill);
+        if (draggedIndex < 0)
+        {
+            return;
+        }
+
+        var reordered = Skills.ToList();
+        reordered.RemoveAt(draggedIndex);
+        var targetIndex = targetSkill is null ? reordered.Count : reordered.IndexOf(targetSkill);
+        if (targetIndex < 0)
+        {
+            return;
+        }
+
+        if (targetSkill is not null && insertAfter)
+        {
+            targetIndex++;
+        }
+
+        reordered.Insert(Math.Clamp(targetIndex, 0, reordered.Count), draggedSkill);
+        if (reordered.SequenceEqual(Skills))
+        {
+            return;
+        }
+
+        await _skills.ReorderEnabledAsync(reordered.Select(skill => skill.Id).ToArray(), cancellationToken);
+        Skills.Clear();
+        foreach (var skill in reordered)
+        {
+            Skills.Add(skill with { SortOrder = Skills.Count });
+        }
+
+        StatusMessage = T("SkillSaved");
     }
 
     [RelayCommand]
@@ -665,7 +712,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
 
         var selectedProvider = SelectedProvider with { ModelId = SelectedModelId ?? SelectedProvider.ModelId };
-        _conversation ??= await _conversations.CreateAsync(selectedProvider, SelectedSkill).ConfigureAwait(false);
+        _conversation ??= await _conversations.CreateAsync(selectedProvider, SelectedSkill);
         if (!Conversations.Any(item => item.Id == _conversation.Id))
         {
             Conversations.Insert(0, _conversation);
@@ -679,24 +726,40 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         StatusMessage = T("Generating");
         try
         {
-            await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, _sendCancellation.Token).ConfigureAwait(false))
+            // Keep ObservableObject and ObservableCollection updates on Avalonia's
+            // UI thread. ConfigureAwait(false) here could stall the window on Windows.
+            var pendingContent = new StringBuilder();
+            var lastRenderAt = Environment.TickCount64;
+            await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, _sendCancellation.Token))
             {
-                assistant.Content += update;
+                pendingContent.Append(update);
+                var now = Environment.TickCount64;
+                if (now - lastRenderAt >= 50)
+                {
+                    assistant.Content += pendingContent.ToString();
+                    pendingContent.Clear();
+                    lastRenderAt = now;
+                }
+            }
+
+            if (pendingContent.Length > 0)
+            {
+                assistant.Content += pendingContent.ToString();
             }
 
             StatusMessage = T("Completed");
-            await RefreshConversationHistoryAsync().ConfigureAwait(false);
+            await RefreshConversationHistoryAsync();
         }
         catch (OperationCanceledException)
         {
             StatusMessage = T("Stopped");
-            await RefreshConversationHistoryAsync().ConfigureAwait(false);
+            await RefreshConversationHistoryAsync();
         }
         catch (Exception exception)
         {
             assistant.Content = string.IsNullOrEmpty(assistant.Content) ? "无法完成请求。" : assistant.Content;
             StatusMessage = exception.Message;
-            await RefreshConversationHistoryAsync().ConfigureAwait(false);
+            await RefreshConversationHistoryAsync();
         }
         finally
         {
@@ -981,7 +1044,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedModelDisplayName));
         if (!_openingConversation)
         {
-            NewConversation();
+            ResetConversation();
         }
         if (value is null)
         {
@@ -1001,7 +1064,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedModelDisplayName));
         if (!_openingConversation && !string.IsNullOrWhiteSpace(value))
         {
-            NewConversation();
+            ResetConversation();
         }
     }
 
@@ -1009,7 +1072,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     {
         if (!_openingConversation)
         {
-            NewConversation();
+            ResetConversation();
         }
         if (value is not null)
         {

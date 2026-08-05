@@ -48,6 +48,19 @@ public sealed class RepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task ReorderEnabledAsync_PersistsTheNewDisplayOrder()
+    {
+        var database = await CreateDatabaseAsync();
+        var repository = new SkillRepository(database);
+        var skills = await repository.GetEnabledAsync();
+
+        await repository.ReorderEnabledAsync(skills.Select(skill => skill.Id).Reverse().ToArray());
+
+        var reordered = await repository.GetEnabledAsync();
+        Assert.Equal(skills.Select(skill => skill.Id).Reverse(), reordered.Select(skill => skill.Id));
+    }
+
+    [Fact]
     public async Task ConversationAndMessageQueries_ReturnPersistentHistoryInDisplayOrder()
     {
         var database = await CreateDatabaseAsync();

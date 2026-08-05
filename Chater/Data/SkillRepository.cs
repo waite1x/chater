@@ -1,4 +1,5 @@
 using Chater.Models;
+using Microsoft.Data.Sqlite;
 
 namespace Chater.Data;
 
@@ -70,6 +71,30 @@ public sealed class SkillRepository
         command.Parameters.AddWithValue("$id", id);
         command.Parameters.AddWithValue("$updatedAt", DateTimeOffset.UtcNow.ToString("O"));
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task ReorderEnabledAsync(IReadOnlyList<string> orderedIds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(orderedIds);
+
+        await using var connection = await _database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = (SqliteTransaction)await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "UPDATE Skills SET SortOrder = $sortOrder, UpdatedAt = $updatedAt WHERE Id = $id AND IsEnabled = 1;";
+        var idParameter = command.Parameters.Add("$id", SqliteType.Text);
+        var sortOrderParameter = command.Parameters.Add("$sortOrder", SqliteType.Integer);
+        var updatedAtParameter = command.Parameters.Add("$updatedAt", SqliteType.Text);
+        updatedAtParameter.Value = DateTimeOffset.UtcNow.ToString("O");
+
+        for (var index = 0; index < orderedIds.Count; index++)
+        {
+            idParameter.Value = orderedIds[index];
+            sortOrderParameter.Value = index;
+            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private static Skill Read(Microsoft.Data.Sqlite.SqliteDataReader reader) => new(reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetString(3), reader.IsDBNull(4) ? null : reader.GetString(4), reader.GetInt64(5) == 1, reader.GetInt64(6) == 1, reader.GetInt32(7), reader.GetInt32(8), DateTimeOffset.Parse(reader.GetString(9)), DateTimeOffset.Parse(reader.GetString(10)));

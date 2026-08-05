@@ -14,6 +14,7 @@ public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : I
     // These values are updated without recreating the hook so changing settings takes effect immediately.
     private string _chatShortcut = string.Empty;
     private string _newChatWindowShortcut = string.Empty;
+    private bool _reportedMissingMacAccessibility;
     // Native hooks can report the same key press more than once; this timestamp debounces it.
     private long _lastTriggeredAt;
 
@@ -33,7 +34,11 @@ public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : I
         if (OperatingSystem.IsMacOS() && !MacAccessibility.IsTrusted())
         {
             LastError = "macOS 未授予辅助功能权限，无法启用全局快捷键。已打开系统设置，请在 Chater 下开启权限后重启应用。";
-            MacAccessibility.OpenSettings();
+            if (!_reportedMissingMacAccessibility)
+            {
+                _reportedMissingMacAccessibility = true;
+                MacAccessibility.OpenSettings();
+            }
             return false;
         }
 
