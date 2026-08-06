@@ -57,4 +57,6 @@
   <data name="Cancel"><value>Cancel</value></data>
   <data name="ConfirmDeleteTitle"><value>Confirm deletion</value></data>
   <data name="ConfirmDeleteMessage"><value>Delete "{0}"? This action cannot be undone from the app.</value></data>
+  <data name="CopySelectedText"><value>Copy selected text</value></data>
+  <data name="CopyMarkdownContent"><value>Copy Markdown message</value></data>
 </root>

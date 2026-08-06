@@ -10,14 +10,21 @@ namespace Chater.Views.Settings;
 
 public partial class SkillSettingsView : UserControl
 {
+    private const double DragThreshold = 6;
+    private Skill? _pendingDragSkill;
+    private PointerPressedEventArgs? _dragTriggerEvent;
+    private Point _pointerPressedPosition;
+
     public SkillSettingsView()
     {
         InitializeComponent();
         DragDrop.SetAllowDrop(SkillList, true);
         SkillList.AddHandler(InputElement.PointerPressedEvent, OnSkillPointerPressed, RoutingStrategies.Bubble, true);
+        SkillList.AddHandler(InputElement.PointerMovedEvent, OnSkillPointerMoved, RoutingStrategies.Bubble, true);
+        SkillList.AddHandler(InputElement.PointerReleasedEvent, OnSkillPointerReleased, RoutingStrategies.Bubble, true);
     }
 
-    private async void OnSkillPointerPressed(object? sender, PointerPressedEventArgs e)
+    private void OnSkillPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (e.GetCurrentPoint(SkillList).Properties.PointerUpdateKind != PointerUpdateKind.LeftButtonPressed)
         {
@@ -30,6 +37,29 @@ public partial class SkillSettingsView : UserControl
             return;
         }
 
+        _pendingDragSkill = skill;
+        _dragTriggerEvent = e;
+        _pointerPressedPosition = e.GetPosition(SkillList);
+    }
+
+    private async void OnSkillPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_pendingDragSkill is not { } skill ||
+            _dragTriggerEvent is not { } triggerEvent ||
+            !e.GetCurrentPoint(SkillList).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        var currentPosition = e.GetPosition(SkillList);
+        var offset = currentPosition - _pointerPressedPosition;
+        if (Math.Abs(offset.X) < DragThreshold && Math.Abs(offset.Y) < DragThreshold)
+        {
+            return;
+        }
+
+        _pendingDragSkill = null;
+        _dragTriggerEvent = null;
         var data = new DataTransfer();
         data.Add(DataTransferItem.CreateText(skill.Id));
         DragPreviewName.Text = skill.Name;
@@ -38,12 +68,18 @@ public partial class SkillSettingsView : UserControl
         UpdateDragPreviewPosition(e.GetPosition(this));
         try
         {
-            await DragDrop.DoDragDropAsync(e, data, DragDropEffects.Move);
+            await DragDrop.DoDragDropAsync(triggerEvent, data, DragDropEffects.Move);
         }
         finally
         {
             DragPreview.IsVisible = false;
         }
+    }
+
+    private void OnSkillPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _pendingDragSkill = null;
+        _dragTriggerEvent = null;
     }
 
     private void OnSkillDragOver(object? sender, DragEventArgs e)

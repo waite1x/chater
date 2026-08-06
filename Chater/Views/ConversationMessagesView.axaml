@@ -14,21 +14,26 @@
                                 HorizontalAlignment="Right"
                                 Margin="48,0,0,10" Padding="12,9"
                                 MaxWidth="520">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding Sender}" FontWeight="SemiBold"
-                                           HorizontalAlignment="Right"/>
-                                <local:MarkdownView Markdown="{Binding Content}"/>
-                            </StackPanel>
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Click="OnCopySelectedText"/>
+                                    <MenuItem Click="OnCopyMarkdown"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
+                            <local:MarkdownView Markdown="{Binding Content}"/>
                         </Border>
                         <Border Classes="chat-bubble chat-bubble-assistant"
                                 IsVisible="{Binding IsAssistant}"
                                 HorizontalAlignment="Left"
                                 Margin="0,0,48,10" Padding="12,9"
                                 MaxWidth="520">
-                            <StackPanel Spacing="4">
-                                <TextBlock Text="{Binding Sender}" FontWeight="SemiBold"/>
-                                <local:MarkdownView Markdown="{Binding Content}"/>
-                            </StackPanel>
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Click="OnCopySelectedText"/>
+                                    <MenuItem Click="OnCopyMarkdown"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
+                            <local:MarkdownView Markdown="{Binding Content}"/>
                         </Border>
                     </Grid>
                 </DataTemplate>

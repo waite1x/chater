@@ -1,8 +1,12 @@
 using System.Collections;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Input.Platform;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Chater.ViewModels;
 
 namespace Chater.Views;
 
@@ -11,13 +15,50 @@ public partial class ConversationMessagesView : UserControl
     private const double BottomTolerance = 1;
     private bool _followTail = true;
     private bool _scrollPending;
+    private ChatMessageViewModel? _contextMessage;
+    private MarkdownView? _contextMarkdownView;
 
     public static readonly StyledProperty<IEnumerable?> ItemsSourceProperty =
         AvaloniaProperty.Register<ConversationMessagesView, IEnumerable?>(nameof(ItemsSource));
 
     public IEnumerable? ItemsSource { get => GetValue(ItemsSourceProperty); set => SetValue(ItemsSourceProperty, value); }
 
-    public ConversationMessagesView() => InitializeComponent();
+    public ConversationMessagesView()
+    {
+        InitializeComponent();
+        AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, true);
+    }
+
+    private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.PointerUpdateKind != PointerUpdateKind.RightButtonPressed)
+        {
+            return;
+        }
+
+        var bubble = (e.Source as Visual)?.FindAncestorOfType<Border>(true);
+        while (bubble is not null && !bubble.Classes.Contains("chat-bubble"))
+        {
+            bubble = bubble.FindAncestorOfType<Border>();
+        }
+
+        if (bubble?.ContextMenu is not { } menu)
+        {
+            return;
+        }
+
+        _contextMessage = bubble.DataContext as ChatMessageViewModel;
+        _contextMarkdownView = bubble.GetVisualDescendants().OfType<MarkdownView>().FirstOrDefault();
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            var items = menu.Items.OfType<MenuItem>().ToList();
+            items[0].Header = viewModel.Localization["CopySelectedText"];
+            items[1].Header = viewModel.Localization["CopyMarkdownContent"];
+        }
+
+        menu.Open(bubble);
+        e.Handled = true;
+    }
 
     private void OnLoaded(object? sender, RoutedEventArgs e) => RequestScrollToEnd();
 
@@ -58,4 +99,29 @@ public partial class ConversationMessagesView : UserControl
             }
         }, DispatcherPriority.Render);
     }
+
+    private async void OnCopySelectedText(object? sender, RoutedEventArgs e)
+    {
+        if (_contextMarkdownView is not null)
+        {
+            await _contextMarkdownView.CopySelectionWithFormattingAsync();
+        }
+    }
+
+    private async void OnCopyMarkdown(object? sender, RoutedEventArgs e)
+    {
+        if (_contextMessage is { } message)
+        {
+            await CopyTextAsync(message.Content);
+        }
+    }
+
+    private async Task CopyTextAsync(string text)
+    {
+        if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
+        {
+            await clipboard.SetTextAsync(text);
+        }
+    }
+
 }

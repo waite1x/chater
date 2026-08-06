@@ -27,4 +27,6 @@
   <data name="Cancel"><value>取消</value></data>
   <data name="ConfirmDeleteTitle"><value>确认删除</value></data>
   <data name="ConfirmDeleteMessage"><value>确定要删除“{0}”吗？此操作无法在应用中恢复。</value></data>
+  <data name="CopySelectedText"><value>复制选中文字</value></data>
+  <data name="CopyMarkdownContent"><value>复制 Markdown 消息</value></data>
 </root>
