@@ -63,7 +63,8 @@
                         </MenuItem.ItemsSource>
                         <MenuItem.ItemTemplate>
                             <DataTemplate x:DataType="vm:ProviderModelMenuItem">
-                                <MenuItem Classes="model-menu-item" Header="{Binding Name}" ItemsSource="{Binding Models}">
+                                <MenuItem Classes="model-menu-item" Header="{Binding Name}" ItemsSource="{Binding Models}"
+                                          SubmenuOpened="OnProviderSubmenuOpened">
                                     <MenuItem.ItemTemplate>
                                         <DataTemplate x:DataType="vm:ModelMenuItem">
                                             <MenuItem Classes="model-menu-item" Header="{Binding ModelId}" Click="OnModelMenuItemClick"/>
