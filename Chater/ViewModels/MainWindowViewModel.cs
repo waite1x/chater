@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Channels;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -731,13 +732,48 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _sendCancellation = new CancellationTokenSource();
         IsSending = true;
         StatusMessage = T("Generating");
+
+        // Use a bounded channel to decouple the background producer (ChatService)
+        // from the UI consumer, preventing the streaming loop from blocking the UI thread.
+        var channel = Channel.CreateBounded<string>(new BoundedChannelOptions(256)
+        {
+            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true,
+            SingleWriter = true
+        });
+
+        // Run the entire streaming pipeline on a background thread so that
+        // network I/O, JSON parsing, agent iteration, and database writes
+        // never contend with Avalonia's render/dispatcher loop.
+        var producerTask = Task.Run(async () =>
+        {
+            try
+            {
+                await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, _sendCancellation.Token).ConfigureAwait(false))
+                {
+                    await channel.Writer.WriteAsync(update, _sendCancellation.Token).ConfigureAwait(false);
+                }
+
+                channel.Writer.TryComplete();
+            }
+            catch (OperationCanceledException)
+            {
+                channel.Writer.TryComplete();
+            }
+            catch (Exception ex)
+            {
+                channel.Writer.TryComplete(ex);
+            }
+        }, _sendCancellation.Token);
+
         try
         {
-            // Keep ObservableObject and ObservableCollection updates on Avalonia's
-            // UI thread. ConfigureAwait(false) here could stall the window on Windows.
             var pendingContent = new StringBuilder();
             var lastRenderAt = Environment.TickCount64;
-            await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, _sendCancellation.Token))
+            // ReadAllAsync yields when the channel is empty, so the UI thread
+            // stays responsive between batches. Each iteration applies pending
+            // content at most every 50 ms to avoid excessive re-layout.
+            await foreach (var update in channel.Reader.ReadAllAsync(_sendCancellation.Token))
             {
                 pendingContent.Append(update);
                 var now = Environment.TickCount64;
@@ -753,6 +789,9 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             {
                 assistant.Content += pendingContent.ToString();
             }
+
+            // Observe any exception from the producer after the channel is drained.
+            await producerTask;
 
             StatusMessage = T("Completed");
             await RefreshConversationHistoryAsync();
