@@ -47,34 +47,39 @@
         </Border>
         <DockPanel Grid.Row="1" Margin="10,2,10,10" LastChildFill="True" VerticalSpacing="8">
             <DockPanel DockPanel.Dock="Top" LastChildFill="True" HorizontalSpacing="4">
-                <Menu HorizontalAlignment="Left" Padding="0" Margin="0" DockPanel.Dock="Left">
-                    <MenuItem x:Name="ModelMenu" Classes="model-menu-item" HorizontalAlignment="Left" Padding="0" Margin="0">
-                        <MenuItem.Header>
-                            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                    BorderThickness="1" Padding="6,2" CornerRadius="4">
-                                <StackPanel Spacing="0">
-                                    <TextBlock Text="{Binding SelectedProviderDisplayName}" FontSize="12" FontWeight="SemiBold"/>
-                                    <TextBlock Text="{Binding SelectedModelDisplayName}" FontSize="10" Opacity="0.7"/>
-                                </StackPanel>
-                            </Border>
-                        </MenuItem.Header>
-                        <MenuItem.ItemsSource>
-                            <Binding Path="ProviderModelMenuItems"/>
-                        </MenuItem.ItemsSource>
-                        <MenuItem.ItemTemplate>
-                            <DataTemplate x:DataType="vm:ProviderModelMenuItem">
-                                <MenuItem Classes="model-menu-item" Header="{Binding Name}" ItemsSource="{Binding Models}"
-                                          SubmenuOpened="OnProviderSubmenuOpened">
-                                    <MenuItem.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:ModelMenuItem">
-                                            <MenuItem Classes="model-menu-item" Header="{Binding ModelId}" Click="OnModelMenuItemClick"/>
-                                        </DataTemplate>
-                                    </MenuItem.ItemTemplate>
-                                </MenuItem>
-                            </DataTemplate>
-                        </MenuItem.ItemTemplate>
-                    </MenuItem>
-                </Menu>
+                <Button Classes="model-selector-button" HorizontalAlignment="Left" Padding="0" Margin="0"
+                        DockPanel.Dock="Left">
+                    <Button.Content>
+                        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                BorderThickness="1" Padding="6,2" CornerRadius="4">
+                            <StackPanel Spacing="0">
+                                <TextBlock Text="{Binding SelectedProviderDisplayName}" FontSize="12" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SelectedModelDisplayName}" FontSize="10" Opacity="0.7"/>
+                            </StackPanel>
+                        </Border>
+                    </Button.Content>
+                    <Button.Flyout>
+                        <MenuFlyout ItemsSource="{Binding ProviderModelMenuItems}"
+                                    Placement="BottomEdgeAlignedLeft">
+                            <MenuFlyout.ItemContainerTheme>
+                                <ControlTheme TargetType="MenuItem"
+                                              BasedOn="{StaticResource {x:Type MenuItem}}"
+                                              x:DataType="vm:ProviderModelMenuItem">
+                                    <Setter Property="Header" Value="{Binding Name}"/>
+                                    <Setter Property="ItemsSource" Value="{Binding Models}"/>
+                                    <Setter Property="ItemContainerTheme">
+                                        <ControlTheme TargetType="MenuItem"
+                                                      BasedOn="{StaticResource {x:Type MenuItem}}"
+                                                      x:DataType="vm:ModelMenuItem">
+                                            <Setter Property="Header" Value="{Binding ModelId}"/>
+                                            <Setter Property="Command" Value="{Binding SelectCommand}"/>
+                                        </ControlTheme>
+                                    </Setter>
+                                </ControlTheme>
+                            </MenuFlyout.ItemContainerTheme>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
                 <Button Classes="primary-button" DockPanel.Dock="Right" Command="{Binding NewConversationCommand}"
                         ToolTip.Tip="{Binding Localization[NewConversation]}" AutomationProperties.Name="{Binding Localization[NewConversation]}" Padding="8">
                     <materialIcons:MaterialIcon Kind="Plus" Width="18" Height="18"/>

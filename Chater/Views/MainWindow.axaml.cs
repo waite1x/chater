@@ -8,7 +8,6 @@ namespace Chater.Views;
 public partial class MainWindow : Window
 {
     protected override bool HideOnClose => false;
-    private MenuItem? _openProviderSubmenu;
 
     public MainWindow()
     {
@@ -56,37 +55,6 @@ public partial class MainWindow : Window
             viewModel.ShowChatCommand.Execute(null);
             e.Handled = true;
         }
-    }
-
-    private void OnModelMenuItemClick(object? sender, RoutedEventArgs e)
-    {
-        if (sender is MenuItem { DataContext: ModelMenuItem model })
-        {
-            model.SelectCommand.Execute(null);
-            e.Handled = true;
-        }
-    }
-
-    /// <summary>
-    /// Ensures only one provider submenu is open at a time. When a provider-level
-    /// MenuItem opens its submenu, all sibling provider submenus are closed.
-    /// </summary>
-    private void OnProviderSubmenuOpened(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not MenuItem openedItem)
-        {
-            return;
-        }
-
-        // Keep the realized control rather than inspecting ItemsSource. Items
-        // contains provider data objects, while the submenu itself is created
-        // later by the item template.
-        if (_openProviderSubmenu is { } previous && previous != openedItem)
-        {
-            previous.IsSubMenuOpen = false;
-        }
-
-        _openProviderSubmenu = openedItem;
     }
 
     protected override void OnClosed(EventArgs e)

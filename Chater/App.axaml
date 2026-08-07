@@ -38,40 +38,6 @@
         <materialIcons:MaterialIconStyles />
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
         <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml" />
-        <Style Selector="MenuItem.model-menu-item">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="MinWidth" Value="0"/>
-        </Style>
-        <Style Selector="MenuItem.model-menu-item:selected /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        <Style Selector="MenuItem.model-menu-item:pressed /template/ Border#PART_LayoutRoot:pointerover">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        <Style Selector="MenuItem.model-menu-item:open /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        <Style Selector="MenuItem.model-menu-item:selected /template/ ContentPresenter#PART_HeaderPresenter">
-            <Setter Property="Foreground" Value="{DynamicResource MenuFlyoutItemForeground}"/>
-        </Style>
-        <Style Selector="MenuItem.model-menu-item:selected /template/ Path#PART_ChevronPath">
-            <Setter Property="Fill" Value="{DynamicResource MenuFlyoutSubItemChevron}"/>
-        </Style>
-        <Style Selector="MenuItem.model-menu-item /template/ Popup#PART_Popup">
-            <Setter Property="MinWidth" Value="0"/>
-        </Style>
-        <Style Selector="MenuItem.model-menu-item">
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-        </Style>
-        <!-- <Style Selector="Button.primary-button">
-            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightAccentBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}"/>
-            <Setter Property="Padding" Value="10,8"/>
-        </Style>
-        <Style Selector="Button.primary-button:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightAltAccentBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAltAccentBrush}"/>
-        </Style> -->
         <Style Selector="Button.window-action-button">
             <Setter Property="Width" Value="42"/>
             <Setter Property="Height" Value="38"/>
