@@ -1,9 +1,11 @@
 using Chater.Data;
+using Chater.Logging;
 using Chater.Services;
 using Chater.Providers;
 using Chater.ViewModels;
 using Chater.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Chater.Composition;
 
@@ -13,7 +15,13 @@ public static class ServiceCollectionExtensions
     /// <summary>Registers all production services. An optional path override supports isolated tests.</summary>
     public static IServiceCollection AddChaterApplication(this IServiceCollection services, AppPaths? paths = null)
     {
-        services.AddSingleton(paths ?? AppPaths.CreateDefault());
+        var appPaths = paths ?? AppPaths.CreateDefault();
+        services.AddSingleton(appPaths);
+        services.AddLogging(builder =>
+        {
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
+        services.AddSingleton<ILoggerProvider>(_ => new DailyFileLoggerProvider(appPaths.LogsDirectory));
         services.AddSingleton(static provider =>
         {
             var appPaths = provider.GetRequiredService<AppPaths>();

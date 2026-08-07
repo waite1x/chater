@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Chater.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Chater.Services;
 
@@ -64,12 +66,14 @@ public sealed class UpdateService : IUpdateService
             UpdateAvailable?.Invoke(this, update);
             return update;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException exception)
         {
+            ExceptionLogger.Log(exception, nameof(UpdateService), "Update check was cancelled", LogLevel.Information);
             throw;
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(UpdateService), "Update check failed");
             Publish(new(UpdateState.Failed, ErrorMessage: exception.Message));
             throw;
         }
@@ -113,12 +117,14 @@ public sealed class UpdateService : IUpdateService
                 Publish(new(UpdateState.Ready, update, 1, DownloadedFilePath: destination));
                 return destination;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException exception)
             {
+                ExceptionLogger.Log(exception, nameof(UpdateService), "Update download was cancelled", LogLevel.Information);
                 throw;
             }
             catch (Exception exception)
             {
+                ExceptionLogger.Log(exception, nameof(UpdateService), "Update download failed");
                 Publish(new(UpdateState.Failed, update, ErrorMessage: exception.Message));
                 throw;
             }

@@ -71,6 +71,8 @@ Open the settings window from the gear button in the chat window or from the sys
 
 Settings and conversation data are stored locally. API keys are kept in the local SQLite database and are not sent anywhere except to the provider endpoint used for a request.
 
+Runtime logs are written beside the executable under `logs/chater-yyyy-MM-dd.log`. Logs roll over daily, and files outside the current seven-day window are removed automatically.
+
 On macOS, the global shortcut may require Accessibility permission. If permission is unavailable, the application still supports the in-app shortcut and tray actions.
 
 ## Project structure

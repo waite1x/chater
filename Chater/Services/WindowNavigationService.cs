@@ -1,6 +1,7 @@
 using Avalonia;
 using Chater.ViewModels;
 using Chater.Views;
+using Chater.Logging;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Microsoft.Extensions.DependencyInjection;
@@ -123,6 +124,7 @@ public sealed class WindowNavigationService(IServiceProvider services) : IWindow
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(WindowNavigationService), "Failed to initialize a chat window");
             viewModel.StatusMessage = exception.Message;
         }
     }
@@ -135,6 +137,7 @@ public sealed class WindowNavigationService(IServiceProvider services) : IWindow
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(WindowNavigationService), "Failed to initialize the settings window");
             viewModel.StatusMessage = exception.Message;
         }
     }

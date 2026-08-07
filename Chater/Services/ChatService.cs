@@ -1,10 +1,12 @@
 using System.ClientModel;
 using System.Text.Json;
 using Chater.Data;
+using Chater.Logging;
 using Chater.Models;
 using Chater.Models.Enums;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using OpenAI;
 
 #pragma warning disable MAAI001 // Harness options are the documented Agent Framework surface used by Chater.
@@ -74,13 +76,15 @@ public sealed class ChatService(
                 {
                     hasNext = await updates.MoveNextAsync().ConfigureAwait(false);
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                catch (OperationCanceledException exception) when (cancellationToken.IsCancellationRequested)
                 {
+                    ExceptionLogger.Log(exception, nameof(ChatService), "Chat response was cancelled", LogLevel.Information);
                     await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Cancelled, "cancelled", "The response was cancelled.", CancellationToken.None).ConfigureAwait(false);
                     throw;
                 }
                 catch (Exception exception)
                 {
+                    ExceptionLogger.Log(exception, nameof(ChatService), "Chat provider streaming failed");
                     await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Failed, "provider_error", exception.Message, CancellationToken.None).ConfigureAwait(false);
                     throw;
                 }

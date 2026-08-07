@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Chater.Logging;
 
 namespace Chater.Services;
 
@@ -65,8 +66,9 @@ public sealed partial class AppState : ObservableObject
             {
                 await _checkForUpdates(CancellationToken.None).ConfigureAwait(false);
             }
-            catch
+            catch (Exception exception)
             {
+                ExceptionLogger.Log(exception, nameof(AppState), "Update command failed");
                 // UpdateService publishes the failure through UpdateProgress.
             }
         }

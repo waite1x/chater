@@ -10,8 +10,10 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Chater.Composition;
+using Chater.Logging;
 using Chater.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Chater;
 
@@ -20,6 +22,7 @@ public partial class App : Application
     private const string DarkTrayIconUri = "avares://Chater/Assets/chater-tray.png";
     private const string LightTrayIconUri = "avares://Chater/Assets/chater-tray-light.png";
     private ServiceProvider? _services;
+    private ILogger<App>? _logger;
     private IPlatformSettings? _platformSettings;
     private TrayIcon? _trayIcon;
     private bool _updateDialogOpen;
@@ -41,7 +44,22 @@ public partial class App : Application
         }
 
         _services = new ServiceCollection().AddChaterApplication().BuildServiceProvider();
-        _services.InitializeChaterDatabase();
+        _logger = _services.GetRequiredService<ILogger<App>>();
+        ExceptionLogger.Configure(_services.GetRequiredService<ILoggerFactory>());
+        AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+        Dispatcher.UIThread.UnhandledException += OnDispatcherUnhandledException;
+        _logger.LogInformation("Chater is starting");
+
+        try
+        {
+            _services.InitializeChaterDatabase();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogCritical(exception, "Chater failed during startup");
+            throw;
+        }
         ApplyStoredTheme(_services.GetRequiredService<AppSettingsService>());
         UpdateTrayIcon();
 
@@ -60,14 +78,22 @@ public partial class App : Application
                 if (!globalHotKeys.Start(viewModel.ChatShortcut, viewModel.NewChatWindowShortcut) && globalHotKeys.LastError is not null)
                 {
                     viewModel.StatusMessage = globalHotKeys.LastError;
+                    _logger?.LogWarning("Global hotkey registration failed: {Error}", globalHotKeys.LastError);
                 }
                 _ = CheckForUpdatesAsync(updateService);
             };
             desktop.Exit += (_, _) =>
             {
                 IsExiting = true;
+                _logger?.LogInformation("Chater is shutting down");
+                AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+                TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+                Dispatcher.UIThread.UnhandledException -= OnDispatcherUnhandledException;
                 _services.GetRequiredService<Services.IGlobalHotKeyService>().Dispose();
                 _services.Dispose();
+                ExceptionLogger.Configure(null);
+                _services = null;
+                _logger = null;
             };
         }
 
@@ -98,14 +124,15 @@ public partial class App : Application
         _trayIcon.Icon = new WindowIcon(new Bitmap(stream));
     }
 
-    private static async Task CheckForUpdatesAsync(IUpdateService updateService)
+    private async Task CheckForUpdatesAsync(IUpdateService updateService)
     {
         try
         {
             await updateService.CheckForUpdateAsync().ConfigureAwait(false);
         }
-        catch
+        catch (Exception exception)
         {
+            _logger?.LogWarning(exception, "The update check failed");
             // Update checks are best-effort and must not interfere with startup.
         }
     }
@@ -124,7 +151,7 @@ public partial class App : Application
         _ = DownloadUpdateAsync(updates, update);
     }
 
-    private static async Task DownloadUpdateAsync(IUpdateService updates, AppUpdateInfo update)
+    private async Task DownloadUpdateAsync(IUpdateService updates, AppUpdateInfo update)
     {
         try
         {
@@ -132,8 +159,9 @@ public partial class App : Application
             if (Application.Current is App app)
                 Dispatcher.UIThread.Post(() => _ = app.ShowUpdateDialogAsync(updates, update, Chater.Views.UpdateDialogMode.Install, downloadedFilePath));
         }
-        catch
+        catch (Exception exception)
         {
+            _logger?.LogError(exception, "Downloading update {Version} failed", update.LatestVersion);
             // Download errors are published by UpdateService and shown in the About page.
         }
     }
@@ -196,5 +224,27 @@ public partial class App : Application
         {
             desktop.Shutdown();
         }
+    }
+
+    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs eventArgs)
+    {
+        if (eventArgs.ExceptionObject is Exception exception)
+        {
+            _logger?.LogCritical(exception, "An unhandled application exception occurred; terminating: {IsTerminating}", eventArgs.IsTerminating);
+        }
+        else
+        {
+            _logger?.LogCritical("An unhandled non-Exception error occurred; terminating: {IsTerminating}", eventArgs.IsTerminating);
+        }
+    }
+
+    private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs eventArgs)
+    {
+        _logger?.LogError(eventArgs.Exception, "An unobserved task exception occurred");
+    }
+
+    private void OnDispatcherUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs eventArgs)
+    {
+        _logger?.LogCritical(eventArgs.Exception, "An unhandled UI-thread exception occurred");
     }
 }

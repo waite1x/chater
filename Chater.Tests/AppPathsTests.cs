@@ -19,6 +19,14 @@ public sealed class AppPathsTests : IDisposable
         Assert.Equal(Path.Combine(_root, "chater.db"), paths.DatabasePath);
     }
 
+    [Fact]
+    public void CreateDefault_PutsLogsBesideTheExecutable()
+    {
+        var paths = AppPaths.CreateDefault();
+
+        Assert.Equal(Path.Combine(AppContext.BaseDirectory, "logs"), paths.LogsDirectory);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

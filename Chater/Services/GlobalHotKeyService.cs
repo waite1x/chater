@@ -2,6 +2,7 @@ using Avalonia.Threading;
 using SharpHook;
 using SharpHook.Data;
 using SharpHook.Providers;
+using Chater.Logging;
 
 namespace Chater.Services;
 
@@ -57,6 +58,7 @@ public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : I
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(GlobalHotKeyService), "Failed to start global hotkeys");
             LastError = $"全局快捷键启动失败：{exception.Message}";
             _hook?.Dispose();
             _hook = null;
@@ -119,6 +121,7 @@ public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : I
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(GlobalHotKeyService), "Global hotkey event loop stopped unexpectedly");
             // Do not leave a dead hook looking like a running hook. This is
             // especially important on macOS when TCC permission belongs to an
             // older app bundle identity.

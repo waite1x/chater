@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
+using Chater.Logging;
 using LiveMarkdown.Avalonia;
 using Markdig;
 using Markdig.Extensions.AutoLinks;
@@ -145,8 +146,9 @@ public sealed class MarkdownView : UserControl
             Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
             e.Handled = true;
         }
-        catch
+        catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MarkdownView), "Failed to open a markdown link", Microsoft.Extensions.Logging.LogLevel.Warning);
             // Opening a link is best-effort; an unavailable system browser must not crash the chat window.
         }
     }

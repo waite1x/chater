@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using Chater.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Chater.Services;
 
@@ -93,8 +95,9 @@ public sealed partial class WebContentTool
             var addresses = await Dns.GetHostAddressesAsync(uri.DnsSafeHost, cancellationToken).ConfigureAwait(false);
             return addresses.Length > 0 && addresses.All(IsPublicAddress);
         }
-        catch (SocketException)
+        catch (SocketException exception)
         {
+            ExceptionLogger.Log(exception, nameof(WebContentTool), "DNS lookup failed while validating webpage host", LogLevel.Warning);
             return false;
         }
     }
@@ -162,7 +165,11 @@ public sealed partial class WebContentTool
     {
         if (string.IsNullOrWhiteSpace(charset)) return null;
         try { return Encoding.GetEncoding(charset.Trim('"')); }
-        catch (ArgumentException) { return null; }
+        catch (ArgumentException exception)
+        {
+            ExceptionLogger.Log(exception, nameof(WebContentTool), "Invalid webpage character encoding", LogLevel.Warning);
+            return null;
+        }
     }
 
     private static string ExtractReadableText(Uri url, string document, string? mediaType)

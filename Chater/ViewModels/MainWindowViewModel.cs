@@ -6,12 +6,14 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Chater.Data;
+using Chater.Logging;
 using Chater.Models;
 using Chater.Models.Enums;
 using Chater.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Material.Icons;
+using Microsoft.Extensions.Logging;
 
 namespace Chater.ViewModels;
 
@@ -599,6 +601,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to save provider");
             StatusMessage = exception.Message;
         }
     }
@@ -624,6 +627,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to delete provider");
             StatusMessage = exception.Message;
         }
     }
@@ -639,6 +643,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Provider connection test failed");
             StatusMessage = exception.Message;
         }
     }
@@ -666,6 +671,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to save skill");
             StatusMessage = exception.Message;
         }
     }
@@ -692,6 +698,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to delete skill");
             StatusMessage = exception.Message;
         }
     }
@@ -750,13 +757,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
             StatusMessage = T("Completed");
             await RefreshConversationHistoryAsync();
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Chat request was cancelled", LogLevel.Information);
             StatusMessage = T("Stopped");
             await RefreshConversationHistoryAsync();
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Chat request failed");
             assistant.Content = string.IsNullOrEmpty(assistant.Content) ? "无法完成请求。" : assistant.Content;
             StatusMessage = exception.Message;
             await RefreshConversationHistoryAsync();
@@ -974,6 +983,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to persist theme setting");
             StatusMessage = exception.Message;
         }
     }
@@ -987,6 +997,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to persist accent color setting");
             StatusMessage = exception.Message;
         }
     }
@@ -1002,6 +1013,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to persist chat shortcut setting");
             StatusMessage = exception.Message;
         }
     }
@@ -1020,6 +1032,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to persist new chat shortcut setting");
             StatusMessage = exception.Message;
         }
     }
@@ -1033,6 +1046,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to persist language setting");
             StatusMessage = exception.Message;
         }
     }

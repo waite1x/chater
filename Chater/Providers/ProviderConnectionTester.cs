@@ -3,6 +3,8 @@ using System.Text;
 using Chater.Models;
 using Chater.Models.Enums;
 using Chater.Services;
+using Chater.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Chater.Providers;
 
@@ -21,16 +23,19 @@ public sealed class ProviderConnectionTester(HttpClient? httpClient = null) : IP
             using var response = await _httpClient.SendAsync(request, timeout.Token).ConfigureAwait(false);
             return response.IsSuccessStatusCode ? ProviderConnectionResult.Success() : MapStatusCode(response.StatusCode);
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
+            ExceptionLogger.Log(exception, nameof(ProviderConnectionTester), "Provider connection test timed out", LogLevel.Warning);
             return new ProviderConnectionResult(false, "request_timeout", "连接测试超时。");
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
+            ExceptionLogger.Log(exception, nameof(ProviderConnectionTester), "Provider connection test failed", LogLevel.Warning);
             return new ProviderConnectionResult(false, "network_error", "无法连接到服务商端点。");
         }
         catch (ArgumentException exception)
         {
+            ExceptionLogger.Log(exception, nameof(ProviderConnectionTester), "Provider connection configuration is invalid", LogLevel.Warning);
             return new ProviderConnectionResult(false, "invalid_configuration", exception.Message);
         }
     }

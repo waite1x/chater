@@ -4,6 +4,8 @@ using System.Security;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 using Microsoft.Win32;
+using Chater.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Chater.Services;
 
@@ -31,6 +33,7 @@ public sealed class StartupService : IStartupService
         }
         catch (Exception exception) when (exception is UnauthorizedAccessException or IOException)
         {
+            ExceptionLogger.Log(exception, nameof(StartupService), "Failed to read startup setting", LogLevel.Warning);
             return false;
         }
     }
@@ -61,6 +64,7 @@ public sealed class StartupService : IStartupService
         }
         catch (Exception exception) when (exception is UnauthorizedAccessException or IOException or SecurityException or InvalidOperationException)
         {
+            ExceptionLogger.Log(exception, nameof(StartupService), "Failed to change startup setting", LogLevel.Warning);
             return false;
         }
     }
@@ -84,6 +88,7 @@ public sealed class StartupService : IStartupService
         }
         catch (Exception exception) when (exception is InvalidOperationException or Win32Exception)
         {
+            ExceptionLogger.Log(exception, nameof(StartupService), "Failed to open startup permission settings", LogLevel.Warning);
             // Opening the system settings is best effort; the setting itself remains unchanged.
         }
     }

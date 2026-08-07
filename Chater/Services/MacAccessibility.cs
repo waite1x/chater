@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Chater.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Chater.Services;
 
@@ -16,8 +18,9 @@ internal static partial class MacAccessibility
         {
             return AXIsProcessTrusted();
         }
-        catch (DllNotFoundException)
+        catch (DllNotFoundException exception)
         {
+            ExceptionLogger.Log(exception, nameof(MacAccessibility), "macOS accessibility API is unavailable", LogLevel.Warning);
             return false;
         }
     }
@@ -41,8 +44,9 @@ internal static partial class MacAccessibility
                 CreateNoWindow = true
             });
         }
-        catch
+        catch (Exception exception)
         {
+            ExceptionLogger.Log(exception, nameof(MacAccessibility), "Failed to open macOS accessibility settings", LogLevel.Warning);
             // The status message still contains the manual navigation path.
         }
     }
