@@ -1,7 +1,6 @@
 using System.Net;
+using Chater.AI.Providers;
 using Chater.Models;
-using Chater.Models.Enums;
-using Chater.Providers;
 
 namespace Chater.Tests;
 

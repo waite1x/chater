@@ -1,7 +1,7 @@
+using Chater.AI.Conversations;
+using Chater.AI.Providers;
+using Chater.AI.Skills;
 using Chater.Data;
-using Chater.Models;
-using Chater.Models.Enums;
-using Chater.Services;
 
 namespace Chater.Tests;
 

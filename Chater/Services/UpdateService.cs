@@ -167,7 +167,7 @@ public sealed class UpdateService : IUpdateService
         using var response = await _httpClient.GetAsync(LatestReleaseUri, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        return await JsonSerializer.DeserializeAsync(stream, ChaterJsonSerializerContext.Default.GitHubRelease, cancellationToken).ConfigureAwait(false);
+        return await JsonSerializer.DeserializeAsync(stream, AI.ChaterJsonSerializerContext.Default.GitHubRelease, cancellationToken).ConfigureAwait(false);
     }
 
     private static string GetCurrentVersion()

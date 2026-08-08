@@ -1,6 +1,8 @@
+using Chater.AI;
+using Chater.AI.Conversations;
+using Chater.AI.Providers;
+using Chater.AI.Tools;
 using Chater.Data;
-using Chater.Models.Enums;
-using Chater.Services;
 
 namespace Chater.Tests;
 
@@ -14,7 +16,7 @@ public sealed class ChatServiceTests : IDisposable
         var database = new SqliteDatabase(_path);
         await new DatabaseMigrator(database).MigrateAsync();
         await SeedConversationAsync(database);
-        var service = new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock());
+        var service = new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([]));
 
         await Assert.ThrowsAsync<NotSupportedException>(async () =>
         {

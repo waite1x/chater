@@ -4,6 +4,9 @@
         xmlns:models="using:Chater.Models"
         xmlns:local="using:Chater.Views"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        xmlns:skills="clr-namespace:Chater.AI.Skills"
+        xmlns:ai="clr-namespace:Chater.AI"
+        xmlns:conversations="clr-namespace:Chater.AI.Conversations"
         x:Class="Chater.Views.MainWindow"
         KeyDown="OnWindowKeyDown"
         x:DataType="vm:MainWindowViewModel"
@@ -90,7 +93,7 @@
                           VerticalAlignment="Center"
                           PlaceholderText="{Binding Localization[HistoryPlaceholder]}">
                     <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="models:Conversation">
+                        <DataTemplate x:DataType="conversations:Conversation">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="{Binding Title}"/>
                             </StackPanel>
@@ -101,7 +104,7 @@
             <DockPanel DockPanel.Dock="Bottom" LastChildFill="True" HorizontalSpacing="4">
                 <ComboBox DockPanel.Dock="Left"  ItemsSource="{Binding Skills}" SelectedItem="{Binding SelectedSkill}" PlaceholderText="{Binding Localization[SkillPlaceholder]}">
                     <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="models:Skill"><TextBlock Text="{Binding Name}"/></DataTemplate>
+                        <DataTemplate x:DataType="skills:Skill"><TextBlock Text="{Binding Name}"/></DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
                 <TextBlock DockPanel.Dock="Left"

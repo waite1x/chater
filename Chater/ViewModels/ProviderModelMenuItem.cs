@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using Chater.AI.Providers;
 using Chater.Models;
 
 namespace Chater.ViewModels;

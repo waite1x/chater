@@ -1,6 +1,6 @@
+using Chater.AI.Providers;
 using Chater.Data;
 using Chater.Models;
-using Chater.Models.Enums;
 using Chater.Services;
 
 namespace Chater.Tests;

@@ -1,3 +1,4 @@
+using Chater.Localization;
 using Chater.Services;
 
 namespace Chater.Views;

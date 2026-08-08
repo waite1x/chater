@@ -1,4 +1,4 @@
-using Chater.Models.Enums;
+using Chater.AI.Conversations;
 
 namespace Chater.ViewModels;
 

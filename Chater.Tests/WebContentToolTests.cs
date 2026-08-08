@@ -1,5 +1,5 @@
 using System.Net;
-using Chater.Services;
+using Chater.AI.Tools;
 
 namespace Chater.Tests;
 

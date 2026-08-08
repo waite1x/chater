@@ -1,7 +1,8 @@
+using Chater.AI;
 using Chater.Data;
+using Chater.Localization;
 using Chater.Logging;
 using Chater.Services;
-using Chater.Providers;
 using Chater.ViewModels;
 using Chater.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,28 +32,20 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DatabaseMigrator>();
         services.AddSingleton<MessageRepository>();
         services.AddSingleton<AppSettingRepository>();
-        services.AddSingleton<ApiProviderRepository>();
-        services.AddSingleton<SkillRepository>();
-        services.AddSingleton<ConversationRepository>();
         services.AddSingleton<StartupRecoveryService>();
-        services.AddSingleton<IProviderConnectionTester, ProviderConnectionTester>();
-        services.AddSingleton<ProviderService>();
-        services.AddSingleton<SkillService>();
         services.AddSingleton<AppSettingsService>();
         services.AddSingleton<AppState>();
         services.AddSingleton<IUpdateService>(provider => new UpdateService(provider.GetRequiredService<AppPaths>(), provider.GetRequiredService<AppState>()));
         services.AddSingleton<IStartupService, StartupService>();
         services.AddSingleton<LocalizationService>();
         services.AddSingleton<IConfirmationService, ConfirmationService>();
-        services.AddSingleton<ConversationService>();
         services.AddSingleton<IWindowNavigationService, WindowNavigationService>();
         services.AddSingleton<IGlobalHotKeyService, GlobalHotKeyService>();
-        services.AddSingleton<SessionRunLock>();
-        services.AddSingleton<WebContentTool>();
-        services.AddSingleton<ChatService>();
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<MainWindow>();
         services.AddTransient<SettingsWindow>();
+
+        services.AddChaterAi();
         return services;
     }
 

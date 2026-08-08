@@ -10,6 +10,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Chater.Composition;
+using Chater.Localization;
 using Chater.Logging;
 using Chater.Services;
 using Microsoft.Extensions.DependencyInjection;

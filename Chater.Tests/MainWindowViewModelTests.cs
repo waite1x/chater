@@ -1,8 +1,10 @@
 using Avalonia.Media;
+using Chater.AI;
+using Chater.AI.Conversations;
+using Chater.AI.Providers;
+using Chater.AI.Skills;
+using Chater.AI.Tools;
 using Chater.Data;
-using Chater.Models;
-using Chater.Models.Enums;
-using Chater.Providers;
 using Chater.Services;
 using Chater.ViewModels;
 
@@ -270,7 +272,7 @@ public sealed class MainWindowViewModelTests : IDisposable
         new ProviderService(new ApiProviderRepository(database)),
         new SkillRepository(database),
         new ConversationService(new ConversationRepository(database)),
-        new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock()),
+        new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([])),
         new ConversationRepository(database),
         new MessageRepository(database),
         new SkillService(new SkillRepository(database)),

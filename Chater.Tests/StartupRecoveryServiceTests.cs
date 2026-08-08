@@ -1,5 +1,5 @@
+using Chater.AI.Conversations;
 using Chater.Data;
-using Chater.Models.Enums;
 using Chater.Services;
 
 namespace Chater.Tests;

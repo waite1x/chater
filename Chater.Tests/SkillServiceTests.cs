@@ -1,3 +1,5 @@
+using Chater.AI;
+using Chater.AI.Skills;
 using Chater.Data;
 using Chater.Models;
 using Chater.Services;

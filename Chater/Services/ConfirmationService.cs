@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Chater.Localization;
 using Chater.Views;
 
 namespace Chater.Services;
