@@ -1,10 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls;
-using Avalonia.Diagnostics;
-using Avalonia.Data.Core;
-using Avalonia.Data.Core.Plugins;
-using System.Linq;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -26,6 +22,7 @@ public partial class App : Application
     private ILogger<App>? _logger;
     private IPlatformSettings? _platformSettings;
     private TrayIcon? _trayIcon;
+    private LocalizationService? _localization;
     private bool _updateDialogOpen;
     internal bool IsExiting { get; private set; }
     public override void Initialize()
@@ -62,6 +59,8 @@ public partial class App : Application
             throw;
         }
         ApplyStoredTheme(_services.GetRequiredService<AppSettingsService>());
+        _localization = _services.GetRequiredService<LocalizationService>();
+        InitializeTrayMenuLocalization();
         UpdateTrayIcon();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -75,7 +74,7 @@ public partial class App : Application
             desktop.MainWindow.Opened += async (_, _) =>
             {
                 await viewModel.LoadAsync();
-                var globalHotKeys = _services.GetRequiredService<Services.IGlobalHotKeyService>();
+                var globalHotKeys = _services.GetRequiredService<IGlobalHotKeyService>();
                 if (!globalHotKeys.Start(viewModel.ChatShortcut, viewModel.NewChatWindowShortcut) && globalHotKeys.LastError is not null)
                 {
                     viewModel.StatusMessage = globalHotKeys.LastError;
@@ -108,6 +107,43 @@ public partial class App : Application
         var theme = settings.GetAsync(AppSettingsService.ThemeKey).GetAwaiter().GetResult()
             ?? AppSettingsService.DefaultTheme;
         AppSettingsService.ApplyTheme(theme);
+    }
+
+    private void InitializeTrayMenuLocalization()
+    {
+        if (_localization is null)
+            return;
+
+        // Load the persisted language early so tray menu text is correct before any window opens.
+        var language = _services?.GetRequiredService<AppSettingsService>()
+            .GetAsync(AppSettingsService.LanguageKey).GetAwaiter().GetResult();
+        if (!string.IsNullOrEmpty(language))
+        {
+            _localization.SetLanguage(language);
+        }
+
+        ApplyTrayMenuText();
+        _localization.PropertyChanged += (_, _) => ApplyTrayMenuText();
+    }
+
+    private void ApplyTrayMenuText()
+    {
+        if (_localization is null)
+            return;
+
+        var trayIcon = _trayIcon ?? TrayIcon.GetIcons(this)?.FirstOrDefault();
+        if (trayIcon?.Menu is not NativeMenu menu)
+            return;
+
+        // Index 0: TrayShowChatItem, Index 1: TrayShowSettingsItem, Index 2: separator, Index 3: TrayExitItem
+        if (menu.Items.Count >= 1 && menu.Items[0] is NativeMenuItem showChat)
+            showChat.Header = _localization["TrayShowChat"];
+        if (menu.Items.Count >= 2 && menu.Items[1] is NativeMenuItem showSettings)
+            showSettings.Header = _localization["TrayShowSettings"];
+        if (menu.Items.Count >= 4 && menu.Items[3] is NativeMenuItem exit)
+            exit.Header = _localization["TrayExit"];
+
+        trayIcon.ToolTipText = _localization["AppTitle"];
     }
 
     private void UpdateTrayIcon()
@@ -192,7 +228,7 @@ public partial class App : Application
                 window.IsEnabled = false;
 
             var localization = _services.GetRequiredService<LocalizationService>();
-            var dialog = new Chater.Views.UpdateDialog(update, localization, mode);
+            var dialog = new Views.UpdateDialog(update, localization, mode);
             dialog.Opened += (_, _) =>
             {
                 dialog.Activate();

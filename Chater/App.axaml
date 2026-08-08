@@ -10,14 +10,13 @@
     <TrayIcon.Icons>
         <TrayIcons>
             <TrayIcon Icon="/Assets/chater-tray.png"
-                      ToolTipText="Chater"
                       mac:MacOSProperties.IsTemplateIcon="True">
                 <TrayIcon.Menu>
                     <NativeMenu>
-                        <NativeMenuItem Header="打开聊天" Click="OnTrayShowChat"/>
-                        <NativeMenuItem Header="打开 Chater" Click="OnTrayShowSettings"/>
+                        <NativeMenuItem Click="OnTrayShowChat"/>
+                        <NativeMenuItem Click="OnTrayShowSettings"/>
                         <NativeMenuItemSeparator/>
-                        <NativeMenuItem Header="退出 Chater" Click="OnTrayExit"/>
+                        <NativeMenuItem Click="OnTrayExit"/>
                     </NativeMenu>
                 </TrayIcon.Menu>
             </TrayIcon>

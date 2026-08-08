@@ -13,7 +13,6 @@ using Chater.AI.Skills;
 using Chater.Data;
 using Chater.Localization;
 using Chater.Logging;
-using Chater.Models;
 using Chater.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;

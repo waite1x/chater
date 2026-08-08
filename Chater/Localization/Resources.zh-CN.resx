@@ -1,32 +1,309 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>2.0</value></resheader>
-  <data name="AppTitle"><value>Chater</value></data><data name="Settings"><value>主窗口</value></data><data name="GeneralSettings"><value>通用设置</value></data>
-  <data name="ApiKey"><value>API Key</value></data><data name="Skills"><value>技能</value></data><data name="Shortcut"><value>快捷键</value></data><data name="NewConversation"><value>新会话</value></data>
-  <data name="HistoryPlaceholder"><value>选择历史会话</value></data><data name="History"><value>会话历史</value></data><data name="HistoryDescription"><value>查看全部历史会话，选择后可在新的聊天窗口中继续。</value></data><data name="StartConversation"><value>开始会话</value></data><data name="SkillPlaceholder"><value>选择技能</value></data><data name="ModelPlaceholder"><value>选择模型</value></data><data name="InputPlaceholder"><value>输入内容，按 Enter 发送…</value></data>
-  <data name="Send"><value>发送</value></data><data name="Stop"><value>停止</value></data><data name="ThemeDescription"><value>选择 Chater 的界面主题，修改后立即生效并自动保存。</value></data><data name="Theme"><value>主题</value></data><data name="ThemeDescriptionShort"><value>跟随系统、浅色或深色模式。</value></data>
-  <data name="Language"><value>语言</value></data><data name="LanguageDescription"><value>选择界面语言，修改后立即生效并自动保存。</value></data><data name="System"><value>跟随系统</value></data><data name="Light"><value>浅色</value></data><data name="Dark"><value>深色</value></data>
-  <data name="Startup"><value>开机自启</value></data><data name="StartupDescription"><value>登录系统后自动启动 Chater。</value></data>
-  <data name="ApiKeyManagement"><value>API Key 管理</value></data><data name="ProviderDescription"><value>管理服务商配置，支持多服务商与 Key 切换。</value></data><data name="AddProvider"><value>新增配置</value></data><data name="NamePlaceholder"><value>名称</value></data>
-  <data name="ModelListPlaceholder"><value>模型列表：每行一个，也可用逗号或分号分隔</value></data><data name="EndpointPlaceholder"><value>端点（OpenAI 可留空）</value></data><data name="ApiKeyPlaceholder"><value>API Key（留空保留已有密钥）</value></data><data name="Save"><value>保存</value></data><data name="TestConnection"><value>测试连接</value></data>
-  <data name="SkillManagement"><value>技能管理</value></data><data name="SkillDescription"><value>选择内置技能，或创建、编辑自定义技能。</value></data><data name="CustomSkill"><value>自定义技能</value></data><data name="SkillNamePlaceholder"><value>技能名称</value></data><data name="SkillPromptPlaceholder"><value>System prompt（内置技能只读）</value></data><data name="SaveSkill"><value>保存技能</value></data>
-  <data name="ShortcutDescription"><value>设置应用内唤起聊天窗口的快捷键，修改后立即生效并自动保存。</value></data><data name="ChatShortcut"><value>聊天窗口快捷键</value></data><data name="ShortcutHint"><value>点击输入框后按下组合键完成设置。快捷键在主窗口和设置窗口中生效。</value></data><data name="ShortcutPlaceholder"><value>点击后按下组合键，例如 Ctrl+Shift+Space</value></data><data name="SelectApiKey"><value>选择 API Key</value></data>
-  <data name="Ready"><value>已就绪。</value></data><data name="NoProvider"><value>请先在 SQLite 配置中添加并启用服务商。</value></data><data name="NewConversationStatus"><value>将于首次发送时创建新会话。</value></data><data name="Generating"><value>正在生成回复…</value></data><data name="Completed"><value>已完成。</value></data><data name="Stopped"><value>已停止生成。</value></data>
-  <data name="ProviderSaved"><value>服务商已保存。</value></data><data name="SkillSaved"><value>技能已保存。</value></data><data name="AddingProvider"><value>填写服务商配置后保存。</value></data><data name="AddingSkill"><value>填写自定义技能后保存。</value></data><data name="SelectProviderFirst"><value>请先选择一个已启用的服务商。</value></data><data name="Testing"><value>正在测试连接…</value></data><data name="BuiltInSkillReadOnly"><value>内置技能不可编辑；请新增自定义技能。</value></data><data name="Loading"><value>正在加载配置…</value></data>
-  <data name="Delete"><value>删除</value></data>
-  <data name="ProviderDeleted"><value>服务商已删除。</value></data>
-  <data name="SkillDeleted"><value>技能已删除。</value></data>
-  <data name="ShortcutCleared"><value>快捷键已清除。</value></data>
-  <data name="StartupEnabled"><value>已开启开机自启。</value></data><data name="StartupDisabled"><value>已关闭开机自启。</value></data><data name="StartupPermissionRequired"><value>需要系统权限，已打开系统启动项设置。</value></data>
-  <data name="AccentColor"><value>主题色</value></data><data name="AccentColorDescription"><value>选择预设颜色，或使用颜色选择器自定义 Chater 的主题色。</value></data><data name="CustomAccentColor"><value>自定义颜色</value></data>
-  <data name="About"><value>关于</value></data><data name="CurrentVersionLabel"><value>当前版本</value></data><data name="CheckForUpdates"><value>检查更新</value></data><data name="CheckingForUpdates"><value>正在检查更新…</value></data><data name="NoUpdates"><value>当前已是最新版本。</value></data><data name="UpdateAvailable"><value>发现新版本，正在后台下载。</value></data><data name="UpdateReady"><value>更新包已下载完成，等待确认。</value></data><data name="UpdateCheckFailed"><value>更新失败：{0}</value></data>
-  <data name="UpdateDownloadTitle"><value>Chater 有新版本</value></data><data name="UpdateDownloadMessage"><value>发现 Chater 新版本，是否立即下载？</value></data><data name="UpdateInstallTitle"><value>Chater 更新已就绪</value></data><data name="UpdateInstallMessage"><value>更新包已下载完成，是否立即开始安装？</value></data><data name="UpdateVersionDetails"><value>当前版本：{0}&#xA;新版本：{1}</value></data><data name="ReleaseDetails"><value>发布说明：{0}</value></data><data name="Later"><value>暂不更新</value></data><data name="DownloadNow"><value>立即下载</value></data><data name="UpdateNow"><value>立即安装</value></data><data name="DownloadingUpdate"><value>正在下载更新…</value></data><data name="UpdateDownloadFailed"><value>更新失败：{0}</value></data>
-  <data name="NewChatWindowShortcut"><value>新建聊天窗口快捷键</value></data>
-  <data name="NewChatWindowShortcutHint"><value>点击输入框后按下组合键。此快捷键每次都会新建聊天窗口。</value></data>
-  <data name="HistoryDeleted"><value>会话已删除。</value></data>
-  <data name="Cancel"><value>取消</value></data>
-  <data name="ConfirmDeleteTitle"><value>确认删除</value></data>
-  <data name="ConfirmDeleteMessage"><value>确定要删除“{0}”吗？此操作无法在应用中恢复。</value></data>
-  <data name="CopySelectedText"><value>复制选中文字</value></data>
-  <data name="CopyMarkdownContent"><value>复制 Markdown 消息</value></data>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>2.0</value>
+    </resheader>
+    <data name="AppTitle">
+        <value>Chater</value>
+    </data>
+    <data name="Settings">
+        <value>设置</value>
+    </data>
+    <data name="GeneralSettings">
+        <value>通用设置</value>
+    </data>
+    <data name="ApiKey">
+        <value>API Key</value>
+    </data>
+    <data name="Skills">
+        <value>技能</value>
+    </data>
+    <data name="Shortcut">
+        <value>快捷键</value>
+    </data>
+    <data name="NewConversation">
+        <value>新会话</value>
+    </data>
+    <data name="HistoryPlaceholder">
+        <value>选择历史会话</value>
+    </data>
+    <data name="History">
+        <value>会话历史</value>
+    </data>
+    <data name="HistoryDescription">
+        <value>查看全部历史会话，选择后可在新的聊天窗口中继续。</value>
+    </data>
+    <data name="StartConversation">
+        <value>开始会话</value>
+    </data>
+    <data name="SkillPlaceholder">
+        <value>选择技能</value>
+    </data>
+    <data name="ModelPlaceholder">
+        <value>选择模型</value>
+    </data>
+    <data name="InputPlaceholder">
+        <value>输入内容，按 Enter 发送…</value>
+    </data>
+    <data name="Send">
+        <value>发送</value>
+    </data>
+    <data name="Stop">
+        <value>停止</value>
+    </data>
+    <data name="ThemeDescription">
+        <value>选择 Chater 的界面主题，修改后立即生效并自动保存。</value>
+    </data>
+    <data name="Theme">
+        <value>主题</value>
+    </data>
+    <data name="ThemeDescriptionShort">
+        <value>跟随系统、浅色或深色模式。</value>
+    </data>
+    <data name="Language">
+        <value>语言</value>
+    </data>
+    <data name="LanguageDescription">
+        <value>选择界面语言，修改后立即生效并自动保存。</value>
+    </data>
+    <data name="System">
+        <value>跟随系统</value>
+    </data>
+    <data name="Light">
+        <value>浅色</value>
+    </data>
+    <data name="Dark">
+        <value>深色</value>
+    </data>
+    <data name="Startup">
+        <value>开机自启</value>
+    </data>
+    <data name="StartupDescription">
+        <value>登录系统后自动启动 Chater。</value>
+    </data>
+    <data name="ApiKeyManagement">
+        <value>API Key 管理</value>
+    </data>
+    <data name="ProviderDescription">
+        <value>管理服务商配置，支持多服务商与 Key 切换。</value>
+    </data>
+    <data name="AddProvider">
+        <value>新增配置</value>
+    </data>
+    <data name="NamePlaceholder">
+        <value>名称</value>
+    </data>
+    <data name="ModelListPlaceholder">
+        <value>模型列表：每行一个，也可用逗号或分号分隔</value>
+    </data>
+    <data name="EndpointPlaceholder">
+        <value>端点（OpenAI 可留空）</value>
+    </data>
+    <data name="ApiKeyPlaceholder">
+        <value>API Key（留空保留已有密钥）</value>
+    </data>
+    <data name="Save">
+        <value>保存</value>
+    </data>
+    <data name="TestConnection">
+        <value>测试连接</value>
+    </data>
+    <data name="SkillManagement">
+        <value>技能管理</value>
+    </data>
+    <data name="SkillDescription">
+        <value>选择内置技能，或创建、编辑自定义技能。</value>
+    </data>
+    <data name="CustomSkill">
+        <value>自定义技能</value>
+    </data>
+    <data name="SkillNamePlaceholder">
+        <value>技能名称</value>
+    </data>
+    <data name="SkillPromptPlaceholder">
+        <value>System prompt（内置技能只读）</value>
+    </data>
+    <data name="SaveSkill">
+        <value>保存技能</value>
+    </data>
+    <data name="ShortcutDescription">
+        <value>设置应用内唤起聊天窗口的快捷键，修改后立即生效并自动保存。</value>
+    </data>
+    <data name="ChatShortcut">
+        <value>聊天窗口快捷键</value>
+    </data>
+    <data name="ShortcutHint">
+        <value>点击输入框后按下组合键完成设置。快捷键在主窗口和设置窗口中生效。</value>
+    </data>
+    <data name="ShortcutPlaceholder">
+        <value>点击后按下组合键，例如 Ctrl+Shift+Space</value>
+    </data>
+    <data name="SelectApiKey">
+        <value>选择 API Key</value>
+    </data>
+    <data name="Ready">
+        <value>已就绪。</value>
+    </data>
+    <data name="NoProvider">
+        <value>请先在 SQLite 配置中添加并启用服务商。</value>
+    </data>
+    <data name="NewConversationStatus">
+        <value>将于首次发送时创建新会话。</value>
+    </data>
+    <data name="Generating">
+        <value>正在生成回复…</value>
+    </data>
+    <data name="Completed">
+        <value>已完成。</value>
+    </data>
+    <data name="Stopped">
+        <value>已停止生成。</value>
+    </data>
+    <data name="ProviderSaved">
+        <value>服务商已保存。</value>
+    </data>
+    <data name="SkillSaved">
+        <value>技能已保存。</value>
+    </data>
+    <data name="AddingProvider">
+        <value>填写服务商配置后保存。</value>
+    </data>
+    <data name="AddingSkill">
+        <value>填写自定义技能后保存。</value>
+    </data>
+    <data name="SelectProviderFirst">
+        <value>请先选择一个已启用的服务商。</value>
+    </data>
+    <data name="Testing">
+        <value>正在测试连接…</value>
+    </data>
+    <data name="BuiltInSkillReadOnly">
+        <value>内置技能不可编辑；请新增自定义技能。</value>
+    </data>
+    <data name="Loading">
+        <value>正在加载配置…</value>
+    </data>
+    <data name="Delete">
+        <value>删除</value>
+    </data>
+    <data name="ProviderDeleted">
+        <value>服务商已删除。</value>
+    </data>
+    <data name="SkillDeleted">
+        <value>技能已删除。</value>
+    </data>
+    <data name="ShortcutCleared">
+        <value>快捷键已清除。</value>
+    </data>
+    <data name="StartupEnabled">
+        <value>已开启开机自启。</value>
+    </data>
+    <data name="StartupDisabled">
+        <value>已关闭开机自启。</value>
+    </data>
+    <data name="StartupPermissionRequired">
+        <value>需要系统权限，已打开系统启动项设置。</value>
+    </data>
+    <data name="AccentColor">
+        <value>主题色</value>
+    </data>
+    <data name="AccentColorDescription">
+        <value>选择预设颜色，或使用颜色选择器自定义 Chater 的主题色。</value>
+    </data>
+    <data name="CustomAccentColor">
+        <value>自定义颜色</value>
+    </data>
+    <data name="About">
+        <value>关于</value>
+    </data>
+    <data name="CurrentVersionLabel">
+        <value>当前版本</value>
+    </data>
+    <data name="CheckForUpdates">
+        <value>检查更新</value>
+    </data>
+    <data name="CheckingForUpdates">
+        <value>正在检查更新…</value>
+    </data>
+    <data name="NoUpdates">
+        <value>当前已是最新版本。</value>
+    </data>
+    <data name="UpdateAvailable">
+        <value>发现新版本，正在后台下载。</value>
+    </data>
+    <data name="UpdateReady">
+        <value>更新包已下载完成，等待确认。</value>
+    </data>
+    <data name="UpdateCheckFailed">
+        <value>更新失败：{0}</value>
+    </data>
+    <data name="UpdateDownloadTitle">
+        <value>Chater 有新版本</value>
+    </data>
+    <data name="UpdateDownloadMessage">
+        <value>发现 Chater 新版本，是否立即下载？</value>
+    </data>
+    <data name="UpdateInstallTitle">
+        <value>Chater 更新已就绪</value>
+    </data>
+    <data name="UpdateInstallMessage">
+        <value>更新包已下载完成，是否立即开始安装？</value>
+    </data>
+    <data name="UpdateVersionDetails">
+        <value>当前版本：{0}&#xA;新版本：{1}</value>
+    </data>
+    <data name="ReleaseDetails">
+        <value>发布说明：{0}</value>
+    </data>
+    <data name="Later">
+        <value>暂不更新</value>
+    </data>
+    <data name="DownloadNow">
+        <value>立即下载</value>
+    </data>
+    <data name="UpdateNow">
+        <value>立即安装</value>
+    </data>
+    <data name="DownloadingUpdate">
+        <value>正在下载更新…</value>
+    </data>
+    <data name="UpdateDownloadFailed">
+        <value>更新失败：{0}</value>
+    </data>
+    <data name="NewChatWindowShortcut">
+        <value>新建聊天窗口快捷键</value>
+    </data>
+    <data name="NewChatWindowShortcutHint">
+        <value>点击输入框后按下组合键。此快捷键每次都会新建聊天窗口。</value>
+    </data>
+    <data name="HistoryDeleted">
+        <value>会话已删除。</value>
+    </data>
+    <data name="Cancel">
+        <value>取消</value>
+    </data>
+    <data name="ConfirmDeleteTitle">
+        <value>确认删除</value>
+    </data>
+    <data name="ConfirmDeleteMessage">
+        <value>确定要删除“{0}”吗？此操作无法在应用中恢复。</value>
+    </data>
+    <data name="CopySelectedText">
+        <value>复制选中文字</value>
+    </data>
+    <data name="CopyMarkdownContent">
+        <value>复制 Markdown 消息</value>
+    </data>
+    <data name="TrayShowChat">
+        <value>打开聊天</value>
+    </data>
+    <data name="TrayShowSettings">
+        <value>打开设置</value>
+    </data>
+    <data name="TrayExit">
+        <value>退出</value>
+    </data>
 </root>
