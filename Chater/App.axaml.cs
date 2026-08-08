@@ -25,6 +25,9 @@ public partial class App : Application
     private LocalizationService? _localization;
     private bool _updateDialogOpen;
     internal bool IsExiting { get; private set; }
+
+    /// <summary>Exposes the DI container for settings page ViewModel resolution.</summary>
+    internal ServiceProvider? Services => _services;
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -107,6 +110,10 @@ public partial class App : Application
         var theme = settings.GetAsync(AppSettingsService.ThemeKey).GetAwaiter().GetResult()
             ?? AppSettingsService.DefaultTheme;
         AppSettingsService.ApplyTheme(theme);
+
+        var accent = settings.GetAsync(AppSettingsService.AccentColorKey).GetAwaiter().GetResult()
+            ?? AppSettingsService.DefaultAccentColor;
+        AppSettingsService.ApplyAccentColor(accent);
     }
 
     private void InitializeTrayMenuLocalization()

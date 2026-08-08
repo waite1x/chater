@@ -12,21 +12,21 @@ public partial class HistorySettingsView : UserControl
 
     private void OnHistoryScrollChanged(object? sender, ScrollChangedEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel viewModel || sender is not ScrollViewer scrollViewer) return;
+        if (DataContext is not HistorySettingsViewModel viewModel || sender is not ScrollViewer scrollViewer) return;
         if (scrollViewer.Offset.Y + scrollViewer.Viewport.Height >= scrollViewer.Extent.Height - 80)
             viewModel.LoadMoreHistoryCommand.Execute(null);
     }
 
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
-        if (DataContext is MainWindowViewModel viewModel)
+        if (DataContext is HistorySettingsViewModel viewModel)
             viewModel.LoadHistoryCommand.Execute(null);
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        if (DataContext is MainWindowViewModel viewModel)
+        if (DataContext is HistorySettingsViewModel viewModel)
             viewModel.LoadHistoryCommand.Execute(null);
     }
 }

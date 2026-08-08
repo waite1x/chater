@@ -10,7 +10,7 @@ public partial class ApiKeySettingsView : UserControl
 
     private void OnFetchedModelClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: string modelId } && DataContext is MainWindowViewModel vm)
+        if (sender is Button { DataContext: string modelId } && DataContext is ApiKeySettingsViewModel vm)
         {
             vm.AddFetchedModelCommand.Execute(modelId);
         }

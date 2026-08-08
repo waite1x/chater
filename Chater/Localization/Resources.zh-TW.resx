@@ -33,9 +33,6 @@
     <data name="History">
         <value>對話歷史</value>
     </data>
-    <data name="HistoryDescription">
-        <value>查看全部歷史對話，選擇後可在新的聊天視窗中繼續。</value>
-    </data>
     <data name="StartConversation">
         <value>開始對話</value>
     </data>
@@ -53,9 +50,6 @@
     </data>
     <data name="Stop">
         <value>停止</value>
-    </data>
-    <data name="ThemeDescription">
-        <value>選擇 Chater 的介面主題，修改後立即生效並自動儲存。</value>
     </data>
     <data name="Theme">
         <value>主題</value>
@@ -87,14 +81,8 @@
     <data name="ApiKeyManagement">
         <value>API Key 管理</value>
     </data>
-    <data name="ProviderDescription">
-        <value>管理服務商設定，支援多服務商與 Key 切換。</value>
-    </data>
     <data name="AddProvider">
         <value>新增設定</value>
-    </data>
-    <data name="NamePlaceholder">
-        <value>名稱</value>
     </data>
     <data name="ProviderTypeLabel">
         <value>模型提供商</value>
@@ -132,14 +120,8 @@
     <data name="Save">
         <value>儲存</value>
     </data>
-    <data name="TestConnection">
-        <value>測試連線</value>
-    </data>
     <data name="SkillManagement">
         <value>技能管理</value>
-    </data>
-    <data name="SkillDescription">
-        <value>選擇內建技能，或建立、編輯自訂技能。</value>
     </data>
     <data name="CustomSkill">
         <value>自訂技能</value>
@@ -152,9 +134,6 @@
     </data>
     <data name="SaveSkill">
         <value>儲存技能</value>
-    </data>
-    <data name="ShortcutDescription">
-        <value>設定應用程式內喚起聊天視窗的快捷鍵，修改後立即生效並自動儲存。</value>
     </data>
     <data name="ChatShortcut">
         <value>聊天視窗快捷鍵</value>
@@ -200,15 +179,6 @@
     </data>
     <data name="SelectProviderFirst">
         <value>請先選擇一個已啟用的服務商。</value>
-    </data>
-    <data name="Testing">
-        <value>正在測試連線…</value>
-    </data>
-    <data name="BuiltInSkillReadOnly">
-        <value>內建技能不可編輯；請新增自訂技能。</value>
-    </data>
-    <data name="Loading">
-        <value>正在載入設定…</value>
     </data>
     <data name="Delete">
         <value>刪除</value>

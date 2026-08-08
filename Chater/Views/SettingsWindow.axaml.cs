@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Chater.ViewModels;
 using Chater.Views.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 
 namespace Chater.Views;
@@ -60,27 +61,40 @@ public partial class SettingsWindow : Window
         finally { _updatingNavigation = false; }
 
         DisposeCurrentPage();
-        if (_viewModel is null) return;
 
-        _currentPage = pageKey switch
+        if (App.Current is not App app || app.Services is null) return;
+
+        (_currentPage, var pageVm) = pageKey switch
         {
-            MainWindowViewModel.GeneralSettingsPage => new GeneralSettingsView(),
-            MainWindowViewModel.ApiKeySettingsPage => new ApiKeySettingsView(),
-            MainWindowViewModel.SkillsSettingsPage => new SkillSettingsView(),
-            MainWindowViewModel.ShortcutSettingsPage => new ShortcutSettingsView(),
-            MainWindowViewModel.HistorySettingsPage => new HistorySettingsView(),
-            MainWindowViewModel.AboutSettingsPage => new AboutSettingsView(),
-            _ => new GeneralSettingsView()
+            MainWindowViewModel.GeneralSettingsPage => CreatePage<GeneralSettingsView, GeneralSettingsViewModel>(app.Services, vm => vm.LoadAsync()),
+            MainWindowViewModel.ApiKeySettingsPage => CreatePage<ApiKeySettingsView, ApiKeySettingsViewModel>(app.Services, vm => vm.LoadAsync()),
+            MainWindowViewModel.SkillsSettingsPage => CreatePage<SkillSettingsView, SkillSettingsViewModel>(app.Services, vm => vm.LoadAsync()),
+            MainWindowViewModel.ShortcutSettingsPage => CreatePage<ShortcutSettingsView, ShortcutSettingsViewModel>(app.Services, vm => { vm.LoadFromState(); return Task.CompletedTask; }),
+            MainWindowViewModel.HistorySettingsPage => CreatePage<HistorySettingsView, HistorySettingsViewModel>(app.Services, _ => Task.CompletedTask),
+            MainWindowViewModel.AboutSettingsPage => CreatePage<AboutSettingsView, AboutSettingsViewModel>(app.Services, vm => { vm.LoadFromState(); return Task.CompletedTask; }),
+            _ => CreatePage<GeneralSettingsView, GeneralSettingsViewModel>(app.Services, vm => vm.LoadAsync())
         };
-        _currentPage.DataContext = _viewModel;
-        SettingsContent.Content = _currentPage;
+
+        if (_currentPage is not null)
+            SettingsContent.Content = _currentPage;
+    }
+
+    private static (Control?, SettingsViewModelBase?) CreatePage<TView, TVm>(IServiceProvider services, Func<TVm, Task> initialize)
+        where TView : Control, new()
+        where TVm : SettingsViewModelBase
+    {
+        var view = new TView();
+        var vm = services.GetRequiredService<TVm>();
+        view.DataContext = vm;
+        _ = initialize(vm);
+        return (view, vm);
     }
 
     private void DisposeCurrentPage()
     {
-        SettingsContent.Content = null;
-        if (_currentPage is IDisposable disposable)
+        if (_currentPage?.DataContext is IDisposable disposable)
             disposable.Dispose();
+        SettingsContent.Content = null;
         _currentPage = null;
     }
 
@@ -100,5 +114,4 @@ public partial class SettingsWindow : Window
         DisposeCurrentPage();
         base.OnClosed(e);
     }
-
 }

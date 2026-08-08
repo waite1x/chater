@@ -92,7 +92,7 @@ public partial class SkillSettingsView : UserControl
 
     private async void OnSkillDrop(object? sender, DragEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel viewModel || e.DataTransfer.TryGetText() is not string draggedId)
+        if (DataContext is not SkillSettingsViewModel viewModel || e.DataTransfer.TryGetText() is not string draggedId)
         {
             return;
         }

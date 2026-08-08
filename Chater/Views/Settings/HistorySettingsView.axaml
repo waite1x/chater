@@ -3,43 +3,40 @@
              xmlns:vm="using:Chater.ViewModels"
              xmlns:local="using:Chater.Views"
              x:Class="Chater.Views.Settings.HistorySettingsView"
-             x:DataType="vm:MainWindowViewModel"
+             x:DataType="vm:HistorySettingsViewModel"
              DataContextChanged="OnDataContextChanged">
     <Grid RowDefinitions="Auto,*" RowSpacing="12">
-        <StackPanel Spacing="4">
+        <DockPanel HorizontalSpacing="4" LastChildFill="True">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Classes="primary-button" Command="{Binding DeleteHistoryConversationCommand}">
+                    <TextBlock Text="{Binding Localization[Delete]}"/>
+                </Button>
+                <Button Classes="primary-button" Command="{Binding StartHistoryConversationCommand}">
+                    <TextBlock Text="{Binding Localization[StartConversation]}"/>
+                </Button>
+            </StackPanel>
             <TextBlock Text="{Binding Localization[History]}" FontSize="22" FontWeight="Bold"/>
-            <TextBlock Text="{Binding Localization[HistoryDescription]}" Opacity="0.7"/>
-        </StackPanel>
+        </DockPanel>
         <Grid Grid.Row="1" ColumnDefinitions="220,*" ColumnSpacing="14">
-            <ScrollViewer x:Name="HistoryScrollViewer" ScrollChanged="OnHistoryScrollChanged">
-                <ListBox ItemsSource="{Binding HistoryConversations}"
-                         BorderThickness="1"
-                         CornerRadius="8"
-                         SelectedItem="{Binding SelectedHistoryConversation, Mode=TwoWay}"
-                         Background="Transparent">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Spacing="3">
-                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap"/>
-                                <TextBlock Text="{Binding DisplayUpdatedAt}" FontSize="11" Opacity="0.65"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </ScrollViewer>
-            <Grid Grid.Column="1" RowDefinitions="*,Auto" RowSpacing="8">
-                <Border Classes="card" Padding="12">
-                    <local:ConversationMessagesView ItemsSource="{Binding HistoryMessages}"/>
-                </Border>
-                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                    <Button Classes="primary-button" Command="{Binding DeleteHistoryConversationCommand}">
-                        <TextBlock Text="{Binding Localization[Delete]}"/>
-                    </Button>
-                    <Button Classes="primary-button" Command="{Binding StartHistoryConversationCommand}">
-                        <TextBlock Text="{Binding Localization[StartConversation]}"/>
-                    </Button>
-                </StackPanel>
-            </Grid>
+            <Border Classes="card">
+                <ScrollViewer x:Name="HistoryScrollViewer" ScrollChanged="OnHistoryScrollChanged">
+                    <ListBox ItemsSource="{Binding HistoryConversations}"
+                             SelectedItem="{Binding SelectedHistoryConversation, Mode=TwoWay}"
+                             Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Spacing="3">
+                                    <TextBlock Text="{Binding Title}" TextWrapping="Wrap"/>
+                                    <TextBlock Text="{Binding DisplayUpdatedAt}" FontSize="11" Opacity="0.65"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </Border>
+            <Border Grid.Column="1" Classes="card" Padding="12">
+                <local:ConversationMessagesView ItemsSource="{Binding HistoryMessages}"/>
+            </Border>
         </Grid>
     </Grid>
 </UserControl>

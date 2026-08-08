@@ -3,11 +3,9 @@
              xmlns:vm="using:Chater.ViewModels"
              xmlns:picker="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ColorPicker"
              x:Class="Chater.Views.Settings.GeneralSettingsView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:GeneralSettingsViewModel">
     <StackPanel Spacing="16">
         <TextBlock Text="{Binding Localization[GeneralSettings]}" FontSize="22" FontWeight="Bold"/>
-        <TextBlock Text="{Binding Localization[ThemeDescription]}"
-                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
         <Border Classes="card" Padding="14">
             <DockPanel>
                 <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}">

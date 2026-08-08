@@ -11,7 +11,7 @@ public partial class ShortcutSettingsView : UserControl
 
     private void OnShortcutKeyDown(object? sender, KeyEventArgs e)
     {
-        if (DataContext is MainWindowViewModel viewModel && ShortcutFormatter.TryFormat(e.Key, e.KeyModifiers, out var shortcut))
+        if (DataContext is ShortcutSettingsViewModel viewModel && ShortcutFormatter.TryFormat(e.Key, e.KeyModifiers, out var shortcut))
         {
             viewModel.ChatShortcut = shortcut;
             e.Handled = true;
@@ -20,7 +20,7 @@ public partial class ShortcutSettingsView : UserControl
 
     private void OnNewChatWindowShortcutKeyDown(object? sender, KeyEventArgs e)
     {
-        if (DataContext is MainWindowViewModel viewModel && ShortcutFormatter.TryFormat(e.Key, e.KeyModifiers, out var shortcut))
+        if (DataContext is ShortcutSettingsViewModel viewModel && ShortcutFormatter.TryFormat(e.Key, e.KeyModifiers, out var shortcut))
         {
             viewModel.NewChatWindowShortcut = shortcut;
             e.Handled = true;

@@ -3,7 +3,7 @@
              xmlns:vm="using:Chater.ViewModels"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Chater.Views.Settings.AboutSettingsView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:AboutSettingsViewModel">
     <StackPanel Spacing="16">
         <TextBlock Text="{Binding Localization[About]}" FontSize="22" FontWeight="Bold"/>
         <Border Classes="card" Padding="16">

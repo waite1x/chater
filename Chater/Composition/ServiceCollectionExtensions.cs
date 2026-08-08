@@ -44,6 +44,12 @@ public static class ServiceCollectionExtensions
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<MainWindow>();
         services.AddTransient<SettingsWindow>();
+        services.AddTransient<ApiKeySettingsViewModel>();
+        services.AddTransient<GeneralSettingsViewModel>();
+        services.AddTransient<ShortcutSettingsViewModel>();
+        services.AddTransient<SkillSettingsViewModel>();
+        services.AddTransient<HistorySettingsViewModel>();
+        services.AddTransient<AboutSettingsViewModel>();
 
         services.AddChaterAi();
         return services;

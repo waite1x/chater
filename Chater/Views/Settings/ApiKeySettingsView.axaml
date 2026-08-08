@@ -3,16 +3,14 @@
              xmlns:vm="using:Chater.ViewModels"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Chater.Views.Settings.ApiKeySettingsView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:ApiKeySettingsViewModel">
     <Grid ColumnDefinitions="220,*" ColumnSpacing="10">
         <!-- Left: Provider List -->
         <Grid RowDefinitions="Auto,*" Margin="0,0,0,0">
             <StackPanel Spacing="4">
-                <TextBlock Text="{Binding Localization[ApiKeyManagement]}" FontSize="18" FontWeight="Bold"/>
-                <TextBlock Text="{Binding Localization[ProviderDescription]}" FontSize="12"
-                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Localization[ApiKeyManagement]}" FontSize="22" FontWeight="Bold"/>
             </StackPanel>
-            <ScrollViewer Grid.Row="1">
+            <ScrollViewer Grid.Row="1" Margin="0,8,0,0">
                 <ListBox
                     ItemsSource="{Binding Providers}"
                     Background="Transparent"

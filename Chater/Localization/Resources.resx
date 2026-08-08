@@ -39,9 +39,6 @@
     <data name="History">
         <value>History</value>
     </data>
-    <data name="HistoryDescription">
-        <value>View all past conversations and continue a selected one in a new chat window.</value>
-    </data>
     <data name="StartConversation">
         <value>Start conversation</value>
     </data>
@@ -59,9 +56,6 @@
     </data>
     <data name="Stop">
         <value>Stop</value>
-    </data>
-    <data name="ThemeDescription">
-        <value>Choose Chater's interface theme. Changes apply and save immediately.</value>
     </data>
     <data name="Theme">
         <value>Theme</value>
@@ -93,14 +87,8 @@
     <data name="ApiKeyManagement">
         <value>API Key management</value>
     </data>
-    <data name="ProviderDescription">
-        <value>Manage providers and switch between API keys.</value>
-    </data>
     <data name="AddProvider">
         <value>Add provider</value>
-    </data>
-    <data name="NamePlaceholder">
-        <value>Name</value>
     </data>
     <data name="ProviderTypeLabel">
         <value>Model Provider</value>
@@ -138,14 +126,8 @@
     <data name="Save">
         <value>Save</value>
     </data>
-    <data name="TestConnection">
-        <value>Test connection</value>
-    </data>
     <data name="SkillManagement">
         <value>Skill management</value>
-    </data>
-    <data name="SkillDescription">
-        <value>Choose a built-in skill or create and edit a custom one.</value>
     </data>
     <data name="CustomSkill">
         <value>Custom skill</value>
@@ -158,9 +140,6 @@
     </data>
     <data name="SaveSkill">
         <value>Save skill</value>
-    </data>
-    <data name="ShortcutDescription">
-        <value>Set the shortcut to show the chat window. Changes apply and save immediately.</value>
     </data>
     <data name="ChatShortcut">
         <value>Chat window shortcut</value>
@@ -206,15 +185,6 @@
     </data>
     <data name="SelectProviderFirst">
         <value>Select an enabled provider first.</value>
-    </data>
-    <data name="Testing">
-        <value>Testing connection…</value>
-    </data>
-    <data name="BuiltInSkillReadOnly">
-        <value>Built-in skills cannot be edited; add a custom skill instead.</value>
-    </data>
-    <data name="Loading">
-        <value>Loading settings…</value>
     </data>
     <data name="Delete">
         <value>Delete</value>

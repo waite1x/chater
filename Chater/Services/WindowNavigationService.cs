@@ -78,7 +78,6 @@ public sealed class WindowNavigationService(IServiceProvider services) : IWindow
         var isNewViewModel = _settingsViewModel is null;
         _settingsViewModel ??= services.GetRequiredService<MainWindowViewModel>();
         var viewModel = _settingsViewModel;
-        viewModel.SettingsTabIndex = compatibilityIndex;
         viewModel.SelectSettingsPage(pageKey);
         window.DataContext = viewModel;
         if (!window.IsVisible)

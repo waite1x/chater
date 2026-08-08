@@ -3,10 +3,9 @@
              xmlns:vm="using:Chater.ViewModels"
              xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              x:Class="Chater.Views.Settings.ShortcutSettingsView"
-             x:DataType="vm:MainWindowViewModel">
+             x:DataType="vm:ShortcutSettingsViewModel">
     <StackPanel Spacing="16">
         <TextBlock Text="{Binding Localization[Shortcut]}" FontSize="22" FontWeight="Bold"/>
-        <TextBlock Text="{Binding Localization[ShortcutDescription]}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
         <Border Classes="card delete-action-container" Padding="14">
             <StackPanel Spacing="8">
                 <TextBlock Text="{Binding Localization[ChatShortcut]}" FontWeight="SemiBold"/>
