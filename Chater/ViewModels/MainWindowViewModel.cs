@@ -195,6 +195,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _providerApiKey = string.Empty;
 
+    /// <summary>Models fetched from the current provider's API for the user to select from.</summary>
+    public ObservableCollection<string> FetchedModels { get; } = [];
+
+    [ObservableProperty]
+    private bool _isFetchingModels;
+
     [ObservableProperty]
     private string _skillName = string.Empty;
 
@@ -637,18 +643,50 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task TestProviderConnectionAsync()
+    private async Task FetchModelsAsync()
     {
+        if (IsFetchingModels) return;
+        IsFetchingModels = true;
         try
         {
-            StatusMessage = T("Testing");
-            var result = await _providerService.TestConnectionAsync(BuildEditedProvider()).ConfigureAwait(false);
-            StatusMessage = result.Message;
+            var provider = BuildEditedProvider();
+            if (provider.ProviderType == ProviderType.Anthropic)
+            {
+                StatusMessage = T("FetchModelsNotSupported");
+                return;
+            }
+
+            StatusMessage = T("FetchingModels");
+            FetchedModels.Clear();
+            var models = await _providerService.FetchModelsAsync(provider).ConfigureAwait(false);
+            foreach (var model in models)
+            {
+                FetchedModels.Add(model);
+            }
+
+            StatusMessage = string.Format(T("FetchedModelsCount"), FetchedModels.Count);
         }
         catch (Exception exception)
         {
-            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Provider connection test failed");
+            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Failed to fetch models");
             StatusMessage = exception.Message;
+        }
+        finally
+        {
+            IsFetchingModels = false;
+        }
+    }
+
+    [RelayCommand]
+    private void AddFetchedModel(string? modelId)
+    {
+        if (string.IsNullOrWhiteSpace(modelId)) return;
+        var current = ProviderModelId
+            .Split(['\r', '\n', ',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (current.Add(modelId.Trim()))
+        {
+            ProviderModelId = string.Join(Environment.NewLine, current);
         }
     }
 

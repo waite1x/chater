@@ -96,6 +96,30 @@
     <data name="NamePlaceholder">
         <value>名称</value>
     </data>
+    <data name="ProviderTypeLabel">
+        <value>模型提供商</value>
+    </data>
+    <data name="ApiKeyLabel">
+        <value>API 秘钥</value>
+    </data>
+    <data name="EndpointLabel">
+        <value>端点</value>
+    </data>
+    <data name="ModelListLabel">
+        <value>模型列表</value>
+    </data>
+    <data name="FetchModels">
+        <value>从 API 获取模型列表</value>
+    </data>
+    <data name="FetchingModels">
+        <value>正在获取模型列表…</value>
+    </data>
+    <data name="FetchedModelsCount">
+        <value>已获取 {0} 个模型，点击添加。</value>
+    </data>
+    <data name="FetchModelsNotSupported">
+        <value>此提供商不支持获取模型列表。</value>
+    </data>
     <data name="ModelListPlaceholder">
         <value>模型列表：每行一个，也可用逗号或分号分隔</value>
     </data>

@@ -71,4 +71,54 @@ public sealed class ProviderConnectionTester(HttpClient? httpClient = null) : IP
         HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout => new(false, "service_unavailable", "服务商暂不可用，请稍后重试。"),
         _ => new(false, "unexpected_response", $"服务商返回 HTTP {(int)statusCode}。")
     };
+
+    public async Task<IReadOnlyList<string>> FetchModelsAsync(ApiProvider provider, CancellationToken cancellationToken = default)
+    {
+        ProviderService.Validate(provider);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(15));
+        using var request = CreateRequest(provider);
+        using var response = await _httpClient.SendAsync(request, timeout.Token).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
+
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        return provider.ProviderType == ProviderType.Ollama
+            ? ParseOllamaModels(doc)
+            : ParseOpenAiModels(doc);
+    }
+
+    private static IReadOnlyList<string> ParseOpenAiModels(System.Text.Json.JsonDocument doc)
+    {
+        var models = new List<string>();
+        if (doc.RootElement.TryGetProperty("data", out var data) && data.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var item in data.EnumerateArray())
+            {
+                if (item.TryGetProperty("id", out var id))
+                {
+                    models.Add(id.GetString() ?? string.Empty);
+                }
+            }
+        }
+
+        return models;
+    }
+
+    private static IReadOnlyList<string> ParseOllamaModels(System.Text.Json.JsonDocument doc)
+    {
+        var models = new List<string>();
+        if (doc.RootElement.TryGetProperty("models", out var data) && data.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var item in data.EnumerateArray())
+            {
+                if (item.TryGetProperty("name", out var name))
+                {
+                    models.Add(name.GetString() ?? string.Empty);
+                }
+            }
+        }
+
+        return models;
+    }
 }

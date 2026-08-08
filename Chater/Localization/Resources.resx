@@ -102,6 +102,30 @@
     <data name="NamePlaceholder">
         <value>Name</value>
     </data>
+    <data name="ProviderTypeLabel">
+        <value>Model Provider</value>
+    </data>
+    <data name="ApiKeyLabel">
+        <value>API Key</value>
+    </data>
+    <data name="EndpointLabel">
+        <value>Endpoint</value>
+    </data>
+    <data name="ModelListLabel">
+        <value>Model List</value>
+    </data>
+    <data name="FetchModels">
+        <value>Fetch models from API</value>
+    </data>
+    <data name="FetchingModels">
+        <value>Fetching model list…</value>
+    </data>
+    <data name="FetchedModelsCount">
+        <value>Fetched {0} model(s). Click to add.</value>
+    </data>
+    <data name="FetchModelsNotSupported">
+        <value>This provider does not support model fetching.</value>
+    </data>
     <data name="ModelListPlaceholder">
         <value>Models: one per line, comma, or semicolon separated</value>
     </data>

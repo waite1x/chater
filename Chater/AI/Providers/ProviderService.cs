@@ -30,6 +30,12 @@ namespace Chater.AI.Providers
             return (_connectionTester ?? throw new InvalidOperationException("Provider connection testing is not configured.")).TestAsync(provider, cancellationToken);
         }
 
+        public Task<IReadOnlyList<string>> FetchModelsAsync(ApiProvider provider, CancellationToken cancellationToken = default)
+        {
+            Validate(provider);
+            return (_connectionTester ?? throw new InvalidOperationException("Provider connection testing is not configured.")).FetchModelsAsync(provider, cancellationToken);
+        }
+
         /// <summary>
         /// Validates user-editable provider fields before they reach the database or a network client.
         /// </summary>
