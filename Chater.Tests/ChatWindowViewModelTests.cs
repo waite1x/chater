@@ -6,6 +6,7 @@ using Chater.AI.Tools;
 using Chater.Data;
 using Chater.Services;
 using Chater.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Chater.Tests;
 
@@ -14,54 +15,44 @@ public sealed class ChatWindowViewModelTests : IDisposable
     private readonly string _path = Path.Combine(Path.GetTempPath(), "Chater.Tests", $"{Guid.NewGuid():N}.db");
 
     [Fact]
-    public async Task LoadAsync_SelectsDefaultEnabledProviderAndBuiltInSkill()
+    public async Task PrepareNewSession_SelectsDefaultProviderAndFirstSkill()
     {
         var database = new SqliteDatabase(_path);
         await new DatabaseMigrator(database).MigrateAsync();
-        var now = DateTimeOffset.UtcNow;
-        await new ApiProviderRepository(database).SaveAsync(new ApiProvider("provider", "Default", ProviderType.OpenAi, "key", null, "model", true, true, now, now));
         var viewModel = CreateViewModel(database);
+        viewModel.AppState.Providers.Add(CreateProvider());
+        viewModel.AppState.Skills.Add(CreateSkill());
 
-        await viewModel.LoadAsync();
+        viewModel.PrepareNewSession();
 
         Assert.Equal("provider", viewModel.SelectedProvider?.Id);
-        Assert.NotNull(viewModel.SelectedSkill);
-        Assert.Equal("已就绪。", viewModel.StatusMessage);
+        Assert.Equal("builtin-chat", viewModel.SelectedSkill?.Id);
     }
 
     [Fact]
-    public async Task LoadAsync_ExposesAllModelsAndSelectsTheActiveModel()
+    public async Task SelectedProvider_ExposesAllModelsAndSelectsTheActiveModel()
     {
         var database = new SqliteDatabase(_path);
         await new DatabaseMigrator(database).MigrateAsync();
-        var now = DateTimeOffset.UtcNow;
-        await new ApiProviderRepository(database).SaveAsync(new ApiProvider("provider", "Default", ProviderType.OpenAi, "secret", null, "model-a", true, true, now, now)
-        {
-            ModelIds = ["model-a", "model-b"]
-        });
         var viewModel = CreateViewModel(database);
+        viewModel.AppState.Providers.Add(CreateProvider(modelIds: ["model-a", "model-b"]));
 
-        await viewModel.LoadAsync();
+        viewModel.PrepareNewSession();
 
         Assert.Equal(["model-a", "model-b"], viewModel.AvailableModels);
         Assert.Equal("model-a", viewModel.SelectedModelId);
     }
 
     [Fact]
-    public async Task ProviderModelMenu_SelectsProviderAndModelTogether()
+    public async Task SelectingModel_UpdatesSelectionAndDisplayNames()
     {
         var database = new SqliteDatabase(_path);
         await new DatabaseMigrator(database).MigrateAsync();
-        var now = DateTimeOffset.UtcNow;
-        await new ApiProviderRepository(database).SaveAsync(new ApiProvider("provider", "Default", ProviderType.OpenAi, "secret", null, "model-a", true, true, now, now)
-        {
-            ModelIds = ["model-a", "model-b"]
-        });
         var viewModel = CreateViewModel(database);
-        await viewModel.LoadAsync();
+        viewModel.AppState.Providers.Add(CreateProvider(modelIds: ["model-a", "model-b"]));
+        viewModel.PrepareNewSession();
 
-        var model = Assert.Single(viewModel.ProviderModelMenuItems).Models.Single(item => item.ModelId == "model-b");
-        model.SelectCommand.Execute(null);
+        viewModel.SelectedModelId = "model-b";
 
         Assert.Equal("provider", viewModel.SelectedProvider?.Id);
         Assert.Equal("model-b", viewModel.SelectedModelId);
@@ -70,10 +61,9 @@ public sealed class ChatWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task NavigationCommands_OpenCorrespondingWorkspaceWindows()
+    public void NavigationCommands_OpenCorrespondingWorkspaceWindows()
     {
         var database = new SqliteDatabase(_path);
-        await new DatabaseMigrator(database).MigrateAsync();
         var navigation = new RecordingNavigation();
         var viewModel = CreateViewModel(database, navigation);
 
@@ -90,14 +80,29 @@ public sealed class ChatWindowViewModelTests : IDisposable
             File.Delete(_path);
     }
 
-    private static ChatWindowViewModel CreateViewModel(SqliteDatabase database, IWindowNavigationService? navigation = null) => new(
-        new ProviderService(new ApiProviderRepository(database)),
-        new SkillRepository(database),
-        new ConversationService(new ConversationRepository(database)),
-        new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([])),
-        new ConversationRepository(database),
-        new MessageRepository(database),
-        navigation);
+    private static ChatWindowViewModel CreateViewModel(SqliteDatabase database, IWindowNavigationService? navigation = null)
+    {
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var appState = new AppState(new LazyServiceProvider(services));
+        var chatWindowManager = new ChatWindowManager(services.GetRequiredService<IServiceScopeFactory>(), appState);
+        return new ChatWindowViewModel(
+            new ConversationService(new ConversationRepository(database)),
+            new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([])),
+            new ConversationRepository(database),
+            new MessageRepository(database),
+            appState,
+            chatWindowManager,
+            navigation);
+    }
+
+    private static ApiProvider CreateProvider(string[]? modelIds = null) => new(
+        "provider", "Default", ProviderType.OpenAi, "key", null, "model-a", true, true, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)
+    {
+        ModelIds = modelIds ?? ["model-a"]
+    };
+
+    private static Skill CreateSkill() => new(
+        "builtin-chat", "通用对话", null, "你是 Chater，一个有用的 AI 助手。", "💬", true, true, 0, 1, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
     private sealed class RecordingNavigation : IWindowNavigationService
     {
@@ -106,6 +111,5 @@ public sealed class ChatWindowViewModelTests : IDisposable
 
         public void ShowSettings() => SettingsCount++;
         public void ShowSkillSettings() => SkillSettingsCount++;
-        public void ShowChat() { }
     }
 }

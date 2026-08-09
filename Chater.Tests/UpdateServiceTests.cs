@@ -1,6 +1,7 @@
 using System.Net;
 using System.Runtime.InteropServices;
 using Chater.Services;
+using Microsoft.Extensions.DependencyInjection;
 using AppState = Chater.ViewModels.AppState;
 
 namespace Chater.Tests;
@@ -34,7 +35,8 @@ public sealed class UpdateServiceTests
         var handler = new StubHandler($$"""
             {"tag_name":"v9.9.9","name":"Chater 9.9.9","html_url":"https://github.com/waite1x/chater/releases/tag/v9.9.9","draft":false,"prerelease":false,"assets":[{"name":"{{assetName}}","browser_download_url":"https://example.com/update"}]}
             """);
-        var state = new AppState();
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var state = new AppState(new LazyServiceProvider(services));
         var service = new UpdateService(new AppPaths(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))), state, new HttpClient(handler));
         AppUpdateInfo? raised = null;
         service.UpdateAvailable += (_, update) => raised = update;
