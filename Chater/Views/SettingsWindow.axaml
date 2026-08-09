@@ -35,7 +35,7 @@
         <Grid Grid.Row="1" ColumnDefinitions="auto,*">
             <Border Padding="16"
                     BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                    BorderThickness="0,0,1,0"
+                    BorderThickness="0,0,0,0"
                     >
                 <StackPanel Width="120" Spacing="10">
                     <TextBlock Text="{Binding Localization[Settings]}" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
@@ -80,7 +80,7 @@
                     </ListBox>
                 </StackPanel>
             </Border>
-            <ContentControl x:Name="SettingsContent" Grid.Column="1" Margin="24"/>
+            <ContentControl x:Name="SettingsContent" Grid.Column="1" Margin="0,24,24,24"/>
         </Grid>
         <!-- Native non-client hit targets keep the borderless window resizable. -->
         <Border Grid.RowSpan="2" Height="6" VerticalAlignment="Top" Background="Transparent"

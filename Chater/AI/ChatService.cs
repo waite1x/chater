@@ -185,9 +185,9 @@ public sealed class ChatService(
             DisableFileMemory = true,
             DisableAgentSkillsProvider = true,
             DisableWebSearch = true,
-            MaxContextWindowTokens = 64_000,
-            MaxOutputTokens = 8_000,
-            MaximumIterationsPerRequest = 12
+            MaxContextWindowTokens = 128_000,
+            MaxOutputTokens = 16_384,
+            MaximumIterationsPerRequest = 12,
         });
     }
 

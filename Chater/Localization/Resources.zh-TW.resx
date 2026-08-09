@@ -19,7 +19,7 @@
         <value>API Key</value>
     </data>
     <data name="Skills">
-        <value>技能</value>
+        <value>提示詞</value>
     </data>
     <data name="Shortcut">
         <value>快捷鍵</value>
@@ -37,7 +37,7 @@
         <value>開始對話</value>
     </data>
     <data name="SkillPlaceholder">
-        <value>選擇技能</value>
+        <value>選擇提示詞</value>
     </data>
     <data name="ModelPlaceholder">
         <value>選擇模型</value>
@@ -121,19 +121,19 @@
         <value>儲存</value>
     </data>
     <data name="SkillManagement">
-        <value>技能管理</value>
+        <value>提示詞管理</value>
     </data>
     <data name="CustomSkill">
-        <value>自訂技能</value>
+        <value>自訂提示詞</value>
     </data>
     <data name="SkillNamePlaceholder">
-        <value>技能名稱</value>
+        <value>提示詞名稱</value>
     </data>
     <data name="SkillPromptPlaceholder">
-        <value>System prompt（內建技能唯讀）</value>
+        <value>System prompt（內建提示詞唯讀）</value>
     </data>
     <data name="SaveSkill">
-        <value>儲存技能</value>
+        <value>儲存提示詞</value>
     </data>
     <data name="ChatShortcut">
         <value>聊天視窗快捷鍵</value>
@@ -169,13 +169,13 @@
         <value>服務商已儲存。</value>
     </data>
     <data name="SkillSaved">
-        <value>技能已儲存。</value>
+        <value>提示詞已儲存。</value>
     </data>
     <data name="AddingProvider">
         <value>填寫服務商設定後儲存。</value>
     </data>
     <data name="AddingSkill">
-        <value>填寫自訂技能後儲存。</value>
+        <value>填寫自訂提示詞後儲存。</value>
     </data>
     <data name="SelectProviderFirst">
         <value>請先選擇一個已啟用的服務商。</value>
@@ -187,7 +187,7 @@
         <value>服務商已刪除。</value>
     </data>
     <data name="SkillDeleted">
-        <value>技能已刪除。</value>
+        <value>提示詞已刪除。</value>
     </data>
     <data name="ShortcutCleared">
         <value>快捷鍵已清除。</value>

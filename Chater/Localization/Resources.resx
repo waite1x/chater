@@ -25,7 +25,7 @@
         <value>API Key</value>
     </data>
     <data name="Skills">
-        <value>Skills</value>
+        <value>Prompts</value>
     </data>
     <data name="Shortcut">
         <value>Shortcuts</value>
@@ -43,7 +43,7 @@
         <value>Start conversation</value>
     </data>
     <data name="SkillPlaceholder">
-        <value>Select skill</value>
+        <value>Select prompt</value>
     </data>
     <data name="ModelPlaceholder">
         <value>Select model</value>
@@ -127,19 +127,19 @@
         <value>Save</value>
     </data>
     <data name="SkillManagement">
-        <value>Skill management</value>
+        <value>Prompt management</value>
     </data>
     <data name="CustomSkill">
-        <value>Custom skill</value>
+        <value>Custom prompt</value>
     </data>
     <data name="SkillNamePlaceholder">
-        <value>Skill name</value>
+        <value>Prompt name</value>
     </data>
     <data name="SkillPromptPlaceholder">
-        <value>System prompt (built-in skills are read-only)</value>
+        <value>System prompt (built-in prompts are read-only)</value>
     </data>
     <data name="SaveSkill">
-        <value>Save skill</value>
+        <value>Save prompt</value>
     </data>
     <data name="ChatShortcut">
         <value>Chat window shortcut</value>
@@ -175,13 +175,13 @@
         <value>Provider saved.</value>
     </data>
     <data name="SkillSaved">
-        <value>Skill saved.</value>
+        <value>Prompt saved.</value>
     </data>
     <data name="AddingProvider">
         <value>Enter provider settings and save.</value>
     </data>
     <data name="AddingSkill">
-        <value>Enter a custom skill and save.</value>
+        <value>Enter a custom prompt and save.</value>
     </data>
     <data name="SelectProviderFirst">
         <value>Select an enabled provider first.</value>
@@ -193,7 +193,7 @@
         <value>Provider deleted.</value>
     </data>
     <data name="SkillDeleted">
-        <value>Skill deleted.</value>
+        <value>Prompt deleted.</value>
     </data>
     <data name="ShortcutCleared">
         <value>Shortcut cleared.</value>
