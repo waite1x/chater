@@ -109,6 +109,11 @@ public sealed class ChatWindowManager
         {
             await vm.OpenConversationAsync(conversationId);
         }
+        else
+        {
+            // Fresh window: start an empty session with the default (first) skill.
+            vm.PrepareNewSession();
+        }
     }
 
     private void AttachWindowLifetime(

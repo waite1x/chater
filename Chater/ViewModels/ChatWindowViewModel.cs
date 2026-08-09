@@ -1,10 +1,11 @@
 ﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
-using Avalonia.Data.Converters;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Chater.AI;
 using Chater.AI.Conversations;
 using Chater.AI.Providers;
@@ -13,7 +14,6 @@ using Chater.Data;
 using Chater.Localization;
 using Chater.Logging;
 using Chater.Services;
-using Chater.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Material.Icons;
@@ -42,6 +42,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     private Conversation? _conversation;
     private CancellationTokenSource? _sendCancellation;
     private bool _openingConversation;
+    private string? _lastSelectedSkillId;
 
     public ChatWindowViewModel(
         ConversationService conversations,
@@ -64,6 +65,16 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _navigation = navigation;
         _localization = localization ?? new LocalizationService();
         _globalHotKeys = globalHotKeys;
+        // Re-validate the dropdown selection whenever the shared skills list is
+        // reloaded (e.g. after editing skills in the settings window).
+        AppState.Skills.CollectionChanged += OnSkillsCollectionChanged;
+
+        // Keep the window's shortcut bindings in sync with the shared app state so
+        // the global hotkey hook always uses the user's configured shortcuts. This
+        // also corrects the values once AppState finishes loading at startup.
+        ChatShortcut = AppState.ChatShortcut;
+        NewChatWindowShortcut = AppState.NewChatWindowShortcut;
+        AppState.PropertyChanged += OnAppStatePropertyChanged;
     }
 
     public AppState AppState { get; }
@@ -120,6 +131,27 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         Messages.Clear();
         SelectedSkill = AppState.Skills.FirstOrDefault();
         StatusMessage = T("NewConversationStatus");
+    }
+
+    /// <summary>
+    /// Prepares a fresh, empty session for a newly opened chat window, defaulting the
+    /// selected skill to the first available one. If the skills list is not loaded yet,
+    /// the skills collection change handler completes the default selection once loaded.
+    /// </summary>
+    public void PrepareNewSession()
+    {
+        _conversation = null;
+        SelectedConversation = null;
+        Messages.Clear();
+        if (AppState.Skills.Count > 0)
+        {
+            SelectedSkill = AppState.Skills[0];
+        }
+
+        if (AppState.Providers.Count > 0 && SelectedProvider == null)
+        {
+            SelectedProvider = AppState.Providers[0];
+        }
     }
 
     private void ResetConversation()
@@ -262,6 +294,23 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     public void UpdateGlobalShortcuts() =>
         _globalHotKeys?.UpdateShortcuts(ChatShortcut, NewChatWindowShortcut);
 
+    partial void OnChatShortcutChanged(string value) => UpdateGlobalShortcuts();
+
+    partial void OnNewChatWindowShortcutChanged(string value) => UpdateGlobalShortcuts();
+
+    private void OnAppStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(AppState.ChatShortcut):
+                ChatShortcut = AppState.ChatShortcut;
+                break;
+            case nameof(AppState.NewChatWindowShortcut):
+                NewChatWindowShortcut = AppState.NewChatWindowShortcut;
+                break;
+        }
+    }
+
     // ── Conversation lifecycle ───────────────────────────────────────────
 
     public async Task OpenConversationAsync(string conversationId, CancellationToken cancellationToken = default)
@@ -337,7 +386,49 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
 
     partial void OnSelectedSkillChanged(Skill? value)
     {
-        if (!_openingConversation) ResetConversation();
+        // Changing the selected skill (including when the Skills list is reloaded
+        // from the settings window) must NOT reset the active conversation — only
+        // the dropdown selection is affected.
+        if (value is not null)
+        {
+            _lastSelectedSkillId = value.Id;
+            return;
+        }
+
+        // The selection was dropped, e.g. because the previously selected skill
+        // was removed during a Skills reload. Restore it, or fall back to first.
+        RestoreSkillSelection();
+    }
+
+    /// <summary>
+    /// Re-validates <see cref="SelectedSkill"/> after the shared <see cref="AppState.Skills"/>
+    /// list changes. The current conversation is left untouched; only the dropdown
+    /// selection is repaired — preferring the previously selected skill and falling
+    /// back to the first available skill if it was deleted.
+    /// </summary>
+    private void OnSkillsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // The skills list is mutated from a worker thread during a reload, so
+        // repair the selection back on the UI thread (idempotent + re-runs on
+        // the final state after the last collection change).
+        Dispatcher.UIThread.Post(RestoreSkillSelection);
+    }
+
+    private void RestoreSkillSelection()
+    {
+        if (AppState.Skills.Count == 0)
+        {
+            return;
+        }
+
+        var next = _lastSelectedSkillId is null
+            ? AppState.Skills[0]
+            : AppState.Skills.FirstOrDefault(skill => skill.Id == _lastSelectedSkillId) ?? AppState.Skills[0];
+
+        if (SelectedSkill?.Id != next.Id)
+        {
+            SelectedSkill = next;
+        }
     }
 
     partial void OnSelectedConversationChanged(Conversation? value)
@@ -357,6 +448,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
 
     public override void Dispose()
     {
+        AppState.Skills.CollectionChanged -= OnSkillsCollectionChanged;
+        AppState.PropertyChanged -= OnAppStatePropertyChanged;
         _sendCancellation?.Cancel();
         _sendCancellation?.Dispose();
         _sendCancellation = null;

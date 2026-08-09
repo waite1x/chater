@@ -104,7 +104,9 @@ public sealed class GlobalHotKeyService(ChatWindowManager chatWindowManager)
         if (ShortcutFormatter.Matches(_chatShortcut, current))
         {
             Interlocked.Exchange(ref _lastTriggeredAt, now);
-            Dispatcher.UIThread.Post(_chatWindowManager.ShowNew);
+            // The "chat" shortcut shows the existing chat window (or opens one if
+            // none is open); only the explicit "new window" shortcut creates one.
+            Dispatcher.UIThread.Post(_chatWindowManager.Show);
         }
     }
 
