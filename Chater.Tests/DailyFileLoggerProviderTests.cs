@@ -31,7 +31,7 @@ public sealed class DailyFileLoggerProviderTests : IDisposable
         Assert.True(File.Exists(retainedLog));
         Assert.True(File.Exists(unrelatedFile));
 
-        var contents = File.ReadAllText(currentLog);
+        var contents = ReadLogFile(currentLog);
         Assert.Contains("2026-08-07 12:34:56.000 +00:00 [INF] Chater.Tests.Category Application started with value 42", contents);
     }
 
@@ -46,8 +46,8 @@ public sealed class DailyFileLoggerProviderTests : IDisposable
         timeProvider.SetUtcNow(new DateTimeOffset(2026, 8, 8, 0, 0, 1, TimeSpan.Zero));
         logger.LogInformation("Second day");
 
-        Assert.Contains("First day", File.ReadAllText(Path.Combine(_root, "chater-2026-08-07.log")));
-        Assert.Contains("Second day", File.ReadAllText(Path.Combine(_root, "chater-2026-08-08.log")));
+        Assert.Contains("First day", ReadLogFile(Path.Combine(_root, "chater-2026-08-07.log")));
+        Assert.Contains("Second day", ReadLogFile(Path.Combine(_root, "chater-2026-08-08.log")));
     }
 
     [Fact]
@@ -60,9 +60,23 @@ public sealed class DailyFileLoggerProviderTests : IDisposable
         logger.LogInformation("Not persisted");
         logger.LogWarning("Persisted");
 
-        var contents = File.ReadAllText(Path.Combine(_root, "chater-2026-08-07.log"));
+        var contents = ReadLogFile(Path.Combine(_root, "chater-2026-08-07.log"));
         Assert.DoesNotContain("Not persisted", contents);
         Assert.Contains("Persisted", contents);
+    }
+
+    /// <summary>
+    /// Reads a log file with a share mode compatible with the <see cref="DailyFileLoggerProvider"/>
+    /// writer handle that is still open (it keeps <c>FileAccess.Write, FileShare.ReadWrite</c> until
+    /// rollover or dispose). <see cref="File.ReadAllText"/> opens with <see cref="FileShare.Read"/>, which
+    /// on Windows denies the provider's existing write access to the same file and throws an
+    /// <see cref="IOException"/> (ERROR_SHARING_VIOLATION).
+    /// </summary>
+    private static string ReadLogFile(string path)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 
     public void Dispose()
