@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Chater.ViewModels"
              xmlns:local="using:Chater.Views"
+             xmlns:conversations="clr-namespace:Chater.AI.Conversations"
              x:Class="Chater.Views.ConversationMessagesView"
              Loaded="OnLoaded">
     <ScrollViewer x:Name="MessagesScrollViewer" ScrollChanged="OnMessagesScrollChanged">
@@ -20,7 +21,26 @@
                                     <MenuItem Click="OnCopyMarkdown"/>
                                 </ContextMenu>
                             </Border.ContextMenu>
-                            <local:MarkdownView Markdown="{Binding Content}"/>
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding Attachments}"
+                                              IsVisible="{Binding HasAttachments}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="conversations:MessageAttachment">
+                                            <Border CornerRadius="6" Margin="0,0,6,0"
+                                                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                                <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
+                                                       Width="96" Height="96" Stretch="Uniform"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <local:MarkdownView Markdown="{Binding Content}"/>
+                            </StackPanel>
                         </Border>
                         <Border Classes="chat-bubble chat-bubble-assistant"
                                 IsVisible="{Binding IsAssistant}"

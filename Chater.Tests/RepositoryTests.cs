@@ -39,6 +39,25 @@ public sealed class RepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsync_RoundTripsMultimodalModelFlags()
+    {
+        var database = await CreateDatabaseAsync();
+        var provider = CreateProvider("one", true) with
+        {
+            ModelIds = ["model-a", "model-b"],
+            ModelId = "model-a",
+            MultimodalModelIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "model-b" }
+        };
+
+        await new ApiProviderRepository(database).SaveAsync(provider);
+
+        var saved = await new ApiProviderRepository(database).GetByIdAsync(provider.Id);
+        Assert.Equal(["model-a", "model-b"], saved?.ModelIds);
+        Assert.Contains("model-b", saved?.MultimodalModelIds ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+        Assert.DoesNotContain("model-a", saved?.MultimodalModelIds ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task GetEnabledAsync_ReturnsSeededSkillsInDisplayOrder()
     {
         var database = await CreateDatabaseAsync();
@@ -101,6 +120,32 @@ public sealed class RepositoryTests : IDisposable
 
         Assert.Empty(await repository.GetPageAsync(0, 20));
         Assert.True((await repository.GetByIdAsync(conversation.Id))?.IsArchived ?? false);
+    }
+
+    [Fact]
+    public async Task AppendAsync_RoundTripsMessageAttachments()
+    {
+        var database = await CreateDatabaseAsync();
+        var provider = CreateProvider("provider", true);
+        await new ApiProviderRepository(database).SaveAsync(provider);
+        var now = DateTimeOffset.UtcNow;
+        var conversation = new Conversation("conversation", "Conversation", provider.Id, null, "{}", null, "agent", "hash", "1", "{}", SessionStatus.Active, false, now, now);
+        await new ConversationRepository(database).SaveAsync(conversation);
+        var repository = new MessageRepository(database);
+        var message = new Message("m1", conversation.Id, 1, MessageRole.User, "look", MessageStatus.Completed, null, null, now, now)
+        {
+            Attachments = [new MessageAttachment("/tmp/a.png", "a.png", "image/png")]
+        };
+
+        await repository.AppendAsync(message);
+        var history = await repository.GetByConversationAsync(conversation.Id);
+
+        var saved = Assert.Single(history);
+        Assert.Equal("look", saved.Content);
+        var attachment = Assert.Single(saved.Attachments);
+        Assert.Equal("/tmp/a.png", attachment.FilePath);
+        Assert.Equal("a.png", attachment.FileName);
+        Assert.Equal("image/png", attachment.MimeType);
     }
 
     public void Dispose()

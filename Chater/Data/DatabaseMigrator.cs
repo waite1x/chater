@@ -6,7 +6,7 @@ namespace Chater.Data;
 /// <summary>Applies embedded SQLite migrations exactly once and in version order.</summary>
 public sealed class DatabaseMigrator
 {
-    private const int LatestVersion = 2;
+    private const int LatestVersion = 3;
     private readonly SqliteDatabase _database;
 
     public DatabaseMigrator(SqliteDatabase database) => _database = database;
@@ -62,7 +62,14 @@ public sealed class DatabaseMigrator
 
     private static async Task<string> ReadMigrationAsync(int version, CancellationToken cancellationToken)
     {
-        var resource = $"Chater.Data.Migrations.{version:0000}_{(version == 1 ? "InitialSchema" : "ProviderModels")}.sql";
+        var name = version switch
+        {
+            1 => "InitialSchema",
+            2 => "ProviderModels",
+            3 => "ProviderModelsMultimodal",
+            _ => throw new InvalidOperationException($"Unknown migration version '{version}'.")
+        };
+        var resource = $"Chater.Data.Migrations.{version:0000}_{name}.sql";
         await using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource)
             ?? throw new InvalidOperationException($"Missing database migration resource '{resource}'.");
         using var reader = new StreamReader(stream);

@@ -29,6 +29,7 @@ public partial class ChatWindow : Window
         _globalHotKeys = globalHotKeys;
         _logger = logger;
         DataContext = viewModel;
+        viewModel.AttachStorageProvider(StorageProvider);
         InitializeComponent();
         DraftTextBox.AddHandler(KeyDownEvent, OnDraftKeyDown, RoutingStrategies.Tunnel);
         ConfigurePlatformTitleBar();

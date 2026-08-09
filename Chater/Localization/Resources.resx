@@ -306,4 +306,16 @@
     <data name="TrayExit">
         <value>Exit</value>
     </data>
+    <data name="Multimodal">
+        <value>Multimodal</value>
+    </data>
+    <data name="AddModel">
+        <value>Add model</value>
+    </data>
+    <data name="AddImage">
+        <value>Add image</value>
+    </data>
+    <data name="RemoveAttachment">
+        <value>Remove</value>
+    </data>
 </root>

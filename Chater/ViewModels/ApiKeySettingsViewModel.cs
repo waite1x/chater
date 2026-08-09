@@ -36,9 +36,9 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
 
     [ObservableProperty] private ProviderType _providerType = ProviderType.OpenAi;
 
-    [ObservableProperty] private string _providerModelId = string.Empty;
-
     [ObservableProperty] private string _providerEndpoint = string.Empty;
+
+    public ObservableCollection<ProviderModelItem> ProviderModels { get; } = [];
 
     [ObservableProperty] private string _providerApiKey = string.Empty;
 
@@ -62,12 +62,22 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
     }
 
     [RelayCommand]
+    private void AddModel() => ProviderModels.Add(new ProviderModelItem());
+
+    [RelayCommand]
+    private void RemoveModel(ProviderModelItem? item)
+    {
+        if (item is not null) ProviderModels.Remove(item);
+    }
+
+    [RelayCommand]
     private void AddProvider()
     {
         SelectedProvider = null;
         ProviderName = string.Empty;
         ProviderType = ProviderType.OpenAi;
-        ProviderModelId = string.Empty;
+        ProviderModels.Clear();
+        ProviderModels.Add(new ProviderModelItem());
         ProviderEndpoint = string.Empty;
         ProviderApiKey = string.Empty;
         FetchedModels.Clear();
@@ -152,23 +162,31 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
     private void AddFetchedModel(string? modelId)
     {
         if (string.IsNullOrWhiteSpace(modelId)) return;
-        var current = ProviderModelId
-            .Split(['\r', '\n', ',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        var trimmed = modelId.Trim();
+        if (ProviderModels.Any(item => string.Equals(item.ModelId, trimmed, StringComparison.OrdinalIgnoreCase))) return;
+        ProviderModels.Add(new ProviderModelItem(trimmed, false));
+    }
+
+    /// <summary>Projects editable model rows into the model ID list and the multimodal model ID set.</summary>
+    public static (string[] ModelIds, IReadOnlySet<string> MultimodalModelIds) BuildModelLists(IEnumerable<ProviderModelItem> items)
+    {
+        var rows = items
+            .Select(item => (ModelId: item.ModelId.Trim(), item.IsMultimodal))
+            .Where(row => row.ModelId.Length > 0)
+            .ToList();
+        var modelIds = rows.Select(row => row.ModelId).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        var multimodal = rows
+            .Where(row => row.IsMultimodal)
+            .Select(row => row.ModelId)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (current.Add(modelId.Trim()))
-        {
-            ProviderModelId = string.Join(Environment.NewLine, current);
-        }
+        return (modelIds, multimodal);
     }
 
     private ApiProvider BuildEditedProvider()
     {
         var existing = SelectedProvider;
         var now = DateTimeOffset.UtcNow;
-        var modelIds = ProviderModelId
-            .Split(['\r', '\n', ',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        var (modelIds, multimodalModelIds) = BuildModelLists(ProviderModels);
         var activeModel = modelIds.FirstOrDefault() ?? string.Empty;
         return new ApiProvider(
                 existing?.Id ?? Guid.NewGuid().ToString("N"),
@@ -182,18 +200,23 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
                 existing?.CreatedAt ?? now,
                 now) with
             {
-                ModelIds = modelIds
+                ModelIds = modelIds,
+                MultimodalModelIds = multimodalModelIds
             };
     }
 
     partial void OnSelectedProviderChanged(ApiProvider? value)
     {
         FetchedModels.Clear();
+        ProviderModels.Clear();
         if (value is null) return;
 
         ProviderName = value.Name;
         ProviderType = value.ProviderType;
-        ProviderModelId = string.Join(Environment.NewLine, value.ModelIds);
+        foreach (var model in value.ModelIds)
+        {
+            ProviderModels.Add(new ProviderModelItem(model, value.MultimodalModelIds.Contains(model, StringComparer.OrdinalIgnoreCase)));
+        }
         ProviderEndpoint = value.Endpoint ?? string.Empty;
         ProviderApiKey = string.Empty;
     }

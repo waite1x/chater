@@ -124,6 +124,13 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
+                <Button DockPanel.Dock="Left" Classes="transparent-button" Padding="6,2"
+                        Command="{Binding AddFilesCommand}"
+                        IsVisible="{Binding ShowAddAttachmentButton}"
+                        ToolTip.Tip="{Binding Localization[AddImage]}"
+                        AutomationProperties.Name="{Binding Localization[AddImage]}">
+                    <materialIcons:MaterialIcon Kind="ImageMultiple" Width="16" Height="16"/>
+                </Button>
                 <TextBlock DockPanel.Dock="Left"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center"
@@ -131,20 +138,47 @@
                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
             </DockPanel>
 
-            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                <TextBox x:Name="DraftTextBox" Text="{Binding Draft, Mode=OneWay}"
-                         TextChanged="OnDraftTextChanged"
-                         PlaceholderText="{Binding Localization[InputPlaceholder]}"
-                         AcceptsReturn="True"
-                         TextWrapping="Wrap" />
-                <Button Classes="primary-button" Grid.Column="1" Command="{Binding SendOrStopCommand}"
-                        ToolTip.Tip="{Binding SendButtonText}" AutomationProperties.Name="{Binding SendButtonText}"
-                        Padding="10,8" MinWidth="42">
-                    <Button.Content>
-                        <materialIcons:MaterialIcon Kind="{Binding SendButtonIcon}" Width="18" Height="18" />
-                    </Button.Content>
-                </Button>
-            </Grid>
+            <StackPanel DockPanel.Dock="Bottom" Spacing="6">
+                <ItemsControl ItemsSource="{Binding Attachments}"
+                              IsVisible="{Binding HasAttachments}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AttachmentViewModel">
+                            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                    CornerRadius="6" Padding="4" Margin="0,0,6,0">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
+                                           Width="40" Height="40" Stretch="Uniform"/>
+                                    <Button Classes="transparent-button" Padding="2" VerticalAlignment="Center"
+                                            Command="{Binding $parent[Window].DataContext.RemoveAttachmentCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{Binding $parent[Window].DataContext.Localization[RemoveAttachment]}">
+                                        <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                    <TextBox x:Name="DraftTextBox" Text="{Binding Draft, Mode=OneWay}"
+                             TextChanged="OnDraftTextChanged"
+                             PlaceholderText="{Binding Localization[InputPlaceholder]}"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap" />
+                    <Button Classes="primary-button" Grid.Column="1" Command="{Binding SendOrStopCommand}"
+                            ToolTip.Tip="{Binding SendButtonText}" AutomationProperties.Name="{Binding SendButtonText}"
+                            Padding="10,8" MinWidth="42">
+                        <Button.Content>
+                            <materialIcons:MaterialIcon Kind="{Binding SendButtonIcon}" Width="18" Height="18" />
+                        </Button.Content>
+                    </Button>
+                </Grid>
+            </StackPanel>
             <Border Classes="card" Grid.Row="3" Padding="12">
                 <local:ConversationMessagesView ItemsSource="{Binding Messages}" />
             </Border>

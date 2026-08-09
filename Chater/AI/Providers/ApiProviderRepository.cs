@@ -36,7 +36,7 @@ public sealed class ApiProviderRepository
         var models = provider.ModelIds.Append(provider.ModelId).Where(model => !string.IsNullOrWhiteSpace(model)).Select(model => model.Trim()).Distinct(StringComparer.OrdinalIgnoreCase);
         foreach (var model in models)
         {
-            await ExecuteAsync(connection, transaction, "INSERT INTO ProviderModels (ProviderId, ModelId) VALUES ($providerId, $modelId);", cancellationToken, ("$providerId", provider.Id), ("$modelId", model)).ConfigureAwait(false);
+            await ExecuteAsync(connection, transaction, "INSERT INTO ProviderModels (ProviderId, ModelId, IsMultimodal) VALUES ($providerId, $modelId, $isMultimodal);", cancellationToken, ("$providerId", provider.Id), ("$modelId", model), ("$isMultimodal", provider.MultimodalModelIds.Contains(model) ? 1 : 0)).ConfigureAwait(false);
         }
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -95,12 +95,22 @@ public sealed class ApiProviderRepository
         foreach (var provider in providers)
         {
             command.Parameters.Clear();
-            command.CommandText = "SELECT ModelId FROM ProviderModels WHERE ProviderId = $providerId ORDER BY ModelId;";
+            command.CommandText = "SELECT ModelId, IsMultimodal FROM ProviderModels WHERE ProviderId = $providerId ORDER BY ModelId;";
             command.Parameters.AddWithValue("$providerId", provider.Id);
             await using var modelsReader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
             var models = new List<string>();
-            while (await modelsReader.ReadAsync(cancellationToken).ConfigureAwait(false)) models.Add(modelsReader.GetString(0));
-            result.Add(provider with { ModelIds = models.Count == 0 ? [provider.ModelId] : models });
+            var multimodal = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            while (await modelsReader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var model = modelsReader.GetString(0);
+                models.Add(model);
+                if (modelsReader.GetInt64(1) == 1) multimodal.Add(model);
+            }
+            result.Add(provider with
+            {
+                ModelIds = models.Count == 0 ? [provider.ModelId] : models,
+                MultimodalModelIds = multimodal
+            });
         }
 
         return result;

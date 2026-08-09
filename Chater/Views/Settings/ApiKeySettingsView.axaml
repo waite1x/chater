@@ -142,14 +142,34 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <!-- Manual model ID input -->
-                            <TextBlock Text="{Binding Localization[ModelListPlaceholder]}" FontSize="12"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                            <TextBox Text="{Binding ProviderModelId}"
-                                     AcceptsReturn="True"
-                                     TextWrapping="Wrap"
-                                     MinHeight="72"
-                                     PlaceholderText="{Binding Localization[ModelListPlaceholder]}"/>
+                            <!-- Manual model list: one row per model with multimodal flag -->
+                            <ItemsControl ItemsSource="{Binding ProviderModels}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ProviderModelItem">
+                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" Margin="0,0,0,6">
+                                            <TextBox Text="{Binding ModelId, Mode=TwoWay}"
+                                                     PlaceholderText="{Binding $parent[UserControl].DataContext.Localization[ModelListPlaceholder]}"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <CheckBox IsChecked="{Binding IsMultimodal, Mode=TwoWay}"
+                                                          Content="{Binding $parent[UserControl].DataContext.Localization[Multimodal]}"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Classes="transparent-button" Padding="4"
+                                                    Command="{Binding $parent[UserControl].DataContext.RemoveModelCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="{Binding $parent[UserControl].DataContext.Localization[Delete]}">
+                                                <materialIcons:MaterialIcon Kind="Close" Width="14" Height="14"/>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button Classes="transparent-button" HorizontalAlignment="Left" Padding="8,4"
+                                    Command="{Binding AddModelCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <materialIcons:MaterialIcon Kind="Plus" Width="14" Height="14"/>
+                                    <TextBlock Text="{Binding Localization[AddModel]}"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

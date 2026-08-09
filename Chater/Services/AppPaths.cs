@@ -21,6 +21,8 @@ public sealed class AppPaths
 
     public string ExportsDirectory => Path.Combine(ApplicationDataDirectory, "exports");
 
+    public string AttachmentsDirectory => Path.Combine(ApplicationDataDirectory, "attachments");
+
     public static AppPaths CreateDefault()
     {
         var root = OperatingSystem.IsMacOS()
@@ -37,5 +39,6 @@ public sealed class AppPaths
         Directory.CreateDirectory(ApplicationDataDirectory);
         Directory.CreateDirectory(LogsDirectory);
         Directory.CreateDirectory(ExportsDirectory);
+        Directory.CreateDirectory(AttachmentsDirectory);
     }
 }

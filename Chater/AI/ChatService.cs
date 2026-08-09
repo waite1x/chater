@@ -25,6 +25,23 @@ public sealed class ChatService(
     SessionRunLock sessionLock,
     ChatToolRegistry toolRegistry)
 {
+    private const string ImageOnlyTitle = "[Image]";
+
+    /// <summary>Builds a user <see cref="ChatMessage"/> from plain text and optional image attachments.</summary>
+    public static ChatMessage BuildUserMessage(string text, IReadOnlyList<MessageAttachment>? attachments)
+    {
+        var contents = new List<AIContent> { new TextContent(text) };
+        if (attachments is not null)
+        {
+            foreach (var attachment in attachments)
+            {
+                contents.Add(new DataContent(File.ReadAllBytes(attachment.FilePath), attachment.MimeType));
+            }
+        }
+
+        return new ChatMessage(ChatRole.User, contents);
+    }
+
     /// <summary>
     /// Streams an agent response while durably recording both sides of the exchange and the resulting agent session.
     /// </summary>
@@ -32,7 +49,7 @@ public sealed class ChatService(
     /// Only one invocation may run for a conversation at a time. Failed and cancelled runs are persisted before the
     /// exception is rethrown so the UI and recovery flow can render an accurate status.
     /// </remarks>
-    public async IAsyncEnumerable<string> SendStreamingAsync(string conversationId, string message, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<string> SendStreamingAsync(string conversationId, string message, IReadOnlyList<MessageAttachment>? attachments = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var lease = await sessionLock.AcquireAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var conversation = await conversations.GetByIdAsync(conversationId, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException($"Conversation '{conversationId}' does not exist.");
@@ -53,13 +70,17 @@ public sealed class ChatService(
 
         var now = DateTimeOffset.UtcNow;
         var userSequenceNo = await messages.GetNextSequenceNoAsync(conversationId, cancellationToken).ConfigureAwait(false);
+        var titleText = string.IsNullOrWhiteSpace(message) ? ImageOnlyTitle : message;
         if (userSequenceNo == 1)
         {
-            conversation = conversation with { Title = ConversationService.CreateTitle(message), UpdatedAt = now };
+            conversation = conversation with { Title = ConversationService.CreateTitle(titleText), UpdatedAt = now };
             await conversations.SaveAsync(conversation, cancellationToken).ConfigureAwait(false);
         }
 
-        await messages.AppendAsync(new Message(Guid.NewGuid().ToString("N"), conversationId, userSequenceNo, MessageRole.User, message, MessageStatus.Completed, null, null, now, now), cancellationToken).ConfigureAwait(false);
+        await messages.AppendAsync(new Message(Guid.NewGuid().ToString("N"), conversationId, userSequenceNo, MessageRole.User, message, MessageStatus.Completed, null, null, now, now)
+        {
+            Attachments = attachments ?? []
+        }, cancellationToken).ConfigureAwait(false);
 
         var assistantMessageId = Guid.NewGuid().ToString("N");
         await messages.AppendAsync(new Message(assistantMessageId, conversationId, userSequenceNo + 1, MessageRole.Assistant, string.Empty, MessageStatus.Streaming, null, null, now, now), cancellationToken).ConfigureAwait(false);
@@ -70,7 +91,19 @@ public sealed class ChatService(
         var announcedToolCalls = new HashSet<string>(StringComparer.Ordinal);
         try
         {
-            await using var updates = agent.RunStreamingAsync(message, session, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
+            ChatMessage chatMessage;
+            try
+            {
+                chatMessage = BuildUserMessage(message, attachments);
+            }
+            catch (Exception exception)
+            {
+                ExceptionLogger.Log(exception, nameof(ChatService), "Chat provider streaming failed");
+                await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Failed, "provider_error", exception.Message, CancellationToken.None).ConfigureAwait(false);
+                throw;
+            }
+
+            await using var updates = agent.RunStreamingAsync(chatMessage, session, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
             while (true)
             {
                 bool hasNext;

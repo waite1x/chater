@@ -17,10 +17,12 @@ public sealed class DatabaseMigratorTests : IDisposable
         await migrator.MigrateAsync();
 
         await using var connection = await database.OpenConnectionAsync();
-        Assert.Equal(2L, await ScalarAsync(connection, "SELECT COUNT(*) FROM SchemaMigrations;"));
+        Assert.Equal(3L, await ScalarAsync(connection, "SELECT COUNT(*) FROM SchemaMigrations;"));
         Assert.Equal(5L, await ScalarAsync(connection, "SELECT COUNT(*) FROM Skills WHERE IsBuiltIn = 1;"));
         Assert.Equal(1L, await ScalarAsync(connection, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'Messages';"));
         Assert.Equal(1L, await ScalarAsync(connection, "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'ProviderModels';"));
+        Assert.Equal(1L, await ScalarAsync(connection, "SELECT COUNT(*) FROM pragma_table_info('ProviderModels') WHERE name = 'IsMultimodal';"));
+        Assert.Equal(1L, await ScalarAsync(connection, "SELECT COUNT(*) FROM pragma_table_info('Messages') WHERE name = 'Attachments';"));
     }
 
     [Fact]

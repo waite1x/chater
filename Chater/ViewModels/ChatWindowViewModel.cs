@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 using Avalonia.Input;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Chater.AI;
 using Chater.AI.Conversations;
@@ -39,6 +40,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     private readonly IWindowNavigationService? _navigation;
     private readonly LocalizationService _localization;
     private readonly IGlobalHotKeyService? _globalHotKeys;
+    private readonly AppPaths _appPaths;
+    private IStorageProvider? _storageProvider;
     private Conversation? _conversation;
     private CancellationTokenSource? _sendCancellation;
     private bool _openingConversation;
@@ -53,7 +56,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         ChatWindowManager chatWindowManager,
         IWindowNavigationService? navigation = null,
         IGlobalHotKeyService? globalHotKeys = null,
-        LocalizationService? localization = null
+        LocalizationService? localization = null,
+        AppPaths? appPaths = null
     )
     {
         AppState = appState;
@@ -65,6 +69,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _navigation = navigation;
         _localization = localization ?? new LocalizationService();
         _globalHotKeys = globalHotKeys;
+        _appPaths = appPaths ?? AppPaths.CreateDefault();
+        Attachments.CollectionChanged += OnAttachmentsChanged;
         // Re-validate the dropdown selection whenever the shared skills list is
         // reloaded (e.g. after editing skills in the settings window).
         AppState.Skills.CollectionChanged += OnSkillsCollectionChanged;
@@ -83,6 +89,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
 
     public ObservableCollection<ChatMessageViewModel> Messages { get; } = [];
 
+    public ObservableCollection<AttachmentViewModel> Attachments { get; } = [];
+
     // ── Chat-bound selections ────────────────────────────────────────────
 
     [ObservableProperty] private ApiProvider? _selectedProvider;
@@ -94,15 +102,13 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     [ObservableProperty] private Skill? _selectedSkill;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SendCommand))]
-    [NotifyCanExecuteChangedFor(nameof(SendOrStopCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SendCommand), nameof(SendOrStopCommand))]
     private string _draft = string.Empty;
 
     [ObservableProperty] private string _statusMessage = "Loading...";
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SendCommand))]
-    [NotifyCanExecuteChangedFor(nameof(SendOrStopCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SendCommand), nameof(SendOrStopCommand))]
     private bool _isSending;
 
     // ── Derived chat properties ──────────────────────────────────────────
@@ -113,6 +119,12 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     public string SelectedModelDisplayName => SelectedModelId ?? SelectedProvider?.ModelId ?? T("ModelPlaceholder");
     public string SendButtonText => IsSending ? T("Stop") : T("Send");
     public MaterialIconKind SendButtonIcon => IsSending ? MaterialIconKind.Stop : MaterialIconKind.Send;
+
+    public bool ShowAddAttachmentButton =>
+        SelectedProvider is not null && SelectedModelId is not null && SelectedProvider.MultimodalModelIds.Contains(SelectedModelId);
+
+    /// <summary>Called by ChatWindow code-behind after DataContext is set, to provide the file picker.</summary>
+    public void AttachStorageProvider(IStorageProvider? storageProvider) => _storageProvider = storageProvider;
 
 
     // ── Shortcuts (shared with global hotkey system) ─────────────────────
@@ -161,7 +173,80 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         Messages.Clear();
     }
 
+    // ── Attachment management ─────────────────────────────────────────────
 
+    [RelayCommand]
+    private async Task AddFilesAsync()
+    {
+        if (_storageProvider is null) return;
+        var files = await _storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = T("AddImage"),
+            AllowMultiple = true,
+            FileTypeFilter = [new FilePickerFileType("Images") { Patterns = ["*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.bmp"] }]
+        });
+        var paths = files.Select(file => file.TryGetLocalPath()).Where(path => !string.IsNullOrWhiteSpace(path)).Cast<string>().ToList();
+        if (paths.Count > 0) await AddAttachmentsAsync(paths);
+    }
+
+    /// <summary>Copies image files into the app attachments directory and exposes them as attachments.</summary>
+    public async Task AddAttachmentsAsync(IEnumerable<string> sourcePaths)
+    {
+        foreach (var source in sourcePaths)
+        {
+            if (string.IsNullOrWhiteSpace(source) || !File.Exists(source)) continue;
+            var mimeType = ImageMimeTypeFromExtension(Path.GetExtension(source));
+            if (mimeType is null) continue;
+            var destination = Path.Combine(_appPaths.AttachmentsDirectory, $"{Guid.NewGuid():N}{Path.GetExtension(source).ToLowerInvariant()}");
+            Directory.CreateDirectory(_appPaths.AttachmentsDirectory);
+            File.Copy(source, destination, overwrite: false);
+            Attachments.Add(new AttachmentViewModel(destination, Path.GetFileName(source), mimeType));
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveAttachment(AttachmentViewModel? attachment)
+    {
+        if (attachment is null || !Attachments.Remove(attachment)) return;
+        if (!attachment.IsPersisted) TryDeleteFile(attachment.FilePath);
+    }
+
+    private static string? ImageMimeTypeFromExtension(string extension) => extension.ToLowerInvariant() switch
+    {
+        ".png" => "image/png",
+        ".jpg" or ".jpeg" => "image/jpeg",
+        ".gif" => "image/gif",
+        ".webp" => "image/webp",
+        ".bmp" => "image/bmp",
+        _ => null
+    };
+
+    private static void TryDeleteFile(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); }
+        catch { /* best-effort cleanup */ }
+    }
+
+    public bool HasAttachments => Attachments.Count > 0;
+
+    private void OnAttachmentsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        SendCommand.NotifyCanExecuteChanged();
+        SendOrStopCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(ShowAddAttachmentButton));
+        OnPropertyChanged(nameof(HasAttachments));
+    }
+
+    private void ClearUnsentAttachments()
+    {
+        foreach (var attachment in Attachments.ToList())
+        {
+            Attachments.Remove(attachment);
+            if (!attachment.IsPersisted) TryDeleteFile(attachment.FilePath);
+        }
+    }
+
+    // ── Send / stop ──────────────────────────────────────────────────────
     [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task SendAsync()
     {
@@ -172,16 +257,18 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         }
 
         var text = Draft.Trim();
-        if (text.Length == 0) return;
+        if (text.Length == 0 && Attachments.Count == 0) return;
 
         var selectedProvider = SelectedProvider with { ModelId = SelectedModelId ?? SelectedProvider.ModelId };
         _conversation ??= await _conversations.CreateAsync(selectedProvider, SelectedSkill);
         if (AppState.Conversations.All(item => item.Id != _conversation.Id))
             AppState.Conversations.Insert(0, _conversation);
 
+        var attachments = Attachments.Select(a => new MessageAttachment(a.FilePath, a.FileName, a.MimeType)).ToList();
+        foreach (var a in Attachments) a.IsPersisted = true;
         Draft = string.Empty;
         var assistant = new ChatMessageViewModel(MessageRole.Assistant, string.Empty);
-        Messages.Add(new ChatMessageViewModel(MessageRole.User, text));
+        Messages.Add(new ChatMessageViewModel(MessageRole.User, text, attachments));
         Messages.Add(assistant);
         _sendCancellation = new CancellationTokenSource();
         IsSending = true;
@@ -198,7 +285,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         {
             try
             {
-                await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, _sendCancellation.Token)
+                await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, attachments, _sendCancellation.Token)
                                    .ConfigureAwait(false))
                     await channel.Writer.WriteAsync(update, _sendCancellation.Token).ConfigureAwait(false);
                 channel.Writer.TryComplete();
@@ -253,6 +340,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             _sendCancellation.Dispose();
             _sendCancellation = null;
             IsSending = false;
+            Attachments.Clear();
         }
     }
 
@@ -271,9 +359,9 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _ = SendAsync();
     }
 
-    private bool CanSend() => !IsSending && !string.IsNullOrWhiteSpace(Draft);
+    private bool CanSend() => !IsSending && (!string.IsNullOrWhiteSpace(Draft) || Attachments.Count > 0);
     private bool CanStop() => IsSending;
-    private bool CanSendOrStop() => IsSending || !string.IsNullOrWhiteSpace(Draft);
+    private bool CanSendOrStop() => IsSending || !string.IsNullOrWhiteSpace(Draft) || Attachments.Count > 0;
 
     // ── Navigation ───────────────────────────────────────────────────────
 
@@ -350,7 +438,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             Messages.Clear();
             foreach (var message in await _messageRepository.GetByConversationAsync(conversation.Id)
                          .ConfigureAwait(false))
-                Messages.Add(new ChatMessageViewModel(message.Role, message.Content));
+                Messages.Add(new ChatMessageViewModel(message.Role, message.Content, message.Attachments));
 
             StatusMessage = $"Opened: {conversation.Title}";
         }
@@ -376,12 +464,16 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedModelDisplayName));
         if (!_openingConversation) ResetConversation();
         if (value is not null) SelectedModelId = value.ModelId;
+        OnPropertyChanged(nameof(ShowAddAttachmentButton));
+        if (!ShowAddAttachmentButton) ClearUnsentAttachments();
     }
 
     partial void OnSelectedModelIdChanged(string? value)
     {
         OnPropertyChanged(nameof(SelectedModelDisplayName));
         if (!_openingConversation && !string.IsNullOrWhiteSpace(value)) ResetConversation();
+        OnPropertyChanged(nameof(ShowAddAttachmentButton));
+        if (!ShowAddAttachmentButton) ClearUnsentAttachments();
     }
 
     partial void OnSelectedSkillChanged(Skill? value)

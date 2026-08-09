@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Chater.AI;
 using Chater.AI.Conversations;
 using Chater.Models;
 
@@ -37,8 +39,8 @@ public sealed class MessageRepository
     {
         await using var connection = await _database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
-        command.CommandText = "INSERT INTO Messages (Id, ConversationId, SequenceNo, Role, Content, Status, ErrorCode, ErrorMessage, CreatedAt, UpdatedAt) VALUES ($id, $conversationId, $sequenceNo, $role, $content, $status, $errorCode, $errorMessage, $createdAt, $updatedAt);";
-        command.Parameters.AddWithValue("$id", message.Id); command.Parameters.AddWithValue("$conversationId", message.ConversationId); command.Parameters.AddWithValue("$sequenceNo", message.SequenceNo); command.Parameters.AddWithValue("$role", (int)message.Role); command.Parameters.AddWithValue("$content", message.Content); command.Parameters.AddWithValue("$status", (int)message.Status); command.Parameters.AddWithValue("$errorCode", message.ErrorCode ?? (object)DBNull.Value); command.Parameters.AddWithValue("$errorMessage", message.ErrorMessage ?? (object)DBNull.Value); command.Parameters.AddWithValue("$createdAt", message.CreatedAt.ToString("O")); command.Parameters.AddWithValue("$updatedAt", message.UpdatedAt.ToString("O"));
+        command.CommandText = "INSERT INTO Messages (Id, ConversationId, SequenceNo, Role, Content, Status, ErrorCode, ErrorMessage, Attachments, CreatedAt, UpdatedAt) VALUES ($id, $conversationId, $sequenceNo, $role, $content, $status, $errorCode, $errorMessage, $attachments, $createdAt, $updatedAt);";
+        command.Parameters.AddWithValue("$id", message.Id); command.Parameters.AddWithValue("$conversationId", message.ConversationId); command.Parameters.AddWithValue("$sequenceNo", message.SequenceNo); command.Parameters.AddWithValue("$role", (int)message.Role); command.Parameters.AddWithValue("$content", message.Content); command.Parameters.AddWithValue("$status", (int)message.Status); command.Parameters.AddWithValue("$errorCode", message.ErrorCode ?? (object)DBNull.Value); command.Parameters.AddWithValue("$errorMessage", message.ErrorMessage ?? (object)DBNull.Value); command.Parameters.AddWithValue("$attachments", message.Attachments.Count == 0 ? DBNull.Value : JsonSerializer.Serialize(message.Attachments.ToArray(), ChaterJsonSerializerContext.Default.MessageAttachmentArray)); command.Parameters.AddWithValue("$createdAt", message.CreatedAt.ToString("O")); command.Parameters.AddWithValue("$updatedAt", message.UpdatedAt.ToString("O"));
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -58,13 +60,22 @@ public sealed class MessageRepository
     {
         await using var connection = await _database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT Id, ConversationId, SequenceNo, Role, Content, Status, ErrorCode, ErrorMessage, CreatedAt, UpdatedAt FROM Messages WHERE ConversationId = $conversationId ORDER BY SequenceNo;";
+        command.CommandText = "SELECT Id, ConversationId, SequenceNo, Role, Content, Status, ErrorCode, ErrorMessage, CreatedAt, UpdatedAt, Attachments FROM Messages WHERE ConversationId = $conversationId ORDER BY SequenceNo;";
         command.Parameters.AddWithValue("$conversationId", conversationId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         var messages = new List<Message>();
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            messages.Add(new Message(reader.GetString(0), reader.GetString(1), reader.GetInt64(2), (MessageRole)reader.GetInt32(3), reader.GetString(4), (MessageStatus)reader.GetInt32(5), reader.IsDBNull(6) ? null : reader.GetString(6), reader.IsDBNull(7) ? null : reader.GetString(7), DateTimeOffset.Parse(reader.GetString(8)), DateTimeOffset.Parse(reader.GetString(9))));
+            var message = new Message(reader.GetString(0), reader.GetString(1), reader.GetInt64(2), (MessageRole)reader.GetInt32(3), reader.GetString(4), (MessageStatus)reader.GetInt32(5), reader.IsDBNull(6) ? null : reader.GetString(6), reader.IsDBNull(7) ? null : reader.GetString(7), DateTimeOffset.Parse(reader.GetString(8)), DateTimeOffset.Parse(reader.GetString(9)));
+            if (!reader.IsDBNull(10))
+            {
+                message = message with
+                {
+                    Attachments = JsonSerializer.Deserialize(reader.GetString(10), ChaterJsonSerializerContext.Default.MessageAttachmentArray) ?? []
+                };
+            }
+
+            messages.Add(message);
         }
 
         return messages;

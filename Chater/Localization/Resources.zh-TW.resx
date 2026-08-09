@@ -300,4 +300,16 @@
     <data name="TrayExit">
         <value>結束</value>
     </data>
+    <data name="Multimodal">
+        <value>多模態</value>
+    </data>
+    <data name="AddModel">
+        <value>新增模型</value>
+    </data>
+    <data name="AddImage">
+        <value>新增圖片</value>
+    </data>
+    <data name="RemoveAttachment">
+        <value>移除</value>
+    </data>
 </root>
