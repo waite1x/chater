@@ -49,7 +49,7 @@ public partial class ConversationMessagesView : UserControl
 
         _contextMessage = bubble.DataContext as ChatMessageViewModel;
         _contextMarkdownView = bubble.GetVisualDescendants().OfType<MarkdownView>().FirstOrDefault();
-        if (DataContext is MainWindowViewModel viewModel)
+        if (DataContext is ChatWindowViewModel viewModel)
         {
             var items = menu.Items.OfType<MenuItem>().ToList();
             items[0].Header = viewModel.Localization["CopySelectedText"];

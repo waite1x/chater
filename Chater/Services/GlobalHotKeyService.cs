@@ -3,20 +3,26 @@ using SharpHook;
 using SharpHook.Data;
 using SharpHook.Providers;
 using Chater.Logging;
+using Chater.ViewModels;
 
 namespace Chater.Services;
 
 /// <summary>
 /// Owns the process-wide keyboard hook and marshals matching shortcuts back to the UI thread.
 /// </summary>
-public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : IGlobalHotKeyService
+public sealed class GlobalHotKeyService(ChatWindowManager chatWindowManager)
+    : IGlobalHotKeyService
 {
+    private readonly ChatWindowManager _chatWindowManager = chatWindowManager;
     private EventLoopGlobalHook? _hook;
+
     // These values are updated without recreating the hook so changing settings takes effect immediately.
     private string _chatShortcut = string.Empty;
     private string _newChatWindowShortcut = string.Empty;
     private bool _reportedMissingMacAccessibility;
+
     private Task? _hookTask;
+
     // Native hooks can report the same key press more than once; this timestamp debounces it.
     private long _lastTriggeredAt;
 
@@ -44,6 +50,7 @@ public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : I
                 _reportedMissingMacAccessibility = true;
                 MacAccessibility.OpenSettings();
             }
+
             return false;
         }
 
@@ -90,14 +97,14 @@ public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : I
         if (ShortcutFormatter.Matches(_newChatWindowShortcut, current))
         {
             Interlocked.Exchange(ref _lastTriggeredAt, now);
-            Dispatcher.UIThread.Post(navigation.ShowNewChat);
+            Dispatcher.UIThread.Post(_chatWindowManager.ShowNew);
             return;
         }
 
         if (ShortcutFormatter.Matches(_chatShortcut, current))
         {
             Interlocked.Exchange(ref _lastTriggeredAt, now);
-            Dispatcher.UIThread.Post(navigation.ShowChat);
+            Dispatcher.UIThread.Post(_chatWindowManager.ShowNew);
         }
     }
 
@@ -121,7 +128,8 @@ public sealed class GlobalHotKeyService(IWindowNavigationService navigation) : I
         }
         catch (Exception exception)
         {
-            ExceptionLogger.Log(exception, nameof(GlobalHotKeyService), "Global hotkey event loop stopped unexpectedly");
+            ExceptionLogger.Log(exception, nameof(GlobalHotKeyService),
+                "Global hotkey event loop stopped unexpectedly");
             // Do not leave a dead hook looking like a running hook. This is
             // especially important on macOS when TCC permission belongs to an
             // older app bundle identity.

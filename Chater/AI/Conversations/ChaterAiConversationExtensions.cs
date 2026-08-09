@@ -6,8 +6,8 @@ public static class ChaterAiConversationExtensions
 {
     public static IServiceCollection AddChaterAiConversations(this IServiceCollection services)
     {
-        services.AddSingleton<ConversationRepository>()
-            .AddSingleton<ConversationService>()
+        services.AddScoped<ConversationRepository>()
+            .AddScoped<ConversationService>()
             .AddSingleton<SessionRunLock>();
         return services;
     }

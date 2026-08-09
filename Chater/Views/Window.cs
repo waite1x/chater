@@ -5,17 +5,30 @@ using Avalonia.Platform;
 using Chater;
 using Material.Icons;
 using Material.Icons.Avalonia;
+using Microsoft.Extensions.DependencyInjection;
 using System.Runtime.InteropServices;
 
 namespace Chater.Views;
 
 /// <summary>
-/// Base window with cross-platform title-bar behavior and native Windows 11 chrome enhancements.
+/// Base window with cross-platform title-bar behavior, native Windows 11 chrome enhancements,
+/// and DI scope management. Each window owns a dedicated <see cref="IServiceScope"/> that is
+/// disposed when the window closes, guaranteeing transient resources are cleaned up promptly.
 /// </summary>
 public abstract class Window : Avalonia.Controls.Window
 {
     private const int DwmWindowCornerPreferenceAttribute = 33;
     private const int DwmWindowCornerPreferenceRound = 2;
+
+    /// <summary>The DI scope that owns this window and all its transient dependencies.</summary>
+    protected IServiceScope? Scope { get; private set; }
+
+    /// <summary>
+    /// Sets the DI scope that owns this window. Called by <see cref="Services.WindowNavigationService"/>
+    /// immediately after the window is resolved from the scope. The scope is disposed when the window
+    /// closes, releasing all transient resources.
+    /// </summary>
+    public void SetScope(IServiceScope scope) => Scope = scope;
 
     /// <summary>Gets whether a close request should hide the window unless the application is exiting.</summary>
     protected virtual bool HideOnClose => true;
@@ -81,15 +94,35 @@ public abstract class Window : Avalonia.Controls.Window
         }
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        // Dispose the ViewModel (DataContext) before the scope so that event
+        // unsubscriptions and collection clearing happen while DI is intact.
+        if (DataContext is System.IDisposable disposable)
+        {
+            disposable.Dispose();
+            DataContext = null;
+        }
+        DisposeScope();
+        base.OnClosed(e);
+    }
+
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         if (HideOnClose && Application.Current is not App { IsExiting: true })
         {
             e.Cancel = true;
             Hide();
+            return;
         }
-
         base.OnClosing(e);
+    }
+
+    /// <summary>Disposes the dedicated DI scope, releasing all transient resources.</summary>
+    private void DisposeScope()
+    {
+        Scope?.Dispose();
+        Scope = null;
     }
 
     protected override void OnOpened(EventArgs e)

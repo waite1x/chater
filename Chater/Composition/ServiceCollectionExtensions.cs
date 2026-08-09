@@ -7,6 +7,7 @@ using Chater.ViewModels;
 using Chater.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using AppState = Chater.ViewModels.AppState;
 
 namespace Chater.Composition;
 
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
             appPaths.EnsureCreated();
             return new SqliteDatabase(appPaths.DatabasePath);
         });
+        services.AddTransient<LazyServiceProvider>();
         services.AddSingleton<DatabaseMigrator>();
         services.AddSingleton<MessageRepository>();
         services.AddSingleton<AppSettingRepository>();
@@ -41,15 +43,17 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IConfirmationService, ConfirmationService>();
         services.AddSingleton<IWindowNavigationService, WindowNavigationService>();
         services.AddSingleton<IGlobalHotKeyService, GlobalHotKeyService>();
-        services.AddTransient<MainWindowViewModel>();
-        services.AddTransient<MainWindow>();
-        services.AddTransient<SettingsWindow>();
-        services.AddTransient<ApiKeySettingsViewModel>();
-        services.AddTransient<GeneralSettingsViewModel>();
-        services.AddTransient<ShortcutSettingsViewModel>();
-        services.AddTransient<SkillSettingsViewModel>();
-        services.AddTransient<HistorySettingsViewModel>();
-        services.AddTransient<AboutSettingsViewModel>();
+        services.AddScoped<ChatWindowViewModel>();
+        services.AddScoped<SettingsWindowViewModel>();
+        services.AddScoped<ChatWindow>();
+        services.AddSingleton<ChatWindowManager>();
+        services.AddScoped<SettingsWindow>();
+        services.AddScoped<ApiKeySettingsViewModel>();
+        services.AddScoped<GeneralSettingsViewModel>();
+        services.AddScoped<ShortcutSettingsViewModel>();
+        services.AddScoped<SkillSettingsViewModel>();
+        services.AddScoped<HistorySettingsViewModel>();
+        services.AddScoped<AboutSettingsViewModel>();
 
         services.AddChaterAi();
         return services;

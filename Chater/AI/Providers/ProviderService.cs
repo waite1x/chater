@@ -15,7 +15,14 @@ namespace Chater.AI.Providers
         public async Task SaveAsync(ApiProvider provider, CancellationToken cancellationToken = default)
         {
             Validate(provider);
-            await _providers.SaveAsync(provider with { UpdatedAt = DateTimeOffset.UtcNow }, cancellationToken).ConfigureAwait(false);
+            await _providers.SaveAsync(provider with { UpdatedAt = DateTimeOffset.UtcNow }, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyList<ApiProvider>> GetListAsync(CancellationToken cancellationToken = default)
+        {
+            var providers = await GetAllAsync(cancellationToken).ConfigureAwait(false);
+            return [.. providers.Where(p => p.IsEnabled)];
         }
 
         public Task<IReadOnlyList<ApiProvider>> GetAllAsync(CancellationToken cancellationToken = default) =>
@@ -24,16 +31,13 @@ namespace Chater.AI.Providers
         public Task DeleteAsync(string id, CancellationToken cancellationToken = default) =>
             _providers.DeleteAsync(id, cancellationToken);
 
-        public Task<ProviderConnectionResult> TestConnectionAsync(ApiProvider provider, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<string>> FetchModelsAsync(ApiProvider provider,
+            CancellationToken cancellationToken = default)
         {
             Validate(provider);
-            return (_connectionTester ?? throw new InvalidOperationException("Provider connection testing is not configured.")).TestAsync(provider, cancellationToken);
-        }
-
-        public Task<IReadOnlyList<string>> FetchModelsAsync(ApiProvider provider, CancellationToken cancellationToken = default)
-        {
-            Validate(provider);
-            return (_connectionTester ?? throw new InvalidOperationException("Provider connection testing is not configured.")).FetchModelsAsync(provider, cancellationToken);
+            return (_connectionTester ??
+                    throw new InvalidOperationException("Provider connection testing is not configured."))
+                .FetchModelsAsync(provider, cancellationToken);
         }
 
         /// <summary>
@@ -48,9 +52,11 @@ namespace Chater.AI.Providers
                 throw new ArgumentException("An API key is required for the selected provider.", nameof(provider));
             }
 
-            if (provider.ProviderType is ProviderType.Ollama or ProviderType.OpenAiCompatible && !Uri.TryCreate(provider.Endpoint, UriKind.Absolute, out _))
+            if (provider.ProviderType is ProviderType.Ollama or ProviderType.OpenAiCompatible &&
+                !Uri.TryCreate(provider.Endpoint, UriKind.Absolute, out _))
             {
-                throw new ArgumentException("A valid absolute endpoint is required for the selected provider.", nameof(provider));
+                throw new ArgumentException("A valid absolute endpoint is required for the selected provider.",
+                    nameof(provider));
             }
         }
     }

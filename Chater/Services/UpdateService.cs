@@ -14,10 +14,10 @@ public sealed class UpdateService : IUpdateService
     private const string Repository = "waite1x/chater";
     private static readonly Uri LatestReleaseUri = new($"https://api.github.com/repos/{Repository}/releases/latest");
     private readonly HttpClient _httpClient;
-    private readonly AppState _state;
+    private readonly ViewModels.AppState _state;
     private readonly SemaphoreSlim _downloadLock = new(1, 1);
 
-    public UpdateService(AppPaths _, AppState state, HttpClient? httpClient = null)
+    public UpdateService(AppPaths _, ViewModels.AppState state, HttpClient? httpClient = null)
     {
         _state = state;
         _state.CurrentVersion = CurrentVersion;

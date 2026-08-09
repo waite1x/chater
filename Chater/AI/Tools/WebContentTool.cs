@@ -11,7 +11,7 @@ namespace Chater.AI.Tools;
 /// <summary>
 /// Read-only webpage retrieval tool exposed to agents through Microsoft.Extensions.AI.
 /// </summary>
-public sealed partial class WebContentTool
+public sealed partial class WebContentTool : IDisposable
 {
     // Limits prevent a tool call from consuming unbounded memory or injecting excessive text into the model context.
     private const int MaximumResponseBytes = 512 * 1024 * 1024;
@@ -221,4 +221,9 @@ public sealed partial class WebContentTool
 
     [GeneratedRegex("\\s+")]
     private static partial Regex WhitespaceRegex();
+
+    public void Dispose()
+    {
+        _httpClient?.Dispose();
+    }
 }

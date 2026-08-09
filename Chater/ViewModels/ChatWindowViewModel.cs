@@ -1,7 +1,9 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Chater.AI;
 using Chater.AI.Conversations;
@@ -11,6 +13,7 @@ using Chater.Data;
 using Chater.Localization;
 using Chater.Logging;
 using Chater.Services;
+using Chater.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Material.Icons;
@@ -19,90 +22,72 @@ using Microsoft.Extensions.Logging;
 namespace Chater.ViewModels;
 
 /// <summary>
-/// Presentation model for the chat window and settings window navigation coordination.
+/// Presentation model for the chat window. Each <see cref="Views.ChatWindow"/> receives its own
+/// instance via scoped injection within a dedicated DI scope.
 /// </summary>
 /// <remarks>
-/// Each top-level window receives its own instance. <see cref="AppState"/> is the only shared state so preferences
-/// and update progress remain consistent across windows without sharing transient conversation state.
-/// Settings pages now have their own dedicated ViewModels (e.g. <see cref="ApiKeySettingsViewModel"/>).
+/// <see cref="AppState"/> is the only shared state so preferences and update progress remain
+/// consistent across windows without sharing transient conversation state.
 /// </remarks>
-public sealed partial class MainWindowViewModel : ViewModelBase
+public sealed partial class ChatWindowViewModel : ViewModelBase
 {
-    /// <summary>Stable page identifiers used by navigation and settings deep links.</summary>
-    public const string GeneralSettingsPage = "general";
-    public const string ApiKeySettingsPage = "api-key";
-    public const string SkillsSettingsPage = "skills";
-    public const string ShortcutSettingsPage = "shortcut";
-    public const string HistorySettingsPage = "history";
-    public const string AboutSettingsPage = "about";
-
-    private readonly ProviderService _providerService;
-    private readonly SkillRepository _skills;
     private readonly ConversationService _conversations;
     private readonly ChatService _chat;
     private readonly ConversationRepository _conversationRepository;
     private readonly MessageRepository _messageRepository;
+    private readonly ChatWindowManager _chatWindowManager;
     private readonly IWindowNavigationService? _navigation;
     private readonly LocalizationService _localization;
     private readonly IGlobalHotKeyService? _globalHotKeys;
-    private readonly AppState _state;
     private Conversation? _conversation;
     private CancellationTokenSource? _sendCancellation;
     private bool _openingConversation;
 
-    public MainWindowViewModel(
-        ProviderService providerService,
-        SkillRepository skills,
+    public ChatWindowViewModel(
         ConversationService conversations,
         ChatService chat,
         ConversationRepository conversationRepository,
         MessageRepository messageRepository,
+        AppState appState,
+        ChatWindowManager chatWindowManager,
         IWindowNavigationService? navigation = null,
         IGlobalHotKeyService? globalHotKeys = null,
-        LocalizationService? localization = null,
-        AppState? appState = null)
+        LocalizationService? localization = null
+    )
     {
-        _providerService = providerService;
-        _skills = skills;
+        AppState = appState;
         _conversations = conversations;
         _chat = chat;
         _conversationRepository = conversationRepository;
         _messageRepository = messageRepository;
+        _chatWindowManager = chatWindowManager;
         _navigation = navigation;
         _localization = localization ?? new LocalizationService();
         _globalHotKeys = globalHotKeys;
-        _state = appState ?? new AppState();
     }
+
+    public AppState AppState { get; }
 
     // ── Collections for chat UI ──────────────────────────────────────────
 
-    public ObservableCollection<ApiProvider> Providers { get; } = [];
-    public ObservableCollection<ProviderModelMenuItem> ProviderModelMenuItems { get; } = [];
-    public ObservableCollection<Skill> Skills { get; } = [];
     public ObservableCollection<ChatMessageViewModel> Messages { get; } = [];
-    public ObservableCollection<Conversation> Conversations { get; } = [];
 
     // ── Chat-bound selections ────────────────────────────────────────────
 
-    [ObservableProperty]
-    private ApiProvider? _selectedProvider;
+    [ObservableProperty] private ApiProvider? _selectedProvider;
 
-    [ObservableProperty]
-    private string? _selectedModelId;
+    [ObservableProperty] private string? _selectedModelId;
 
-    [ObservableProperty]
-    private Conversation? _selectedConversation;
+    [ObservableProperty] private Conversation? _selectedConversation;
 
-    [ObservableProperty]
-    private Skill? _selectedSkill;
+    [ObservableProperty] private Skill? _selectedSkill;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
     [NotifyCanExecuteChangedFor(nameof(SendOrStopCommand))]
     private string _draft = string.Empty;
 
-    [ObservableProperty]
-    private string _statusMessage = "Loading...";
+    [ObservableProperty] private string _statusMessage = "Loading...";
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand))]
@@ -118,77 +103,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     public string SendButtonText => IsSending ? T("Stop") : T("Send");
     public MaterialIconKind SendButtonIcon => IsSending ? MaterialIconKind.Stop : MaterialIconKind.Send;
 
+
     // ── Shortcuts (shared with global hotkey system) ─────────────────────
 
-    [ObservableProperty]
-    private string _chatShortcut = AppSettingsService.DefaultChatShortcut;
+    [ObservableProperty] private string _chatShortcut = AppSettingsService.DefaultChatShortcut;
 
-    [ObservableProperty]
-    private string _newChatWindowShortcut = AppSettingsService.DefaultNewChatWindowShortcut;
-
-    // ── Settings navigation ──────────────────────────────────────────────
-
-    [ObservableProperty]
-    private string _selectedSettingsPageKey = GeneralSettingsPage;
-
-    public void SelectSettingsPage(string pageKey)
-    {
-        if (string.IsNullOrWhiteSpace(pageKey)) return;
-        SelectedSettingsPageKey = pageKey;
-    }
-
-    // ── Initialisation ───────────────────────────────────────────────────
-
-    public async Task LoadAsync(CancellationToken cancellationToken = default)
-    {
-        // Ensure AppState has been seeded once (the first window to load does this).
-        if (!_state.SettingsLoaded)
-        {
-            var settings = new AppSettingsService(
-                new AppSettingRepository(new SqliteDatabase(AppPaths.CreateDefault().DatabasePath)));
-            _state.ThemeKey = await settings.GetAsync(AppSettingsService.ThemeKey, cancellationToken).ConfigureAwait(false)
-                ?? AppSettingsService.DefaultTheme;
-            _state.LanguageKey = await settings.GetAsync(AppSettingsService.LanguageKey, cancellationToken).ConfigureAwait(false)
-                ?? AppSettingsService.DefaultLanguage;
-            _state.ChatShortcut = await settings.GetAsync(AppSettingsService.ChatShortcutKey, cancellationToken).ConfigureAwait(false)
-                ?? AppSettingsService.DefaultChatShortcut;
-            _state.NewChatWindowShortcut = await settings.GetAsync(AppSettingsService.NewChatWindowShortcutKey, cancellationToken).ConfigureAwait(false)
-                ?? AppSettingsService.DefaultNewChatWindowShortcut;
-            _state.SettingsLoaded = true;
-        }
-
-        ChatShortcut = _state.ChatShortcut;
-        NewChatWindowShortcut = _state.NewChatWindowShortcut;
-
-        Providers.Clear();
-        ProviderModelMenuItems.Clear();
-        foreach (var provider in await _providerService.GetAllAsync(cancellationToken).ConfigureAwait(false))
-        {
-            if (provider.IsEnabled)
-            {
-                Providers.Add(provider);
-                ProviderModelMenuItems.Add(new ProviderModelMenuItem(
-                    provider,
-                    provider.ModelIds
-                        .Where(model => !string.IsNullOrWhiteSpace(model))
-                        .Select(model => new ModelMenuItem(model, new RelayCommand(() => SelectModel(provider, model))))
-                        .ToArray()));
-            }
-        }
-
-        Skills.Clear();
-        foreach (var skill in await _skills.GetEnabledAsync(cancellationToken).ConfigureAwait(false))
-            Skills.Add(skill);
-
-        SelectedProvider = Providers.FirstOrDefault(p => p.IsDefault) ?? Providers.FirstOrDefault();
-        SelectedSkill = Skills.FirstOrDefault();
-
-        Conversations.Clear();
-        foreach (var conversation in await _conversationRepository.GetRecentAsync(cancellationToken).ConfigureAwait(false))
-            Conversations.Add(conversation);
-
-        StatusMessage = SelectedProvider is null ? T("NoProvider") : T("Ready");
-    }
+    [ObservableProperty] private string _newChatWindowShortcut = AppSettingsService.DefaultNewChatWindowShortcut;
 
     // ── Chat actions ─────────────────────────────────────────────────────
 
@@ -198,7 +118,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         _conversation = null;
         SelectedConversation = null;
         Messages.Clear();
-        SelectedSkill = Skills.FirstOrDefault();
+        SelectedSkill = AppState.Skills.FirstOrDefault();
         StatusMessage = T("NewConversationStatus");
     }
 
@@ -209,11 +129,6 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         Messages.Clear();
     }
 
-    private void SelectModel(ApiProvider provider, string model)
-    {
-        SelectedProvider = provider;
-        SelectedModelId = model;
-    }
 
     [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task SendAsync()
@@ -229,8 +144,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
         var selectedProvider = SelectedProvider with { ModelId = SelectedModelId ?? SelectedProvider.ModelId };
         _conversation ??= await _conversations.CreateAsync(selectedProvider, SelectedSkill);
-        if (!Conversations.Any(item => item.Id == _conversation.Id))
-            Conversations.Insert(0, _conversation);
+        if (AppState.Conversations.All(item => item.Id != _conversation.Id))
+            AppState.Conversations.Insert(0, _conversation);
 
         Draft = string.Empty;
         var assistant = new ChatMessageViewModel(MessageRole.Assistant, string.Empty);
@@ -251,12 +166,19 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         {
             try
             {
-                await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, _sendCancellation.Token).ConfigureAwait(false))
+                await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, _sendCancellation.Token)
+                                   .ConfigureAwait(false))
                     await channel.Writer.WriteAsync(update, _sendCancellation.Token).ConfigureAwait(false);
                 channel.Writer.TryComplete();
             }
-            catch (OperationCanceledException) { channel.Writer.TryComplete(); }
-            catch (Exception ex) { channel.Writer.TryComplete(ex); }
+            catch (OperationCanceledException)
+            {
+                channel.Writer.TryComplete();
+            }
+            catch (Exception ex)
+            {
+                channel.Writer.TryComplete(ex);
+            }
         }, _sendCancellation.Token);
 
         try
@@ -282,14 +204,15 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         }
         catch (OperationCanceledException exception)
         {
-            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Chat request cancelled", LogLevel.Information);
+            ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Chat request cancelled", LogLevel.Information);
             StatusMessage = T("Stopped");
             await RefreshConversationHistoryAsync();
         }
         catch (Exception exception)
         {
-            ExceptionLogger.Log(exception, nameof(MainWindowViewModel), "Chat request failed");
-            assistant.Content = string.IsNullOrEmpty(assistant.Content) ? "Cannot complete request." : assistant.Content;
+            ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Chat request failed");
+            assistant.Content =
+                string.IsNullOrEmpty(assistant.Content) ? "Cannot complete request." : assistant.Content;
             StatusMessage = exception.Message;
             await RefreshConversationHistoryAsync();
         }
@@ -307,7 +230,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanSendOrStop))]
     private void SendOrStop()
     {
-        if (IsSending) { Stop(); return; }
+        if (IsSending)
+        {
+            Stop();
+            return;
+        }
+
         _ = SendAsync();
     }
 
@@ -324,7 +252,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     private void OpenSkillWorkbench() => _navigation?.ShowSkillSettings();
 
     [RelayCommand]
-    private void ShowChat() => _navigation?.ShowChat();
+    private void ShowChat() => _chatWindowManager?.Show();
 
     // ── Shortcut helpers ─────────────────────────────────────────────────
 
@@ -338,21 +266,20 @@ public sealed partial class MainWindowViewModel : ViewModelBase
 
     public async Task OpenConversationAsync(string conversationId, CancellationToken cancellationToken = default)
     {
-        var conversation = await _conversationRepository.GetByIdAsync(conversationId, cancellationToken).ConfigureAwait(false);
+        var conversation = await _conversationRepository.GetByIdAsync(conversationId, cancellationToken)
+            .ConfigureAwait(false);
         if (conversation is null) return;
-        if (!Conversations.Any(item => item.Id == conversation.Id))
-            Conversations.Insert(0, conversation);
+        if (AppState.Conversations.All(item => item.Id != conversation.Id))
+            AppState.Conversations.Insert(0, conversation);
         SelectedConversation = conversation;
     }
 
     private async Task RefreshConversationHistoryAsync(CancellationToken cancellationToken = default)
     {
         var selectedId = SelectedConversation?.Id;
-        var conversations = await _conversationRepository.GetRecentAsync(cancellationToken).ConfigureAwait(false);
-        Conversations.Clear();
-        foreach (var c in conversations) Conversations.Add(c);
+        await AppState.RefreshConversationHistoryAsync(cancellationToken);
         if (selectedId is not null)
-            SelectedConversation = Conversations.FirstOrDefault(c => c.Id == selectedId);
+            SelectedConversation = AppState.Conversations.FirstOrDefault(c => c.Id == selectedId);
     }
 
     private async Task OpenConversationAsync(Conversation conversation)
@@ -361,10 +288,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         try
         {
             _conversation = conversation;
-            var provider = Providers.FirstOrDefault(item => item.Id == conversation.ProviderId);
+            var provider = AppState.Providers.FirstOrDefault(item => item.Id == conversation.ProviderId);
             if (provider is not null) SelectedProvider = provider;
 
-            var skill = Skills.FirstOrDefault(item => item.Id == conversation.SkillId);
+            var skill = AppState.Skills.FirstOrDefault(item => item.Id == conversation.SkillId);
             if (skill is not null) SelectedSkill = skill;
 
             using var snapshot = JsonDocument.Parse(conversation.ProviderConfiguration);
@@ -372,12 +299,16 @@ public sealed partial class MainWindowViewModel : ViewModelBase
                 SelectedModelId = modelId.GetString();
 
             Messages.Clear();
-            foreach (var message in await _messageRepository.GetByConversationAsync(conversation.Id).ConfigureAwait(false))
+            foreach (var message in await _messageRepository.GetByConversationAsync(conversation.Id)
+                         .ConfigureAwait(false))
                 Messages.Add(new ChatMessageViewModel(message.Role, message.Content));
 
             StatusMessage = $"Opened: {conversation.Title}";
         }
-        finally { _openingConversation = false; }
+        finally
+        {
+            _openingConversation = false;
+        }
     }
 
     // ── Partial change handlers ──────────────────────────────────────────
@@ -414,14 +345,26 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         if (value is not null) _ = OpenConversationAsync(value);
     }
 
+    public void SelectModel(ApiProvider provider, string model)
+    {
+        SelectedProvider = provider;
+        SelectedModelId = model;
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────
 
     private string T(string key) => _localization[key];
 
-    public void Dispose()
+    public override void Dispose()
     {
         _sendCancellation?.Cancel();
         _sendCancellation?.Dispose();
         _sendCancellation = null;
+
+        Messages.Clear();
+
+        _conversation = null;
+        _openingConversation = false;
+        base.Dispose();
     }
 }

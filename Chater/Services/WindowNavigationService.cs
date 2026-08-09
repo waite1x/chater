@@ -1,152 +1,61 @@
 using Avalonia;
-using Chater.ViewModels;
-using Chater.Views;
-using Chater.Logging;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Chater.ViewModels;
+using Chater.Views;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Chater.Services;
 
 /// <summary>
-/// Coordinates top-level windows while keeping their view-model lifetime separate from the UI controls.
+/// Coordinates top-level windows. Each window is resolved from a dedicated
+/// <see cref="IServiceScope"/> so that the window, its ViewModel, and all
+/// transient dependencies are scoped to the window's lifetime. The scope is
+/// disposed when the window closes, releasing all transient resources.
 /// </summary>
-public sealed class WindowNavigationService(IServiceProvider services) : IWindowNavigationService
+/// <remarks>
+/// ViewModel initialization and data loading are handled internally by each
+/// window in <see cref="Window.OnOpened"/>. This service only creates windows
+/// and passes pre-show parameters (conversation id, page key).
+/// </remarks>
+public sealed class WindowNavigationService(IServiceScopeFactory scopeFactory) : IWindowNavigationService
 {
-    // Settings is intentionally single-instance; chat windows may have independent conversations.
     private SettingsWindow? _settingsWindow;
-    private MainWindowViewModel? _settingsViewModel;
 
     public void ShowSettings()
     {
-        ShowSettings(MainWindowViewModel.GeneralSettingsPage, 0);
+        ShowSettings(SettingsWindowViewModel.GeneralSettingsPage);
     }
 
     public void ShowSkillSettings()
     {
-        ShowSettings(MainWindowViewModel.SkillsSettingsPage, 1);
+        ShowSettings(SettingsWindowViewModel.SkillsSettingsPage);
     }
 
-    /// <summary>Shows the existing chat window, or creates one when none exists.</summary>
-    public void ShowChat()
+    private void ShowSettings(string pageKey)
     {
-        if (FindFirstChatWindow() is { } existingWindow)
+        if (_settingsWindow is { IsVisible: true })
         {
-            ActivateChatWindow(existingWindow);
+            _settingsWindow.NavigateTo(pageKey);
+            _settingsWindow.Activate();
+            _settingsWindow.Focus();
             return;
         }
 
-        ShowChat(null);
-    }
+        var scope = scopeFactory.CreateScope();
+        var window = scope.ServiceProvider.GetRequiredService<SettingsWindow>();
+        window.SetScope(scope);
+        window.PendingPageKey = pageKey;
 
-    /// <summary>Always creates a new chat window, even when another chat window is already open.</summary>
-    public void ShowNewChat() => ShowChat(null);
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(window, _settingsWindow))
+                _settingsWindow = null;
+        };
 
-    public void ShowChat(string? conversationId)
-    {
-        var window = services.GetRequiredService<MainWindow>();
-        var viewModel = services.GetRequiredService<MainWindowViewModel>();
-        window.DataContext = viewModel;
-        window.Closed += OnChatWindowClosed;
+        _settingsWindow = window;
         window.Show();
-        window.WindowState = WindowState.Normal;
         window.Activate();
         window.Focus();
-        _ = InitializeChatWindowAsync(viewModel, conversationId);
-    }
-
-    private static MainWindow? FindFirstChatWindow() =>
-        (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)
-        ?.Windows.OfType<MainWindow>()
-        .FirstOrDefault();
-
-    private static void ActivateChatWindow(MainWindow window)
-    {
-        if (!window.IsVisible)
-        {
-            window.Show();
-        }
-
-        window.WindowState = WindowState.Normal;
-        window.Activate();
-        window.Focus();
-    }
-
-    private void ShowSettings(string pageKey, int compatibilityIndex)
-    {
-        var window = _settingsWindow ??= CreateSettingsWindow();
-        var isNewViewModel = _settingsViewModel is null;
-        _settingsViewModel ??= services.GetRequiredService<MainWindowViewModel>();
-        var viewModel = _settingsViewModel;
-        viewModel.SelectSettingsPage(pageKey);
-        window.DataContext = viewModel;
-        if (!window.IsVisible)
-        {
-            window.Show();
-        }
-
-        window.Activate();
-        window.Focus();
-
-        if (isNewViewModel)
-        {
-            _ = InitializeSettingsWindowAsync(viewModel);
-        }
-    }
-
-    private SettingsWindow CreateSettingsWindow()
-    {
-        var window = services.GetRequiredService<SettingsWindow>();
-        window.Closed += OnSettingsWindowClosed;
-        return window;
-    }
-
-    private void OnSettingsWindowClosed(object? sender, EventArgs e)
-    {
-        if (sender is SettingsWindow window && ReferenceEquals(window, _settingsWindow))
-        {
-            window.DataContext = null;
-            _settingsViewModel?.Dispose();
-            _settingsViewModel = null;
-            _settingsWindow = null;
-        }
-    }
-
-    private async Task InitializeChatWindowAsync(MainWindowViewModel viewModel, string? conversationId)
-    {
-        try
-        {
-            // The window is shown first so long-running I/O never delays native window creation.
-            await viewModel.LoadAsync().ConfigureAwait(false);
-            if (conversationId is not null)
-                await viewModel.OpenConversationAsync(conversationId).ConfigureAwait(false);
-        }
-        catch (Exception exception)
-        {
-            ExceptionLogger.Log(exception, nameof(WindowNavigationService), "Failed to initialize a chat window");
-            viewModel.StatusMessage = exception.Message;
-        }
-    }
-
-    private static async Task InitializeSettingsWindowAsync(MainWindowViewModel viewModel)
-    {
-        try
-        {
-            await viewModel.LoadAsync().ConfigureAwait(false);
-        }
-        catch (Exception exception)
-        {
-            ExceptionLogger.Log(exception, nameof(WindowNavigationService), "Failed to initialize the settings window");
-            viewModel.StatusMessage = exception.Message;
-        }
-    }
-
-    private static void OnChatWindowClosed(object? sender, EventArgs e)
-    {
-        if (sender is MainWindow window)
-        {
-            window.Closed -= OnChatWindowClosed;
-            window.DataContext = null;
-        }
     }
 }

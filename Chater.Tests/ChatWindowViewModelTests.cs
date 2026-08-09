@@ -9,7 +9,7 @@ using Chater.ViewModels;
 
 namespace Chater.Tests;
 
-public sealed class MainWindowViewModelTests : IDisposable
+public sealed class ChatWindowViewModelTests : IDisposable
 {
     private readonly string _path = Path.Combine(Path.GetTempPath(), "Chater.Tests", $"{Guid.NewGuid():N}.db");
 
@@ -90,7 +90,7 @@ public sealed class MainWindowViewModelTests : IDisposable
             File.Delete(_path);
     }
 
-    private static MainWindowViewModel CreateViewModel(SqliteDatabase database, IWindowNavigationService? navigation = null) => new(
+    private static ChatWindowViewModel CreateViewModel(SqliteDatabase database, IWindowNavigationService? navigation = null) => new(
         new ProviderService(new ApiProviderRepository(database)),
         new SkillRepository(database),
         new ConversationService(new ConversationRepository(database)),

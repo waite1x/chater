@@ -142,8 +142,9 @@ public sealed partial class ShortcutSettingsViewModel : SettingsViewModelBase
         finally { _syncingAppState = false; }
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         _state.PropertyChanged -= OnAppStatePropertyChanged;
+        base.Dispose();
     }
 }

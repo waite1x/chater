@@ -3,10 +3,8 @@
         xmlns:vm="using:Chater.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         x:Class="Chater.Views.SettingsWindow"
-        x:DataType="vm:MainWindowViewModel"
-        DataContextChanged="OnDataContextChanged"
+        x:DataType="vm:SettingsWindowViewModel"
         Title="{Binding Localization[Settings]}" Width="960" Height="640" MinWidth="760" MinHeight="520"
-        KeyDown="OnWindowKeyDown"
         Icon="/Assets/chater.ico"
         WindowDecorations="None" ExtendClientAreaToDecorationsHint="True">
     <Grid x:Name="WindowLayout" RowDefinitions="28,*">

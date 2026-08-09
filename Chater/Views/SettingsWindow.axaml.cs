@@ -9,37 +9,46 @@ namespace Chater.Views;
 
 public partial class SettingsWindow : Window
 {
+    private readonly SettingsWindowViewModel _viewModel;
+
     protected override bool HideOnClose => false;
-    private MainWindowViewModel? _viewModel;
     private Control? _currentPage;
     private bool _updatingNavigation;
+    private bool _initialized;
 
-    public SettingsWindow()
+    /// <summary>If set before the window is shown, this page will be selected on open.</summary>
+    internal string? PendingPageKey { get; set; }
+
+    public SettingsWindow(SettingsWindowViewModel viewModel)
     {
+        _viewModel = viewModel;
+        DataContext = viewModel;
         InitializeComponent();
         ConfigurePlatformTitleBar();
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
-    private void OnDataContextChanged(object? sender, EventArgs e)
+    /// <summary>Navigates to a settings page. Used externally when the window is already visible.</summary>
+    public void NavigateTo(string pageKey)
     {
-        if (_viewModel is not null)
-            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.SelectSettingsPage(pageKey);
+    }
 
-        _viewModel = DataContext as MainWindowViewModel;
-        if (_viewModel is not null)
+    protected override void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+        if (!_initialized)
         {
-            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-            ShowPage(_viewModel.SelectedSettingsPageKey);
-        }
-        else
-        {
-            DisposeCurrentPage();
+            _initialized = true;
+            var pageKey = PendingPageKey ?? _viewModel.SelectedSettingsPageKey;
+            _viewModel.SelectSettingsPage(pageKey);
+            ShowPage(pageKey);
         }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainWindowViewModel.SelectedSettingsPageKey) && _viewModel is not null)
+        if (e.PropertyName == nameof(SettingsWindowViewModel.SelectedSettingsPageKey))
         {
             ShowPage(_viewModel.SelectedSettingsPageKey);
         }
@@ -47,7 +56,7 @@ public partial class SettingsWindow : Window
 
     private void OnSettingsSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (_updatingNavigation || _viewModel is null || SettingsNavigation.SelectedItem is not ListBoxItem { Tag: string pageKey })
+        if (_updatingNavigation || SettingsNavigation.SelectedItem is not ListBoxItem { Tag: string pageKey })
             return;
 
         _viewModel.SelectSettingsPage(pageKey);
@@ -55,6 +64,10 @@ public partial class SettingsWindow : Window
 
     private void ShowPage(string pageKey)
     {
+        // Scope is set by WindowNavigationService before the window is shown,
+        // so it is available by the time OnOpened fires.
+        if (Scope is null) return;
+
         var selectedItem = SettingsNavigation.ItemsView.OfType<ListBoxItem>().FirstOrDefault(item => Equals(item.Tag, pageKey));
         _updatingNavigation = true;
         try { SettingsNavigation.SelectedItem = selectedItem; }
@@ -62,29 +75,27 @@ public partial class SettingsWindow : Window
 
         DisposeCurrentPage();
 
-        if (App.Current is not App app || app.Services is null) return;
-
         (_currentPage, var pageVm) = pageKey switch
         {
-            MainWindowViewModel.GeneralSettingsPage => CreatePage<GeneralSettingsView, GeneralSettingsViewModel>(app.Services, vm => vm.LoadAsync()),
-            MainWindowViewModel.ApiKeySettingsPage => CreatePage<ApiKeySettingsView, ApiKeySettingsViewModel>(app.Services, vm => vm.LoadAsync()),
-            MainWindowViewModel.SkillsSettingsPage => CreatePage<SkillSettingsView, SkillSettingsViewModel>(app.Services, vm => vm.LoadAsync()),
-            MainWindowViewModel.ShortcutSettingsPage => CreatePage<ShortcutSettingsView, ShortcutSettingsViewModel>(app.Services, vm => { vm.LoadFromState(); return Task.CompletedTask; }),
-            MainWindowViewModel.HistorySettingsPage => CreatePage<HistorySettingsView, HistorySettingsViewModel>(app.Services, _ => Task.CompletedTask),
-            MainWindowViewModel.AboutSettingsPage => CreatePage<AboutSettingsView, AboutSettingsViewModel>(app.Services, vm => { vm.LoadFromState(); return Task.CompletedTask; }),
-            _ => CreatePage<GeneralSettingsView, GeneralSettingsViewModel>(app.Services, vm => vm.LoadAsync())
+            SettingsWindowViewModel.GeneralSettingsPage => CreatePage<GeneralSettingsView, GeneralSettingsViewModel>(vm => vm.LoadAsync()),
+            SettingsWindowViewModel.ApiKeySettingsPage => CreatePage<ApiKeySettingsView, ApiKeySettingsViewModel>(vm => vm.LoadAsync()),
+            SettingsWindowViewModel.SkillsSettingsPage => CreatePage<SkillSettingsView, SkillSettingsViewModel>(vm => vm.LoadAsync()),
+            SettingsWindowViewModel.ShortcutSettingsPage => CreatePage<ShortcutSettingsView, ShortcutSettingsViewModel>(vm => { vm.LoadFromState(); return Task.CompletedTask; }),
+            SettingsWindowViewModel.HistorySettingsPage => CreatePage<HistorySettingsView, HistorySettingsViewModel>(_ => Task.CompletedTask),
+            SettingsWindowViewModel.AboutSettingsPage => CreatePage<AboutSettingsView, AboutSettingsViewModel>(vm => { vm.LoadFromState(); return Task.CompletedTask; }),
+            _ => CreatePage<GeneralSettingsView, GeneralSettingsViewModel>(vm => vm.LoadAsync())
         };
 
         if (_currentPage is not null)
             SettingsContent.Content = _currentPage;
     }
 
-    private static (Control?, SettingsViewModelBase?) CreatePage<TView, TVm>(IServiceProvider services, Func<TVm, Task> initialize)
+    private (Control?, SettingsViewModelBase?) CreatePage<TView, TVm>(Func<TVm, Task> initialize)
         where TView : Control, new()
         where TVm : SettingsViewModelBase
     {
         var view = new TView();
-        var vm = services.GetRequiredService<TVm>();
+        var vm = Scope!.ServiceProvider.GetRequiredService<TVm>();
         view.DataContext = vm;
         _ = initialize(vm);
         return (view, vm);
@@ -98,20 +109,11 @@ public partial class SettingsWindow : Window
         _currentPage = null;
     }
 
-    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (DataContext is MainWindowViewModel viewModel && viewModel.IsChatShortcut(e.Key, e.KeyModifiers))
-        {
-            viewModel.ShowChatCommand.Execute(null);
-            e.Handled = true;
-        }
-    }
-
     protected override void OnClosed(EventArgs e)
     {
-        if (_viewModel is not null)
-            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         DisposeCurrentPage();
+        // The base window disposes the ViewModel (DataContext) and the scope.
         base.OnClosed(e);
     }
 }

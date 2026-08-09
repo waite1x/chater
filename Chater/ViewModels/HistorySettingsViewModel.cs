@@ -13,6 +13,7 @@ public sealed partial class HistorySettingsViewModel : SettingsViewModelBase
 {
     private readonly ConversationRepository _conversationRepository;
     private readonly MessageRepository _messageRepository;
+    private readonly ChatWindowManager _chatWindowManager;
     private readonly IConfirmationService? _confirmation;
     private readonly IWindowNavigationService? _navigation;
     private int _historyPage;
@@ -24,12 +25,14 @@ public sealed partial class HistorySettingsViewModel : SettingsViewModelBase
         ConversationRepository conversationRepository,
         MessageRepository messageRepository,
         LocalizationService localization,
+        ChatWindowManager chatWindowManager,
         IConfirmationService? confirmation = null,
         IWindowNavigationService? navigation = null)
         : base(localization)
     {
         _conversationRepository = conversationRepository;
         _messageRepository = messageRepository;
+        _chatWindowManager = chatWindowManager;
         _confirmation = confirmation;
         _navigation = navigation;
     }
@@ -71,7 +74,7 @@ public sealed partial class HistorySettingsViewModel : SettingsViewModelBase
     private void StartHistoryConversation()
     {
         if (SelectedHistoryConversation is not null)
-            _navigation?.ShowChat(SelectedHistoryConversation.Id);
+            _chatWindowManager?.ShowNew(SelectedHistoryConversation.Id);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteHistoryConversation))]

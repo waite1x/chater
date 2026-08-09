@@ -9,8 +9,10 @@ using Chater.Composition;
 using Chater.Localization;
 using Chater.Logging;
 using Chater.Services;
+using Chater.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Chater.Views;
 
 namespace Chater;
 
@@ -25,9 +27,6 @@ public partial class App : Application
     private LocalizationService? _localization;
     private bool _updateDialogOpen;
     internal bool IsExiting { get; private set; }
-
-    /// <summary>Exposes the DI container for settings page ViewModel resolution.</summary>
-    internal ServiceProvider? Services => _services;
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -68,23 +67,20 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = _services.GetRequiredService<Chater.Views.MainWindow>();
-            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            var viewModel = _services.GetRequiredService<Chater.ViewModels.MainWindowViewModel>();
+            desktop.ShutdownMode =  ShutdownMode.OnExplicitShutdown;
+            
             var updateService = _services.GetRequiredService<IUpdateService>();
             updateService.UpdateAvailable += OnUpdateAvailable;
-            desktop.MainWindow.DataContext = viewModel;
-            desktop.MainWindow.Opened += async (_, _) =>
-            {
-                await viewModel.LoadAsync();
-                var globalHotKeys = _services.GetRequiredService<IGlobalHotKeyService>();
-                if (!globalHotKeys.Start(viewModel.ChatShortcut, viewModel.NewChatWindowShortcut) && globalHotKeys.LastError is not null)
-                {
-                    viewModel.StatusMessage = globalHotKeys.LastError;
-                    _logger?.LogWarning("Global hotkey registration failed: {Error}", globalHotKeys.LastError);
-                }
-                _ = CheckForUpdatesAsync(updateService);
-            };
+
+            _ = _services.GetRequiredService<AppState>().LoadAsync();
+
+            // Open the first chat window on startup.
+            // Hotkey registration and ViewModel initialization are handled inside ChatWindow.OnOpened.
+            _services.GetRequiredService<ChatWindowManager>().Show();
+
+            // Update check runs on startup, independent of any window.
+            _ = CheckForUpdatesAsync(updateService);
+
             desktop.Exit += (_, _) =>
             {
                 IsExiting = true;
@@ -92,7 +88,7 @@ public partial class App : Application
                 AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
                 TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
                 Dispatcher.UIThread.UnhandledException -= OnDispatcherUnhandledException;
-                _services.GetRequiredService<Services.IGlobalHotKeyService>().Dispose();
+                _services.GetRequiredService<IGlobalHotKeyService>().Dispose();
                 _services.Dispose();
                 ExceptionLogger.Configure(null);
                 _services = null;
@@ -210,7 +206,7 @@ public partial class App : Application
         }
     }
 
-    private async Task<bool> ShowUpdateDialogAsync(IUpdateService updates, AppUpdateInfo update, Chater.Views.UpdateDialogMode mode, string? downloadedFilePath = null)
+    private async Task<bool> ShowUpdateDialogAsync(IUpdateService updates, AppUpdateInfo update, UpdateDialogMode mode, string? downloadedFilePath = null)
     {
         if (_updateDialogOpen || _services is null || ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -235,7 +231,7 @@ public partial class App : Application
                 window.IsEnabled = false;
 
             var localization = _services.GetRequiredService<LocalizationService>();
-            var dialog = new Views.UpdateDialog(update, localization, mode);
+            var dialog = new UpdateDialog(update, localization, mode);
             dialog.Opened += (_, _) =>
             {
                 dialog.Activate();
@@ -257,9 +253,9 @@ public partial class App : Application
         }
     }
 
-    private void OnTrayShowChat(object? sender, EventArgs e) => _services?.GetRequiredService<Services.IWindowNavigationService>().ShowChat();
+    private void OnTrayShowChat(object? sender, EventArgs e) => _services?.GetRequiredService<ChatWindowManager>().Show();
 
-    private void OnTrayShowSettings(object? sender, EventArgs e) => _services?.GetRequiredService<Services.IWindowNavigationService>().ShowSettings();
+    private void OnTrayShowSettings(object? sender, EventArgs e) => _services?.GetRequiredService<IWindowNavigationService>().ShowSettings();
 
     private void OnTrayExit(object? sender, EventArgs e)
     {

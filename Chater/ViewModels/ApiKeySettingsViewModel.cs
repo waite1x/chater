@@ -11,15 +11,18 @@ namespace Chater.ViewModels;
 public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
 {
     private readonly ProviderService _providerService;
+    private readonly AppState _appState;
     private readonly IConfirmationService? _confirmation;
 
     public ApiKeySettingsViewModel(
         ProviderService providerService,
+        AppState appState,
         LocalizationService localization,
         IConfirmationService? confirmation = null)
         : base(localization)
     {
         _providerService = providerService;
+        _appState = appState;
         _confirmation = confirmation;
     }
 
@@ -27,26 +30,19 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
     public IReadOnlyList<ProviderType> ProviderTypes { get; } = Enum.GetValues<ProviderType>();
     public ObservableCollection<string> FetchedModels { get; } = [];
 
-    [ObservableProperty]
-    private ApiProvider? _selectedProvider;
+    [ObservableProperty] private ApiProvider? _selectedProvider;
 
-    [ObservableProperty]
-    private string _providerName = string.Empty;
+    [ObservableProperty] private string _providerName = string.Empty;
 
-    [ObservableProperty]
-    private ProviderType _providerType = ProviderType.OpenAi;
+    [ObservableProperty] private ProviderType _providerType = ProviderType.OpenAi;
 
-    [ObservableProperty]
-    private string _providerModelId = string.Empty;
+    [ObservableProperty] private string _providerModelId = string.Empty;
 
-    [ObservableProperty]
-    private string _providerEndpoint = string.Empty;
+    [ObservableProperty] private string _providerEndpoint = string.Empty;
 
-    [ObservableProperty]
-    private string _providerApiKey = string.Empty;
+    [ObservableProperty] private string _providerApiKey = string.Empty;
 
-    [ObservableProperty]
-    private bool _isFetchingModels;
+    [ObservableProperty] private bool _isFetchingModels;
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -88,6 +84,7 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
             await LoadAsync().ConfigureAwait(false);
             SelectedProvider = Providers.FirstOrDefault(item => item.Id == provider.Id);
             StatusMessage = T("ProviderSaved");
+            _ = _appState.ReloadAiProvidersAsync();
         }
         catch (Exception exception)
         {
@@ -109,6 +106,7 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
             await _providerService.DeleteAsync(provider.Id).ConfigureAwait(false);
             await LoadAsync().ConfigureAwait(false);
             StatusMessage = T("ProviderDeleted");
+            _ = _appState.ReloadAiProvidersAsync();
         }
         catch (Exception exception)
         {
@@ -173,16 +171,19 @@ public sealed partial class ApiKeySettingsViewModel : SettingsViewModelBase
             .ToArray();
         var activeModel = modelIds.FirstOrDefault() ?? string.Empty;
         return new ApiProvider(
-            existing?.Id ?? Guid.NewGuid().ToString("N"),
-            string.IsNullOrWhiteSpace(ProviderName) ? (existing?.Name ?? "Unnamed") : ProviderName.Trim(),
-            ProviderType,
-            string.IsNullOrWhiteSpace(ProviderApiKey) ? existing?.ApiKey ?? string.Empty : ProviderApiKey,
-            string.IsNullOrWhiteSpace(ProviderEndpoint) ? null : ProviderEndpoint.Trim(),
-            activeModel,
-            existing?.IsDefault ?? Providers.Count == 0,
-            true,
-            existing?.CreatedAt ?? now,
-            now) with { ModelIds = modelIds };
+                existing?.Id ?? Guid.NewGuid().ToString("N"),
+                string.IsNullOrWhiteSpace(ProviderName) ? (existing?.Name ?? "Unnamed") : ProviderName.Trim(),
+                ProviderType,
+                string.IsNullOrWhiteSpace(ProviderApiKey) ? existing?.ApiKey ?? string.Empty : ProviderApiKey,
+                string.IsNullOrWhiteSpace(ProviderEndpoint) ? null : ProviderEndpoint.Trim(),
+                activeModel,
+                existing?.IsDefault ?? Providers.Count == 0,
+                true,
+                existing?.CreatedAt ?? now,
+                now) with
+            {
+                ModelIds = modelIds
+            };
     }
 
     partial void OnSelectedProviderChanged(ApiProvider? value)

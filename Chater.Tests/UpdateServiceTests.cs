@@ -1,6 +1,7 @@
 using System.Net;
 using System.Runtime.InteropServices;
 using Chater.Services;
+using AppState = Chater.ViewModels.AppState;
 
 namespace Chater.Tests;
 

@@ -6,8 +6,8 @@ public static class ChaterAiSkillsExtensions
 {
     public static IServiceCollection AddChaterSkills(this IServiceCollection services)
     {
-        services.AddSingleton<SkillRepository>()
-            .AddSingleton<SkillService>();
+        services.AddScoped<SkillRepository>()
+            .AddScoped<SkillService>();
 
         return services;
     }

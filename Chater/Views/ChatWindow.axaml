@@ -5,16 +5,16 @@
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         xmlns:skills="clr-namespace:Chater.AI.Skills"
         xmlns:conversations="clr-namespace:Chater.AI.Conversations"
-        x:Class="Chater.Views.MainWindow"
+        xmlns:providers="clr-namespace:Chater.AI.Providers"
+        x:Class="Chater.Views.ChatWindow"
         KeyDown="OnWindowKeyDown"
-        x:DataType="vm:MainWindowViewModel"
+        x:DataType="vm:ChatWindowViewModel"
         Icon="/Assets/chater.ico"
         Title="{Binding Localization[AppTitle]}" Width="520" Height="700" MinWidth="420" MinHeight="500"
         WindowDecorations="None" ExtendClientAreaToDecorationsHint="True">
     <Grid x:Name="WindowLayout" RowDefinitions="28,*">
         <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                WindowDecorationProperties.ElementRole="TitleBar"
-                >
+                WindowDecorationProperties.ElementRole="TitleBar">
             <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Stretch">
                 <StackPanel x:Name="TitleContent"
                             Orientation="Horizontal"
@@ -22,7 +22,7 @@
                             Spacing="8" VerticalAlignment="Center">
                     <TextBlock Text="{Binding Localization[AppTitle]}"
                                FontWeight="SemiBold" VerticalAlignment="Center"
-                               FontSize="14"/>
+                               FontSize="14" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Classes="window-action-button"
@@ -30,17 +30,22 @@
                             Command="{Binding OpenSettingsCommand}"
                             ToolTip.Tip="{Binding Localization[Settings]}"
                             AutomationProperties.Name="{Binding Localization[Settings]}">
-                        <materialIcons:MaterialIcon Kind="Settings" Width="16" Height="16"/>
+                        <materialIcons:MaterialIcon Kind="Settings" Width="16" Height="16" />
                     </Button>
                     <StackPanel x:Name="CustomWindowButtons" Orientation="Horizontal">
-                        <Button Classes="window-action-button" WindowDecorationProperties.ElementRole="MinimizeButton" Click="OnMinimizeWindow" ToolTip.Tip="最小化">
-                            <materialIcons:MaterialIcon Kind="WindowMinimize" Width="16" Height="16"/>
+                        <Button Classes="window-action-button" WindowDecorationProperties.ElementRole="MinimizeButton"
+                                Click="OnMinimizeWindow" ToolTip.Tip="最小化">
+                            <materialIcons:MaterialIcon Kind="WindowMinimize" Width="16" Height="16" />
                         </Button>
-                        <Button Classes="window-action-button" WindowDecorationProperties.ElementRole="MaximizeButton" Click="OnToggleMaximizeWindow" ToolTip.Tip="最大化">
-                            <materialIcons:MaterialIcon x:Name="MaximizeIcon" Kind="WindowMaximize" Width="16" Height="16"/>
+                        <Button Classes="window-action-button" WindowDecorationProperties.ElementRole="MaximizeButton"
+                                Click="OnToggleMaximizeWindow" ToolTip.Tip="最大化">
+                            <materialIcons:MaterialIcon x:Name="MaximizeIcon" Kind="WindowMaximize" Width="16"
+                                                        Height="16" />
                         </Button>
-                        <Button Classes="window-action-button close-button" WindowDecorationProperties.ElementRole="CloseButton" Click="OnCloseWindow" ToolTip.Tip="关闭">
-                            <materialIcons:MaterialIcon Kind="WindowClose" Width="16" Height="16"/>
+                        <Button Classes="window-action-button close-button"
+                                WindowDecorationProperties.ElementRole="CloseButton" Click="OnCloseWindow"
+                                ToolTip.Tip="关闭">
+                            <materialIcons:MaterialIcon Kind="WindowClose" Width="16" Height="16" />
                         </Button>
                     </StackPanel>
                 </StackPanel>
@@ -54,26 +59,35 @@
                         <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                                 BorderThickness="1" Padding="6,2" CornerRadius="4">
                             <StackPanel Spacing="0">
-                                <TextBlock Text="{Binding SelectedProviderDisplayName}" FontSize="12" FontWeight="SemiBold"/>
-                                <TextBlock Text="{Binding SelectedModelDisplayName}" FontSize="10" Opacity="0.7"/>
+                                <TextBlock Text="{Binding SelectedProviderDisplayName}" FontSize="12"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding SelectedModelDisplayName}" FontSize="10" Opacity="0.7" />
                             </StackPanel>
                         </Border>
                     </Button.Content>
                     <Button.Flyout>
-                        <MenuFlyout ItemsSource="{Binding ProviderModelMenuItems}"
-                                    Placement="BottomEdgeAlignedLeft">
+                        <MenuFlyout
+                            Placement="BottomEdgeAlignedLeft"
+                            ItemsSource="{Binding AppState.Providers}">
                             <MenuFlyout.ItemContainerTheme>
                                 <ControlTheme TargetType="MenuItem"
                                               BasedOn="{StaticResource {x:Type MenuItem}}"
-                                              x:DataType="vm:ProviderModelMenuItem">
-                                    <Setter Property="Header" Value="{Binding Name}"/>
-                                    <Setter Property="ItemsSource" Value="{Binding Models}"/>
+                                              x:DataType="providers:ApiProvider">
+                                    <Setter Property="Header" Value="{Binding Name}" />
+                                    <Setter Property="ItemsSource">
+                                        <Setter.Value>
+                                            <MultiBinding Converter="{x:Static vm:AiProviderMenuDataConverter.Instance}">
+                                                <Binding Path=""></Binding>
+                                                <Binding Path="$parent[Window].DataContext"></Binding>
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
                                     <Setter Property="ItemContainerTheme">
                                         <ControlTheme TargetType="MenuItem"
                                                       BasedOn="{StaticResource {x:Type MenuItem}}"
                                                       x:DataType="vm:ModelMenuItem">
-                                            <Setter Property="Header" Value="{Binding ModelId}"/>
-                                            <Setter Property="Command" Value="{Binding SelectCommand}"/>
+                                            <Setter Property="Header" Value="{Binding ModelId}" />
+                                            <Setter Property="Command" Value="{Binding SelectCommand}" />
                                         </ControlTheme>
                                     </Setter>
                                 </ControlTheme>
@@ -82,34 +96,39 @@
                     </Button.Flyout>
                 </Button>
                 <Button Classes="primary-button" DockPanel.Dock="Right" Command="{Binding NewConversationCommand}"
-                        ToolTip.Tip="{Binding Localization[NewConversation]}" AutomationProperties.Name="{Binding Localization[NewConversation]}" Padding="8">
-                    <materialIcons:MaterialIcon Kind="Plus" Width="18" Height="18"/>
+                        ToolTip.Tip="{Binding Localization[NewConversation]}"
+                        AutomationProperties.Name="{Binding Localization[NewConversation]}" Padding="8">
+                    <materialIcons:MaterialIcon Kind="Plus" Width="18" Height="18" />
                 </Button>
                 <ComboBox HorizontalAlignment="Stretch"
-                          ItemsSource="{Binding Conversations}"
+                          ItemsSource="{Binding  AppState.Conversations}"
                           SelectedItem="{Binding SelectedConversation}"
                           VerticalAlignment="Center"
                           PlaceholderText="{Binding Localization[HistoryPlaceholder]}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="conversations:Conversation">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="{Binding Title}"/>
+                                <TextBlock Text="{Binding Title}" />
                             </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
             </DockPanel>
             <DockPanel DockPanel.Dock="Bottom" LastChildFill="True" HorizontalSpacing="4">
-                <ComboBox DockPanel.Dock="Left"  ItemsSource="{Binding Skills}" SelectedItem="{Binding SelectedSkill}" PlaceholderText="{Binding Localization[SkillPlaceholder]}">
+                <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding AppState.Skills}"
+                          SelectedItem="{Binding SelectedSkill}"
+                          PlaceholderText="{Binding Localization[SkillPlaceholder]}">
                     <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="skills:Skill"><TextBlock Text="{Binding Name}"/></DataTemplate>
+                        <DataTemplate x:DataType="skills:Skill">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
                 <TextBlock DockPanel.Dock="Left"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center"
                            Text="{Binding StatusMessage}"
-                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
             </DockPanel>
 
             <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -117,35 +136,39 @@
                          TextChanged="OnDraftTextChanged"
                          PlaceholderText="{Binding Localization[InputPlaceholder]}"
                          AcceptsReturn="True"
-                         TextWrapping="Wrap"/>
+                         TextWrapping="Wrap" />
                 <Button Classes="primary-button" Grid.Column="1" Command="{Binding SendOrStopCommand}"
                         ToolTip.Tip="{Binding SendButtonText}" AutomationProperties.Name="{Binding SendButtonText}"
                         Padding="10,8" MinWidth="42">
                     <Button.Content>
-                        <materialIcons:MaterialIcon Kind="{Binding SendButtonIcon}" Width="18" Height="18"/>
+                        <materialIcons:MaterialIcon Kind="{Binding SendButtonIcon}" Width="18" Height="18" />
                     </Button.Content>
                 </Button>
             </Grid>
             <Border Classes="card" Grid.Row="3" Padding="12">
-                <local:ConversationMessagesView ItemsSource="{Binding Messages}"/>
+                <local:ConversationMessagesView ItemsSource="{Binding Messages}" />
             </Border>
         </DockPanel>
         <!-- Native non-client hit targets keep the borderless window resizable. -->
         <Border Grid.RowSpan="2" Height="6" VerticalAlignment="Top" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeN"/>
+                WindowDecorationProperties.ElementRole="ResizeN" />
         <Border Grid.RowSpan="2" Height="6" VerticalAlignment="Bottom" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeS"/>
+                WindowDecorationProperties.ElementRole="ResizeS" />
         <Border Grid.RowSpan="2" Width="6" HorizontalAlignment="Left" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeW"/>
+                WindowDecorationProperties.ElementRole="ResizeW" />
         <Border Grid.RowSpan="2" Width="6" HorizontalAlignment="Right" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeE"/>
-        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeNW"/>
-        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Top" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeNE"/>
-        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeSW"/>
-        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent"
-                WindowDecorationProperties.ElementRole="ResizeSE"/>
+                WindowDecorationProperties.ElementRole="ResizeE" />
+        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Top"
+                Background="Transparent"
+                WindowDecorationProperties.ElementRole="ResizeNW" />
+        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Background="Transparent"
+                WindowDecorationProperties.ElementRole="ResizeNE" />
+        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                Background="Transparent"
+                WindowDecorationProperties.ElementRole="ResizeSW" />
+        <Border Grid.RowSpan="2" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Background="Transparent"
+                WindowDecorationProperties.ElementRole="ResizeSE" />
     </Grid>
 </Window>

@@ -12,30 +12,30 @@ public sealed partial class SkillSettingsViewModel : SettingsViewModelBase
 {
     private readonly SkillRepository _skills;
     private readonly SkillService _skillService;
+    private readonly AppState _appState;
     private readonly IConfirmationService? _confirmation;
 
     public SkillSettingsViewModel(
         SkillRepository skills,
         SkillService skillService,
         LocalizationService localization,
+        AppState appState,
         IConfirmationService? confirmation = null)
         : base(localization)
     {
         _skills = skills;
         _skillService = skillService;
+        _appState = appState;
         _confirmation = confirmation;
     }
 
     public ObservableCollection<Skill> Skills { get; } = [];
 
-    [ObservableProperty]
-    private Skill? _selectedSkill;
+    [ObservableProperty] private Skill? _selectedSkill;
 
-    [ObservableProperty]
-    private string _skillName = string.Empty;
+    [ObservableProperty] private string _skillName = string.Empty;
 
-    [ObservableProperty]
-    private string _skillPrompt = string.Empty;
+    [ObservableProperty] private string _skillPrompt = string.Empty;
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
@@ -103,7 +103,8 @@ public sealed partial class SkillSettingsViewModel : SettingsViewModelBase
         }
     }
 
-    public async Task ReorderSkillsAsync(Skill draggedSkill, Skill? targetSkill, bool insertAfter, CancellationToken cancellationToken = default)
+    public async Task ReorderSkillsAsync(Skill draggedSkill, Skill? targetSkill, bool insertAfter,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(draggedSkill);
         var draggedIndex = Skills.IndexOf(draggedSkill);
@@ -132,6 +133,8 @@ public sealed partial class SkillSettingsViewModel : SettingsViewModelBase
         Skills.Clear();
         foreach (var skill in await _skills.GetEnabledAsync(cancellationToken).ConfigureAwait(false))
             Skills.Add(skill);
+        
+        _ =  _appState.ReloadAiSkillsAsync(cancellationToken);
     }
 
     partial void OnSelectedSkillChanged(Skill? value)

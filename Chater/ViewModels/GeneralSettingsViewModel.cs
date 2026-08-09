@@ -234,8 +234,9 @@ public sealed partial class GeneralSettingsViewModel : SettingsViewModelBase
         });
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         _state.PropertyChanged -= OnAppStatePropertyChanged;
+        base.Dispose();
     }
 }

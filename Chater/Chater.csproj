@@ -35,13 +35,14 @@
     </Target>
 
     <ItemGroup>
-        <Folder Include="Models\"/>
         <AvaloniaResource Include="Assets\**"/>
         <EmbeddedResource Include="Data\Migrations\*.sql" />
         <EmbeddedResource Update="Localization\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
+        <EmbeddedResource Remove="Converters\**" />
+        <AvaloniaResource Remove="Converters\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -67,5 +68,21 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Microsoft.Extensions.Logging" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AvaloniaXaml Remove="Converters\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Converters\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Remove="Converters\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Converters\**" />
     </ItemGroup>
 </Project>
