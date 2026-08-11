@@ -75,14 +75,14 @@ On first launch, Chater creates its local database and support directories. The 
 ## Build and test
 
 ```bash
-dotnet build Chater.sln
-dotnet test Chater.sln --no-build
+dotnet build Chater.slnx
+dotnet test Chater.slnx --no-build
 ```
 
 Release build:
 
 ```bash
-dotnet build Chater.sln --configuration Release
+dotnet build Chater.slnx --configuration Release
 ```
 
 Current publishing targets:
