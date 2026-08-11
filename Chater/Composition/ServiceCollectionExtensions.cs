@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
     {
         var appPaths = paths ?? AppPaths.CreateDefault();
         services.AddSingleton(appPaths);
+        services.AddSingleton(DataDirectoryConfiguration.CreateDefault());
         services.AddLogging(builder =>
         {
             builder.SetMinimumLevel(LogLevel.Information);
@@ -32,6 +33,7 @@ public static class ServiceCollectionExtensions
         });
         services.AddTransient<LazyServiceProvider>();
         services.AddSingleton<DatabaseMigrator>();
+        services.AddSingleton<DataDirectoryService>();
         services.AddSingleton<MessageRepository>();
         services.AddSingleton<AppSettingRepository>();
         services.AddSingleton<StartupRecoveryService>();

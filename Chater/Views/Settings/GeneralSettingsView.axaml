@@ -4,7 +4,8 @@
              xmlns:picker="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.ColorPicker"
              x:Class="Chater.Views.Settings.GeneralSettingsView"
              x:DataType="vm:GeneralSettingsViewModel">
-    <StackPanel Spacing="16">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="16" Margin="0,0,8,0">
         <TextBlock Text="{Binding Localization[GeneralSettings]}" FontSize="22" FontWeight="Bold"/>
         <Border Classes="card" Padding="14">
             <DockPanel>
@@ -102,6 +103,30 @@
                 </StackPanel>
             </DockPanel>
         </Border>
+        <Border Classes="card" Padding="14">
+            <StackPanel Spacing="10">
+                <StackPanel>
+                    <TextBlock Text="{Binding Localization[DataDirectory]}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Localization[DataDirectoryDescription]}" FontSize="12"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+                <DockPanel HorizontalSpacing="8">
+                    <Button DockPanel.Dock="Right" Content="{Binding Localization[Browse]}"
+                            Command="{Binding BrowseDataDirectoryCommand}"/>
+                    <TextBox Text="{Binding DataDirectory, Mode=TwoWay}"
+                             PlaceholderText="{Binding Localization[DataDirectoryPlaceholder]}"/>
+                </DockPanel>
+                <ToggleSwitch IsChecked="{Binding MigrateData, Mode=TwoWay}"
+                              Content="{Binding Localization[MigrateData]}"/>
+                <TextBlock Text="{Binding Localization[MigrateDataDescription]}" FontSize="12"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                           TextWrapping="Wrap"/>
+                <Button HorizontalAlignment="Right" Content="{Binding Localization[ApplyDataDirectory]}"
+                        Command="{Binding ApplyDataDirectoryCommand}"/>
+            </StackPanel>
+        </Border>
         <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
     </StackPanel>
+    </ScrollViewer>
 </UserControl>

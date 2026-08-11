@@ -26,7 +26,6 @@ public sealed class ChatService(
     ChatToolRegistry toolRegistry)
 {
     private const string ImageOnlyTitle = "[Image]";
-    private readonly Dictionary<string, ActiveConversationSession> _activeSessions = new(StringComparer.Ordinal);
 
     /// <summary>Builds a user <see cref="ChatMessage"/> from plain text and optional image attachments.</summary>
     public static ChatMessage BuildUserMessage(string text, IReadOnlyList<MessageAttachment>? attachments)
@@ -54,23 +53,9 @@ public sealed class ChatService(
     {
         using var lease = await sessionLock.AcquireAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var conversation = await conversations.GetByIdAsync(conversationId, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException($"Conversation '{conversationId}' does not exist.");
-        var provider = await providers.GetByIdAsync(conversation.ProviderId, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException($"Provider '{conversation.ProviderId}' does not exist.");
-        if (!provider.IsEnabled)
-        {
-            throw new InvalidOperationException($"Provider '{provider.Name}' is disabled.");
-        }
-
-        var snapshot = ReadProviderSnapshot(conversation.ProviderConfiguration);
-        provider = provider with { ModelId = snapshot.ModelId, Endpoint = snapshot.Endpoint };
-        // Do not deserialize an agent session against a materially different provider configuration.
-        if (conversation.SessionState != "{}" && !SessionStateValidator.CanRestore(ConversationService.GetPersistedSessionSnapshot(conversation), ConversationService.GetRequestedSessionSnapshot(conversation, provider)))
-        {
-            await conversations.SaveAsync(conversation with { SessionStatus = SessionStatus.Invalid, UpdatedAt = DateTimeOffset.UtcNow }, cancellationToken).ConfigureAwait(false);
-            throw new InvalidOperationException("The saved session no longer matches its provider configuration. Create a new conversation to continue.");
-        }
+        var provider = await providers.GetByIdAsync(conversation.ProviderId, cancellationToken).ConfigureAwait(false);
 
         var now = DateTimeOffset.UtcNow;
-        var durableHistory = await messages.GetByConversationAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var userSequenceNo = await messages.GetNextSequenceNoAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var titleText = string.IsNullOrWhiteSpace(message) ? ImageOnlyTitle : message;
         if (userSequenceNo == 1)
@@ -87,25 +72,62 @@ public sealed class ChatService(
         var assistantMessageId = Guid.NewGuid().ToString("N");
         await messages.AppendAsync(new Message(assistantMessageId, conversationId, userSequenceNo + 1, MessageRole.Assistant, string.Empty, MessageStatus.Streaming, null, null, now, now), cancellationToken).ConfigureAwait(false);
 
-        var activeSession = await GetOrCreateActiveSessionAsync(provider, snapshot.SystemPrompt, conversation, durableHistory, cancellationToken).ConfigureAwait(false);
-        var agent = activeSession.Agent;
-        var session = activeSession.Session;
         var content = string.Empty;
         var announcedToolCalls = new HashSet<string>(StringComparer.Ordinal);
+        AIAgent agent;
+        AgentSession session;
         try
         {
-            ChatMessage chatMessage;
-            try
+            if (provider is null)
             {
-                chatMessage = BuildUserMessage(message, attachments);
-            }
-            catch (Exception exception)
-            {
-                ExceptionLogger.Log(exception, nameof(ChatService), "Chat provider streaming failed");
-                await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Failed, "provider_error", exception.Message, CancellationToken.None).ConfigureAwait(false);
-                throw;
+                throw new InvalidOperationException($"Provider '{conversation.ProviderId}' does not exist.");
             }
 
+            if (!provider.IsEnabled)
+            {
+                throw new InvalidOperationException($"Provider '{provider.Name}' is disabled.");
+            }
+
+            var snapshot = ReadProviderSnapshot(conversation.ProviderConfiguration);
+            provider = provider with { ModelId = snapshot.ModelId, Endpoint = snapshot.Endpoint };
+            // Do not deserialize an agent session against a materially different provider configuration.
+            if (conversation.SessionState != "{}" && !SessionStateValidator.CanRestore(ConversationService.GetPersistedSessionSnapshot(conversation), ConversationService.GetRequestedSessionSnapshot(conversation, provider)))
+            {
+                await conversations.SaveAsync(conversation with { SessionStatus = SessionStatus.Invalid, UpdatedAt = DateTimeOffset.UtcNow }, cancellationToken).ConfigureAwait(false);
+                throw new InvalidOperationException("The saved session no longer matches its provider configuration. Create a new conversation to continue.");
+            }
+
+            agent = await CreateAgent(provider, snapshot.SystemPrompt).ConfigureAwait(false);
+            session = await RestoreOrCreateSessionAsync(agent, conversation, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException exception) when (cancellationToken.IsCancellationRequested)
+        {
+            const string cancellationMessage = "The response was cancelled.";
+            ExceptionLogger.Log(exception, nameof(ChatService), "Chat response was cancelled", LogLevel.Information);
+            content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Cancelled, "cancelled", cancellationMessage).ConfigureAwait(false);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(ChatService), "Chat provider setup failed");
+            content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Failed, "provider_error", exception.Message).ConfigureAwait(false);
+            throw;
+        }
+
+        ChatMessage chatMessage;
+        try
+        {
+            chatMessage = BuildUserMessage(message, attachments);
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(ChatService), "Chat request could not be constructed");
+            content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Failed, "provider_error", exception.Message).ConfigureAwait(false);
+            throw;
+        }
+
+        try
+        {
             await using var updates = agent.RunStreamingAsync(chatMessage, session, cancellationToken: cancellationToken).GetAsyncEnumerator(cancellationToken);
             while (true)
             {
@@ -116,14 +138,15 @@ public sealed class ChatService(
                 }
                 catch (OperationCanceledException exception) when (cancellationToken.IsCancellationRequested)
                 {
+                    const string cancellationMessage = "The response was cancelled.";
                     ExceptionLogger.Log(exception, nameof(ChatService), "Chat response was cancelled", LogLevel.Information);
-                    await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Cancelled, "cancelled", "The response was cancelled.", CancellationToken.None).ConfigureAwait(false);
+                    content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Cancelled, "cancelled", cancellationMessage).ConfigureAwait(false);
                     throw;
                 }
                 catch (Exception exception)
                 {
                     ExceptionLogger.Log(exception, nameof(ChatService), "Chat provider streaming failed");
-                    await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Failed, "provider_error", exception.Message, CancellationToken.None).ConfigureAwait(false);
+                    content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Failed, "provider_error", exception.Message).ConfigureAwait(false);
                     throw;
                 }
 
@@ -144,9 +167,20 @@ public sealed class ChatService(
                         continue;
                     }
 
-                    var toolNotice = await toolRegistry.FormatNotice(toolCall);
+                    string toolNotice;
+                    try
+                    {
+                        toolNotice = await toolRegistry.FormatNotice(toolCall);
+                    }
+                    catch (Exception exception)
+                    {
+                        ExceptionLogger.Log(exception, nameof(ChatService), "Chat tool result could not be formatted");
+                        content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Failed, "tool_error", exception.Message).ConfigureAwait(false);
+                        throw;
+                    }
+
                     content += toolNotice;
-                    await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: CancellationToken.None).ConfigureAwait(false);
                     yield return toolNotice;
                 }
 
@@ -156,11 +190,11 @@ public sealed class ChatService(
                 }
 
                 content += update.Text;
-                await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: CancellationToken.None).ConfigureAwait(false);
                 yield return update.Text;
             }
 
-            await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Completed, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Completed, cancellationToken: CancellationToken.None).ConfigureAwait(false);
         }
         finally
         {
@@ -173,8 +207,22 @@ public sealed class ChatService(
                 SessionStatus = SessionStatus.Restorable,
                 UpdatedAt = DateTimeOffset.UtcNow
             }, CancellationToken.None).ConfigureAwait(false);
-            activeSession.PersistedSessionState = serializedSessionText;
         }
+    }
+
+    private async Task<string> PersistTerminalMessageAsync(
+        string messageId,
+        string content,
+        MessageStatus status,
+        string errorCode,
+        string errorMessage)
+    {
+        var message = string.IsNullOrWhiteSpace(errorMessage)
+            ? "Cannot complete request."
+            : status == MessageStatus.Cancelled ? errorMessage : $"Error: {errorMessage}";
+        var persistedContent = string.IsNullOrWhiteSpace(content) ? message : $"{content}\n\n{message}";
+        await messages.UpdateContentAndStatusAsync(messageId, persistedContent, status, errorCode, errorMessage, CancellationToken.None).ConfigureAwait(false);
+        return persistedContent;
     }
 
     private static ProviderSnapshot ReadProviderSnapshot(string configuration)
@@ -183,7 +231,7 @@ public sealed class ChatService(
             ?? throw new InvalidOperationException("Conversation provider snapshot is invalid.");
     }
 
-    private async Task<AIAgent> CreateAgent(ApiProvider provider, string? instructions, string conversationId)
+    private async Task<AIAgent> CreateAgent(ApiProvider provider, string? instructions)
     {
         if (provider.ProviderType is ProviderType.Anthropic)
         {
@@ -205,9 +253,6 @@ public sealed class ChatService(
         // after an app restart.
         return client.AsIChatClient().AsHarnessAgent(new HarnessAgentOptions
         {
-            // Agent Framework sessions are agent-specific. A stable id keeps a
-            // restored session bound to the same logical agent across turns.
-            Id = conversationId,
             Name = "chater",
             HarnessInstructions = """
                 You are the Chater desktop assistant. Work deliberately on multi-step requests.
@@ -226,147 +271,28 @@ public sealed class ChatService(
             DisableFileMemory = true,
             DisableAgentSkillsProvider = true,
             DisableWebSearch = true,
+            // The framework's compaction state is not serializable by the current
+            // Agent Framework JSON context. Disable it so a completed turn can
+            // always persist and restore its session on the next message.
+            DisableCompaction = true,
             MaxContextWindowTokens = 128_000,
             MaxOutputTokens = 16_384,
             MaximumIterationsPerRequest = 12,
         });
     }
 
-    /// <summary>
-    /// Returns the live Agent Framework session for a conversation. The same session object is reused for
-    /// every turn, matching the framework's multi-turn contract. A different persisted state means another
-    /// window advanced the conversation, so the local cache is refreshed from durable storage.
-    /// </summary>
-    private async ValueTask<ActiveConversationSession> GetOrCreateActiveSessionAsync(
-        ApiProvider provider,
-        string? instructions,
+    private static async ValueTask<AgentSession> RestoreOrCreateSessionAsync(
+        AIAgent agent,
         Conversation conversation,
-        IReadOnlyList<Message> durableHistory,
         CancellationToken cancellationToken)
     {
-        if (_activeSessions.TryGetValue(conversation.Id, out var activeSession) &&
-            string.Equals(activeSession.PersistedSessionState, conversation.SessionState, StringComparison.Ordinal))
-        {
-            return activeSession;
-        }
-
-        var agent = await CreateAgent(provider, instructions, conversation.Id).ConfigureAwait(false);
-        AgentSession session;
         if (string.IsNullOrWhiteSpace(conversation.SessionState) || conversation.SessionState == "{}")
         {
-            session = await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            using var document = JsonDocument.Parse(conversation.SessionState);
-            session = await agent.DeserializeSessionAsync(document.RootElement, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        RepairMissingHistory(agent, session, durableHistory);
-        activeSession = new ActiveConversationSession(agent, session, conversation.SessionState);
-        _activeSessions[conversation.Id] = activeSession;
-        return activeSession;
-    }
-
-    /// <summary>
-    /// Repairs sessions produced by older builds that persisted only the latest turn. Rich framework history
-    /// (including tool messages) is preserved whenever it already contains every durable user turn.
-    /// </summary>
-    internal static void RepairMissingHistory(AIAgent agent, AgentSession session, IReadOnlyList<Message> durableHistory)
-    {
-        var historyProvider = agent.GetService<InMemoryChatHistoryProvider>();
-        if (historyProvider is null)
-        {
-            return;
-        }
-
-        var expectedMessages = durableHistory
-            .Where(static message => message.Role is MessageRole.User or MessageRole.Assistant)
-            .Where(static message => message.Status == MessageStatus.Completed || !string.IsNullOrWhiteSpace(message.Content))
-            .ToList();
-        var sessionMessages = historyProvider.GetMessages(session);
-        if (ContainsMessagesInOrder(sessionMessages, expectedMessages))
-        {
-            return;
-        }
-
-        historyProvider.SetMessages(session, durableHistory
-            .Where(static message => message.Role is MessageRole.User or MessageRole.Assistant)
-            .Where(static message => message.Status == MessageStatus.Completed || !string.IsNullOrWhiteSpace(message.Content))
-            .Select(BuildReplayMessage)
-            .ToList());
-    }
-
-    private static bool ContainsMessagesInOrder(IReadOnlyList<ChatMessage> sessionMessages, IReadOnlyList<Message> expectedMessages)
-    {
-        var searchFrom = 0;
-        foreach (var expected in expectedMessages)
-        {
-            var found = false;
-            for (; searchFrom < sessionMessages.Count; searchFrom++)
-            {
-                var candidate = sessionMessages[searchFrom];
-                if (MatchesDurableMessage(candidate, expected))
-                {
-                    found = true;
-                    searchFrom++;
-                    break;
-                }
-            }
-
-            if (!found)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static bool MatchesDurableMessage(ChatMessage candidate, Message expected)
-    {
-        if (expected.Role == MessageRole.User)
-        {
-            return candidate.Role == ChatRole.User &&
-                   string.Equals(candidate.Text, expected.Content, StringComparison.Ordinal) &&
-                   candidate.Contents.OfType<DataContent>().Count() >= expected.Attachments.Count;
-        }
-
-        if (candidate.Role != ChatRole.Assistant)
-        {
-            return false;
-        }
-
-        // The UI prepends tool-use notices to the displayed assistant message, while the framework keeps
-        // those calls as structured content. The final assistant text should still be its suffix.
-        return string.Equals(candidate.Text, expected.Content, StringComparison.Ordinal) ||
-               (!string.IsNullOrEmpty(candidate.Text) && expected.Content.EndsWith(candidate.Text, StringComparison.Ordinal));
-    }
-
-    private static ChatMessage BuildReplayMessage(Message message)
-    {
-        if (message.Role == MessageRole.User)
-        {
-            var contents = new List<AIContent> { new TextContent(message.Content) };
-            foreach (var attachment in message.Attachments)
-            {
-                if (File.Exists(attachment.FilePath))
-                {
-                    contents.Add(new DataContent(File.ReadAllBytes(attachment.FilePath), attachment.MimeType));
-                }
-            }
-
-            return new ChatMessage(ChatRole.User, contents);
-        }
-
-        return new ChatMessage(ChatRole.Assistant, message.Content);
-    }
-
-    private sealed class ActiveConversationSession(AIAgent agent, AgentSession session, string persistedSessionState)
-    {
-        public AIAgent Agent { get; } = agent;
-        public AgentSession Session { get; } = session;
-        public string PersistedSessionState { get; set; } = persistedSessionState;
+        using var document = JsonDocument.Parse(conversation.SessionState);
+        return await agent.DeserializeSessionAsync(document.RootElement, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 }
 

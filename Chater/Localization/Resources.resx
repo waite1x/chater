@@ -75,6 +75,33 @@
     <data name="StartupDescription">
         <value>Start Chater automatically when you sign in.</value>
     </data>
+    <data name="DataDirectory">
+        <value>Data directory</value>
+    </data>
+    <data name="DataDirectoryDescription">
+        <value>Stores your conversations, providers, prompts, attachments, exports, and logs. Changes apply after restart.</value>
+    </data>
+    <data name="DataDirectoryPlaceholder">
+        <value>Select a folder for Chater data</value>
+    </data>
+    <data name="Browse">
+        <value>Browse…</value>
+    </data>
+    <data name="MigrateData">
+        <value>Migrate current data</value>
+    </data>
+    <data name="MigrateDataDescription">
+        <value>Copy all current data to the new directory and overwrite files already there. The original data is kept.</value>
+    </data>
+    <data name="ApplyDataDirectory">
+        <value>Apply data directory</value>
+    </data>
+    <data name="SelectDataDirectory">
+        <value>Select data directory</value>
+    </data>
+    <data name="DataDirectoryUpdatedRestartRequired">
+        <value>Data directory updated. Restart Chater to use it.</value>
+    </data>
     <data name="System">
         <value>System</value>
     </data>

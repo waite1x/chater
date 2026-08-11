@@ -204,6 +204,30 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Saves an image obtained from the system clipboard and adds it to the draft.
+    /// Clipboard bitmaps are encoded as PNG by the view before reaching this method.
+    /// </summary>
+    public async Task AddClipboardImageAsync(Stream imageStream)
+    {
+        ArgumentNullException.ThrowIfNull(imageStream);
+
+        var destination = Path.Combine(_appPaths.AttachmentsDirectory, $"{Guid.NewGuid():N}.png");
+        Directory.CreateDirectory(_appPaths.AttachmentsDirectory);
+
+        try
+        {
+            await using var destinationStream = File.Create(destination);
+            await imageStream.CopyToAsync(destinationStream);
+            Attachments.Add(new AttachmentViewModel(destination, "clipboard.png", "image/png"));
+        }
+        catch
+        {
+            TryDeleteFile(destination);
+            throw;
+        }
+    }
+
     [RelayCommand]
     private void RemoveAttachment(AttachmentViewModel? attachment)
     {
@@ -267,6 +291,10 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         var attachments = Attachments.Select(a => new MessageAttachment(a.FilePath, a.FileName, a.MimeType)).ToList();
         foreach (var a in Attachments) a.IsPersisted = true;
         Draft = string.Empty;
+        // The outgoing message owns this attachment snapshot. Clear the draft now so
+        // its previews disappear immediately and new attachments can be selected for
+        // the next message while a response is still streaming.
+        Attachments.Clear();
         var assistant = new ChatMessageViewModel(MessageRole.Assistant, string.Empty);
         Messages.Add(new ChatMessageViewModel(MessageRole.User, text, attachments));
         Messages.Add(assistant);
@@ -324,6 +352,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         catch (OperationCanceledException exception)
         {
             ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Chat request cancelled", LogLevel.Information);
+            if (string.IsNullOrWhiteSpace(assistant.Content))
+                assistant.Content = "The response was cancelled.";
             StatusMessage = T("Stopped");
             await RefreshConversationHistoryAsync();
         }
@@ -331,7 +361,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         {
             ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Chat request failed");
             assistant.Content =
-                string.IsNullOrEmpty(assistant.Content) ? "Cannot complete request." : assistant.Content;
+                string.IsNullOrWhiteSpace(assistant.Content) ? $"Error: {exception.Message}" : assistant.Content;
             StatusMessage = exception.Message;
             await RefreshConversationHistoryAsync();
         }
@@ -340,7 +370,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             _sendCancellation.Dispose();
             _sendCancellation = null;
             IsSending = false;
-            Attachments.Clear();
         }
     }
 

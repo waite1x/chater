@@ -5,6 +5,7 @@ using Chater.Localization;
 using Chater.Logging;
 using Chater.Services;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 
 namespace Chater.ViewModels;
@@ -14,6 +15,8 @@ public sealed partial class GeneralSettingsViewModel : SettingsViewModelBase
     private readonly AppSettingsService _settings;
     private readonly IStartupService _startup;
     private readonly AppState _state;
+    private readonly DataDirectoryService _dataDirectoryService;
+    private IStorageProvider? _storageProvider;
     private bool _loadingSettings;
     private bool _syncingAppState;
     private bool _restoringStartupSetting;
@@ -22,12 +25,14 @@ public sealed partial class GeneralSettingsViewModel : SettingsViewModelBase
         AppSettingsService settings,
         IStartupService startup,
         AppState state,
+        DataDirectoryService dataDirectoryService,
         LocalizationService localization)
         : base(localization)
     {
         _settings = settings;
         _startup = startup;
         _state = state;
+        _dataDirectoryService = dataDirectoryService;
         _state.PropertyChanged += OnAppStatePropertyChanged;
     }
 
@@ -58,6 +63,17 @@ public sealed partial class GeneralSettingsViewModel : SettingsViewModelBase
     [ObservableProperty]
     private bool _launchAtStartup;
 
+    [ObservableProperty]
+    private string _dataDirectory = string.Empty;
+
+    [ObservableProperty]
+    private bool _migrateData = true;
+
+    [ObservableProperty]
+    private bool _isUpdatingDataDirectory;
+
+    public void AttachStorageProvider(IStorageProvider? storageProvider) => _storageProvider = storageProvider;
+
     public async Task LoadAsync(CancellationToken cancellationToken = default)
     {
         var theme = _state.ThemeKey;
@@ -74,6 +90,8 @@ public sealed partial class GeneralSettingsViewModel : SettingsViewModelBase
                 ? parsedAccent
                 : Color.Parse(AppSettingsService.DefaultAccentColor);
             LaunchAtStartup = _state.LaunchAtStartup;
+            DataDirectory = _dataDirectoryService.CurrentDataDirectory;
+            MigrateData = true;
             AppSettingsService.ApplyTheme(SelectedTheme.Key);
         }
         finally
@@ -96,6 +114,57 @@ public sealed partial class GeneralSettingsViewModel : SettingsViewModelBase
         if (option is not null)
             AccentColor = option.Color;
     }
+
+    [RelayCommand]
+    private async Task BrowseDataDirectoryAsync()
+    {
+        if (_storageProvider is null)
+        {
+            return;
+        }
+
+        var folders = await _storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = T("SelectDataDirectory"),
+            AllowMultiple = false
+        });
+        var selectedPath = folders.FirstOrDefault()?.TryGetLocalPath();
+        if (!string.IsNullOrWhiteSpace(selectedPath))
+        {
+            DataDirectory = selectedPath;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanApplyDataDirectory))]
+    private async Task ApplyDataDirectoryAsync()
+    {
+        if (string.IsNullOrWhiteSpace(DataDirectory))
+        {
+            return;
+        }
+
+        IsUpdatingDataDirectory = true;
+        try
+        {
+            await _dataDirectoryService.SetDataDirectoryAsync(DataDirectory, MigrateData).ConfigureAwait(false);
+            StatusMessage = T("DataDirectoryUpdatedRestartRequired");
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(GeneralSettingsViewModel), "Failed to update data directory");
+            StatusMessage = exception.Message;
+        }
+        finally
+        {
+            IsUpdatingDataDirectory = false;
+        }
+    }
+
+    private bool CanApplyDataDirectory() => !IsUpdatingDataDirectory && !string.IsNullOrWhiteSpace(DataDirectory);
+
+    partial void OnDataDirectoryChanged(string value) => ApplyDataDirectoryCommand.NotifyCanExecuteChanged();
+
+    partial void OnIsUpdatingDataDirectoryChanged(bool value) => ApplyDataDirectoryCommand.NotifyCanExecuteChanged();
 
     partial void OnSelectedLanguageChanged(LanguageOption? value)
     {

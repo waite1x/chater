@@ -116,6 +116,23 @@ public sealed class ChatWindowViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task AddClipboardImageAsync_SavesPngAndExposesThumbnail()
+    {
+        var database = new SqliteDatabase(_path);
+        await new DatabaseMigrator(database).MigrateAsync();
+        var attachmentsRoot = Path.Combine(Path.GetTempPath(), "Chater.Tests", $"{Guid.NewGuid():N}");
+        var viewModel = CreateViewModel(database, appPaths: new AppPaths(attachmentsRoot));
+        var image = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+
+        await viewModel.AddClipboardImageAsync(new MemoryStream(image));
+
+        var attachment = Assert.Single(viewModel.Attachments);
+        Assert.Equal("clipboard.png", attachment.FileName);
+        Assert.Equal("image/png", attachment.MimeType);
+        Assert.Equal(image, File.ReadAllBytes(attachment.FilePath));
+    }
+
+    [Fact]
     public async Task RemoveAttachment_DeletesUnsentCopiedFile()
     {
         var database = new SqliteDatabase(_path);

@@ -79,6 +79,10 @@ public sealed class ChatServiceTests : IDisposable
             Assert.Equal("look", user.Content);
             var attachment = Assert.Single(user.Attachments);
             Assert.Equal("image/png", attachment.MimeType);
+            var assistant = Assert.Single(messages, static m => m.Role == MessageRole.Assistant);
+            Assert.Equal(MessageStatus.Failed, assistant.Status);
+            Assert.Contains("Anthropic", assistant.Content);
+            Assert.Contains("Anthropic", assistant.ErrorMessage);
         }
         finally
         {

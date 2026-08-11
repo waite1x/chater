@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
 using Chater.Logging;
 using Chater.Services;
 using Chater.ViewModels;
@@ -8,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Chater.Views;
 
-public partial class ChatWindow : Window
+internal partial class ChatWindow : Window
 {
     private readonly ChatWindowViewModel _viewModel;
     private readonly IGlobalHotKeyService _globalHotKeys;
@@ -32,6 +34,7 @@ public partial class ChatWindow : Window
         viewModel.AttachStorageProvider(StorageProvider);
         InitializeComponent();
         DraftTextBox.AddHandler(KeyDownEvent, OnDraftKeyDown, RoutingStrategies.Tunnel);
+        DraftTextBox.AddHandler(TextBox.PastingFromClipboardEvent, OnDraftPastingFromClipboard, RoutingStrategies.Tunnel);
         ConfigurePlatformTitleBar();
     }
 
@@ -93,6 +96,61 @@ public partial class ChatWindow : Window
         // Prevent TextBox from inserting a newline and prevent the window's
         // default button handling from processing the same key press.
         e.Handled = true;
+    }
+
+    private void OnDraftPastingFromClipboard(object? sender, RoutedEventArgs e)
+    {
+        // Keep the regular TextBox paste behavior for models that cannot accept images.
+        if (!_viewModel.ShowAddAttachmentButton || sender is not TextBox textBox)
+        {
+            return;
+        }
+
+        // Clipboard access is asynchronous. Handle the event here, then reproduce a
+        // text paste ourselves when the clipboard does not contain an image.
+        e.Handled = true;
+        _ = PasteClipboardContentAsync(textBox);
+    }
+
+    private async Task PasteClipboardContentAsync(TextBox textBox)
+    {
+        if (Clipboard is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var bitmap = await Clipboard.TryGetBitmapAsync();
+            if (bitmap is not null)
+            {
+                await using var imageStream = new MemoryStream();
+                bitmap.Save(imageStream, PngBitmapEncoderOptions.Default);
+                imageStream.Position = 0;
+                await _viewModel.AddClipboardImageAsync(imageStream);
+                return;
+            }
+
+            var text = await Clipboard.TryGetTextAsync();
+            if (!string.IsNullOrEmpty(text))
+            {
+                InsertPastedText(textBox, text);
+            }
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(ChatWindow), "Failed to paste clipboard content");
+            _viewModel.StatusMessage = exception.Message;
+        }
+    }
+
+    private static void InsertPastedText(TextBox textBox, string text)
+    {
+        var current = textBox.Text ?? string.Empty;
+        var start = Math.Clamp(textBox.SelectionStart, 0, current.Length);
+        var end = Math.Clamp(textBox.SelectionEnd, start, current.Length);
+        textBox.Text = string.Concat(current.AsSpan(0, start), text, current.AsSpan(end));
+        textBox.CaretIndex = start + text.Length;
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)

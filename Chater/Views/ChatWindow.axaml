@@ -7,6 +7,7 @@
         xmlns:conversations="clr-namespace:Chater.AI.Conversations"
         xmlns:providers="clr-namespace:Chater.AI.Providers"
         x:Class="Chater.Views.ChatWindow"
+        x:ClassModifier="internal"
         KeyDown="OnWindowKeyDown"
         x:DataType="vm:ChatWindowViewModel"
         Icon="/Assets/chater.ico"
@@ -115,7 +116,7 @@
                 </ComboBox>
             </DockPanel>
             <DockPanel DockPanel.Dock="Bottom" LastChildFill="True" HorizontalSpacing="4">
-                <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding AppState.Skills}"
+                <ComboBox DockPanel.Dock="Left" Height="32" ItemsSource="{Binding AppState.Skills}"
                           SelectedItem="{Binding SelectedSkill}"
                           PlaceholderText="{Binding Localization[SkillPlaceholder]}">
                     <ComboBox.ItemTemplate>
@@ -124,17 +125,20 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-                <Button DockPanel.Dock="Left" Classes="transparent-button" Padding="6,2"
+                <Button DockPanel.Dock="Left" Classes="transparent-button" Width="32" Height="32" Padding="0"
                         Command="{Binding AddFilesCommand}"
                         IsVisible="{Binding ShowAddAttachmentButton}"
                         ToolTip.Tip="{Binding Localization[AddImage]}"
                         AutomationProperties.Name="{Binding Localization[AddImage]}">
-                    <materialIcons:MaterialIcon Kind="ImageMultiple" Width="16" Height="16"/>
+                    <materialIcons:MaterialIcon Kind="FileImage" Width="18" Height="18"/>
                 </Button>
-                <TextBlock DockPanel.Dock="Left"
-                           HorizontalAlignment="Right"
+                <TextBlock HorizontalAlignment="Stretch"
                            VerticalAlignment="Center"
                            Text="{Binding StatusMessage}"
+                           ToolTip.Tip="{Binding StatusMessage}"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis"
+                           TextAlignment="Right"
                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
             </DockPanel>
 

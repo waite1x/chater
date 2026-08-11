@@ -20,11 +20,11 @@ public sealed class AppPathsTests : IDisposable
     }
 
     [Fact]
-    public void CreateDefault_PutsLogsBesideTheExecutable()
+    public void CreateDefault_PutsLogsInTheUserDataDirectory()
     {
         var paths = AppPaths.CreateDefault();
 
-        Assert.Equal(Path.Combine(AppContext.BaseDirectory, "logs"), paths.LogsDirectory);
+        Assert.Equal(Path.Combine(paths.ApplicationDataDirectory, "logs"), paths.LogsDirectory);
     }
 
     public void Dispose()

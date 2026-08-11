@@ -78,6 +78,33 @@
     <data name="StartupDescription">
         <value>登入系統後自動啟動 Chater。</value>
     </data>
+    <data name="DataDirectory">
+        <value>資料目錄</value>
+    </data>
+    <data name="DataDirectoryDescription">
+        <value>用於儲存對話、服務提供者、提示詞、附件、匯出內容和日誌。修改後重新啟動生效。</value>
+    </data>
+    <data name="DataDirectoryPlaceholder">
+        <value>選擇 Chater 資料存放資料夾</value>
+    </data>
+    <data name="Browse">
+        <value>瀏覽…</value>
+    </data>
+    <data name="MigrateData">
+        <value>移轉目前資料</value>
+    </data>
+    <data name="MigrateDataDescription">
+        <value>將目前所有資料複製到新目錄，並覆寫其中已有檔案；原目錄資料會保留。</value>
+    </data>
+    <data name="ApplyDataDirectory">
+        <value>套用資料目錄</value>
+    </data>
+    <data name="SelectDataDirectory">
+        <value>選擇資料目錄</value>
+    </data>
+    <data name="DataDirectoryUpdatedRestartRequired">
+        <value>資料目錄已更新，重新啟動 Chater 後生效。</value>
+    </data>
     <data name="ApiKeyManagement">
         <value>API Key 管理</value>
     </data>

@@ -4,13 +4,11 @@ public sealed class AppPaths
 {
     public const string ApplicationName = "Chater";
 
-    public AppPaths(string applicationDataDirectory, string? logsDirectory = null)
+    public AppPaths(string applicationDataDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(applicationDataDirectory);
-        ApplicationDataDirectory = applicationDataDirectory;
-        LogsDirectory = logsDirectory is null
-            ? Path.Combine(applicationDataDirectory, "logs")
-            : Path.GetFullPath(logsDirectory);
+        ApplicationDataDirectory = Path.GetFullPath(applicationDataDirectory);
+        LogsDirectory = Path.Combine(ApplicationDataDirectory, "logs");
     }
 
     public string ApplicationDataDirectory { get; }
@@ -19,20 +17,27 @@ public sealed class AppPaths
 
     public string LogsDirectory { get; }
 
+    /// <summary>Log location used by releases before logs became part of the user data directory.</summary>
+    public string LegacyLogsDirectory => Path.Combine(AppContext.BaseDirectory, "logs");
+
     public string ExportsDirectory => Path.Combine(ApplicationDataDirectory, "exports");
 
     public string AttachmentsDirectory => Path.Combine(ApplicationDataDirectory, "attachments");
 
     public static AppPaths CreateDefault()
     {
-        var root = OperatingSystem.IsMacOS()
+        var configuration = DataDirectoryConfiguration.CreateDefault();
+        return new AppPaths(configuration.GetDataDirectory() ?? GetDefaultDataDirectory());
+    }
+
+    public static string GetDefaultDataDirectory() => Path.Combine(GetUserApplicationDataRoot(), ApplicationName);
+
+    internal static string GetDataDirectoryConfigurationPath() =>
+        Path.Combine(GetUserApplicationDataRoot(), $"{ApplicationName}.data-directory");
+
+    private static string GetUserApplicationDataRoot() => OperatingSystem.IsMacOS()
             ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support")
             : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-        return new AppPaths(
-            Path.Combine(root, ApplicationName),
-            Path.Combine(AppContext.BaseDirectory, "logs"));
-    }
 
     public void EnsureCreated()
     {

@@ -7,7 +7,7 @@ using System.ComponentModel;
 
 namespace Chater.Views;
 
-public partial class SettingsWindow : Window
+internal partial class SettingsWindow : Window
 {
     private readonly SettingsWindowViewModel _viewModel;
 
@@ -96,6 +96,10 @@ public partial class SettingsWindow : Window
     {
         var view = new TView();
         var vm = Scope!.ServiceProvider.GetRequiredService<TVm>();
+        if (vm is GeneralSettingsViewModel generalSettings)
+        {
+            generalSettings.AttachStorageProvider(StorageProvider);
+        }
         view.DataContext = vm;
         _ = initialize(vm);
         return (view, vm);

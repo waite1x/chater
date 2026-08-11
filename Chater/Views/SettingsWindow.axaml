@@ -3,6 +3,7 @@
         xmlns:vm="using:Chater.ViewModels"
         xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
         x:Class="Chater.Views.SettingsWindow"
+        x:ClassModifier="internal"
         x:DataType="vm:SettingsWindowViewModel"
         Title="{Binding Localization[Settings]}" Width="960" Height="640" MinWidth="760" MinHeight="520"
         Icon="/Assets/chater.ico"
