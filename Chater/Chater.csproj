@@ -85,4 +85,8 @@
     <ItemGroup>
       <None Remove="Converters\**" />
     </ItemGroup>
+
+    <ItemGroup>
+      <InternalsVisibleTo Include="Chater.Tests" />
+    </ItemGroup>
 </Project>

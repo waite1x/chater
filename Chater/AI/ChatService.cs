@@ -26,6 +26,7 @@ public sealed class ChatService(
     ChatToolRegistry toolRegistry)
 {
     private const string ImageOnlyTitle = "[Image]";
+    private readonly Dictionary<string, ActiveConversationSession> _activeSessions = new(StringComparer.Ordinal);
 
     /// <summary>Builds a user <see cref="ChatMessage"/> from plain text and optional image attachments.</summary>
     public static ChatMessage BuildUserMessage(string text, IReadOnlyList<MessageAttachment>? attachments)
@@ -69,6 +70,7 @@ public sealed class ChatService(
         }
 
         var now = DateTimeOffset.UtcNow;
+        var durableHistory = await messages.GetByConversationAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var userSequenceNo = await messages.GetNextSequenceNoAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var titleText = string.IsNullOrWhiteSpace(message) ? ImageOnlyTitle : message;
         if (userSequenceNo == 1)
@@ -85,8 +87,9 @@ public sealed class ChatService(
         var assistantMessageId = Guid.NewGuid().ToString("N");
         await messages.AppendAsync(new Message(assistantMessageId, conversationId, userSequenceNo + 1, MessageRole.Assistant, string.Empty, MessageStatus.Streaming, null, null, now, now), cancellationToken).ConfigureAwait(false);
 
-        var agent = await CreateAgent(provider, snapshot.SystemPrompt);
-        var session = await RestoreOrCreateSessionAsync(agent, conversation, cancellationToken).ConfigureAwait(false);
+        var activeSession = await GetOrCreateActiveSessionAsync(provider, snapshot.SystemPrompt, conversation, durableHistory, cancellationToken).ConfigureAwait(false);
+        var agent = activeSession.Agent;
+        var session = activeSession.Session;
         var content = string.Empty;
         var announcedToolCalls = new HashSet<string>(StringComparer.Ordinal);
         try
@@ -163,12 +166,14 @@ public sealed class ChatService(
         {
             // Persist even after cancellation or provider failure; the provider may have advanced its session.
             var serializedSession = await agent.SerializeSessionAsync(session, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+            var serializedSessionText = serializedSession.GetRawText();
             await conversations.SaveAsync(conversation with
             {
-                SessionState = serializedSession.GetRawText(),
+                SessionState = serializedSessionText,
                 SessionStatus = SessionStatus.Restorable,
                 UpdatedAt = DateTimeOffset.UtcNow
             }, CancellationToken.None).ConfigureAwait(false);
+            activeSession.PersistedSessionState = serializedSessionText;
         }
     }
 
@@ -178,7 +183,7 @@ public sealed class ChatService(
             ?? throw new InvalidOperationException("Conversation provider snapshot is invalid.");
     }
 
-    private async Task<AIAgent> CreateAgent(ApiProvider provider, string? instructions)
+    private async Task<AIAgent> CreateAgent(ApiProvider provider, string? instructions, string conversationId)
     {
         if (provider.ProviderType is ProviderType.Anthropic)
         {
@@ -200,6 +205,9 @@ public sealed class ChatService(
         // after an app restart.
         return client.AsIChatClient().AsHarnessAgent(new HarnessAgentOptions
         {
+            // Agent Framework sessions are agent-specific. A stable id keeps a
+            // restored session bound to the same logical agent across turns.
+            Id = conversationId,
             Name = "chater",
             HarnessInstructions = """
                 You are the Chater desktop assistant. Work deliberately on multi-step requests.
@@ -224,15 +232,141 @@ public sealed class ChatService(
         });
     }
 
-    private static async ValueTask<AgentSession> RestoreOrCreateSessionAsync(AIAgent agent, Conversation conversation, CancellationToken cancellationToken)
+    /// <summary>
+    /// Returns the live Agent Framework session for a conversation. The same session object is reused for
+    /// every turn, matching the framework's multi-turn contract. A different persisted state means another
+    /// window advanced the conversation, so the local cache is refreshed from durable storage.
+    /// </summary>
+    private async ValueTask<ActiveConversationSession> GetOrCreateActiveSessionAsync(
+        ApiProvider provider,
+        string? instructions,
+        Conversation conversation,
+        IReadOnlyList<Message> durableHistory,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(conversation.SessionState) || conversation.SessionState == "{}")
+        if (_activeSessions.TryGetValue(conversation.Id, out var activeSession) &&
+            string.Equals(activeSession.PersistedSessionState, conversation.SessionState, StringComparison.Ordinal))
         {
-            return await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
+            return activeSession;
         }
 
-        using var document = JsonDocument.Parse(conversation.SessionState);
-        return await agent.DeserializeSessionAsync(document.RootElement, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var agent = await CreateAgent(provider, instructions, conversation.Id).ConfigureAwait(false);
+        AgentSession session;
+        if (string.IsNullOrWhiteSpace(conversation.SessionState) || conversation.SessionState == "{}")
+        {
+            session = await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            using var document = JsonDocument.Parse(conversation.SessionState);
+            session = await agent.DeserializeSessionAsync(document.RootElement, cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+
+        RepairMissingHistory(agent, session, durableHistory);
+        activeSession = new ActiveConversationSession(agent, session, conversation.SessionState);
+        _activeSessions[conversation.Id] = activeSession;
+        return activeSession;
+    }
+
+    /// <summary>
+    /// Repairs sessions produced by older builds that persisted only the latest turn. Rich framework history
+    /// (including tool messages) is preserved whenever it already contains every durable user turn.
+    /// </summary>
+    internal static void RepairMissingHistory(AIAgent agent, AgentSession session, IReadOnlyList<Message> durableHistory)
+    {
+        var historyProvider = agent.GetService<InMemoryChatHistoryProvider>();
+        if (historyProvider is null)
+        {
+            return;
+        }
+
+        var expectedMessages = durableHistory
+            .Where(static message => message.Role is MessageRole.User or MessageRole.Assistant)
+            .Where(static message => message.Status == MessageStatus.Completed || !string.IsNullOrWhiteSpace(message.Content))
+            .ToList();
+        var sessionMessages = historyProvider.GetMessages(session);
+        if (ContainsMessagesInOrder(sessionMessages, expectedMessages))
+        {
+            return;
+        }
+
+        historyProvider.SetMessages(session, durableHistory
+            .Where(static message => message.Role is MessageRole.User or MessageRole.Assistant)
+            .Where(static message => message.Status == MessageStatus.Completed || !string.IsNullOrWhiteSpace(message.Content))
+            .Select(BuildReplayMessage)
+            .ToList());
+    }
+
+    private static bool ContainsMessagesInOrder(IReadOnlyList<ChatMessage> sessionMessages, IReadOnlyList<Message> expectedMessages)
+    {
+        var searchFrom = 0;
+        foreach (var expected in expectedMessages)
+        {
+            var found = false;
+            for (; searchFrom < sessionMessages.Count; searchFrom++)
+            {
+                var candidate = sessionMessages[searchFrom];
+                if (MatchesDurableMessage(candidate, expected))
+                {
+                    found = true;
+                    searchFrom++;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool MatchesDurableMessage(ChatMessage candidate, Message expected)
+    {
+        if (expected.Role == MessageRole.User)
+        {
+            return candidate.Role == ChatRole.User &&
+                   string.Equals(candidate.Text, expected.Content, StringComparison.Ordinal) &&
+                   candidate.Contents.OfType<DataContent>().Count() >= expected.Attachments.Count;
+        }
+
+        if (candidate.Role != ChatRole.Assistant)
+        {
+            return false;
+        }
+
+        // The UI prepends tool-use notices to the displayed assistant message, while the framework keeps
+        // those calls as structured content. The final assistant text should still be its suffix.
+        return string.Equals(candidate.Text, expected.Content, StringComparison.Ordinal) ||
+               (!string.IsNullOrEmpty(candidate.Text) && expected.Content.EndsWith(candidate.Text, StringComparison.Ordinal));
+    }
+
+    private static ChatMessage BuildReplayMessage(Message message)
+    {
+        if (message.Role == MessageRole.User)
+        {
+            var contents = new List<AIContent> { new TextContent(message.Content) };
+            foreach (var attachment in message.Attachments)
+            {
+                if (File.Exists(attachment.FilePath))
+                {
+                    contents.Add(new DataContent(File.ReadAllBytes(attachment.FilePath), attachment.MimeType));
+                }
+            }
+
+            return new ChatMessage(ChatRole.User, contents);
+        }
+
+        return new ChatMessage(ChatRole.Assistant, message.Content);
+    }
+
+    private sealed class ActiveConversationSession(AIAgent agent, AgentSession session, string persistedSessionState)
+    {
+        public AIAgent Agent { get; } = agent;
+        public AgentSession Session { get; } = session;
+        public string PersistedSessionState { get; set; } = persistedSessionState;
     }
 }
 
