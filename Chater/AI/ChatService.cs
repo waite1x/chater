@@ -254,6 +254,10 @@ public sealed class ChatService(
         return client.AsIChatClient().AsHarnessAgent(new HarnessAgentOptions
         {
             Name = "chater",
+            ChatHistoryProvider = new InMemoryChatHistoryProvider(new InMemoryChatHistoryProviderOptions
+            {
+                JsonSerializerOptions = ChaterJsonSerializerOptions.AgentSession
+            }),
             HarnessInstructions = """
                 You are the Chater desktop assistant. Work deliberately on multi-step requests.
                 Use the todo list and plan/execute modes when a request has multiple meaningful steps.

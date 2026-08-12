@@ -3,6 +3,7 @@ using Chater.AI.Conversations;
 using Chater.AI.Providers;
 using Chater.AI.Tools;
 using Chater.Data;
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
 namespace Chater.Tests;
@@ -50,6 +51,27 @@ public sealed class ChatServiceTests : IDisposable
         {
             if (File.Exists(imagePath)) File.Delete(imagePath);
         }
+    }
+
+    [Fact]
+    public void AgentSessionJsonOptions_SerializeMessageSourceAttributionWithoutReflectionFallback()
+    {
+        var message = new ChatMessage(ChatRole.User, "hello")
+        {
+            AdditionalProperties = new AdditionalPropertiesDictionary
+            {
+                [AgentRequestMessageSourceAttribution.AdditionalPropertiesKey] =
+                    new AgentRequestMessageSourceAttribution(AgentRequestMessageSourceType.External, "test")
+            }
+        };
+        var state = new InMemoryChatHistoryProvider.State { Messages = [message] };
+        var stateBag = new AgentSessionStateBag();
+        stateBag.SetValue("history", state, ChaterJsonSerializerOptions.AgentSession);
+
+        var json = stateBag.Serialize();
+
+        Assert.Contains("sourceType", json.GetRawText());
+        Assert.Contains("sourceId", json.GetRawText());
     }
 
     [Fact]
