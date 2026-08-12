@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Chater.Logging;
 using Chater.Services;
 using Chater.ViewModels;
@@ -83,6 +84,16 @@ internal partial class ChatWindow : Window
 
     private void OnDraftKeyDown(object? sender, KeyEventArgs e)
     {
+        // Some platform backends do not raise TextBox.PastingFromClipboard for
+        // a keyboard paste. Intercept the standard paste gestures in the
+        // tunnel phase so image data is handled before TextBox inserts text.
+        if (_viewModel.ShowAddAttachmentButton && IsPasteGesture(e))
+        {
+            e.Handled = true;
+            _ = PasteClipboardContentAsync(DraftTextBox);
+            return;
+        }
+
         if (e.Key != Key.Enter || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
         {
             return;
@@ -98,6 +109,11 @@ internal partial class ChatWindow : Window
         e.Handled = true;
     }
 
+    private static bool IsPasteGesture(KeyEventArgs e) => e.Key == Key.V &&
+        (OperatingSystem.IsMacOS()
+            ? e.KeyModifiers.HasFlag(KeyModifiers.Meta)
+            : e.KeyModifiers.HasFlag(KeyModifiers.Control));
+
     private void OnDraftPastingFromClipboard(object? sender, RoutedEventArgs e)
     {
         // Keep the regular TextBox paste behavior for models that cannot accept images.
@@ -107,7 +123,7 @@ internal partial class ChatWindow : Window
         }
 
         // Clipboard access is asynchronous. Handle the event here, then reproduce a
-        // text paste ourselves when the clipboard does not contain an image.
+        // text paste ourselves when the clipboard does not contain an image or image file.
         e.Handled = true;
         _ = PasteClipboardContentAsync(textBox);
     }
@@ -121,6 +137,21 @@ internal partial class ChatWindow : Window
 
         try
         {
+            // Finder, Explorer and file managers expose copied files separately
+            // from bitmap data. Prefer the original file over its potential
+            // thumbnail bitmap, then fall back to a copied image or text.
+            var files = await Clipboard.TryGetFilesAsync();
+            var imagePaths = files?
+                .Select(file => file.TryGetLocalPath())
+                .Where(path => !string.IsNullOrWhiteSpace(path) && IsSupportedImagePath(path))
+                .Cast<string>()
+                .ToList();
+            if (imagePaths is { Count: > 0 })
+            {
+                await _viewModel.AddAttachmentsAsync(imagePaths);
+                return;
+            }
+
             using var bitmap = await Clipboard.TryGetBitmapAsync();
             if (bitmap is not null)
             {
@@ -152,6 +183,9 @@ internal partial class ChatWindow : Window
         textBox.Text = string.Concat(current.AsSpan(0, start), text, current.AsSpan(end));
         textBox.CaretIndex = start + text.Length;
     }
+
+    private static bool IsSupportedImagePath(string path) => Path.GetExtension(path).ToLowerInvariant() is
+        ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp";
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
