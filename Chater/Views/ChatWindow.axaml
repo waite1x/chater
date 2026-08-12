@@ -26,6 +26,14 @@
                                FontSize="14" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <ToggleButton Classes="window-action-button"
+                                  WindowDecorationProperties.ElementRole="User"
+                                  IsChecked="{Binding $parent[Window].Topmost, Mode=TwoWay}"
+                                  ToolTip.Tip="{Binding Localization[AlwaysOnTop]}"
+                                  AutomationProperties.Name="{Binding Localization[AlwaysOnTop]}"
+                                  AutomationProperties.AutomationId="AlwaysOnTopButton">
+                        <materialIcons:MaterialIcon Kind="PinOutline" Width="16" Height="16" />
+                    </ToggleButton>
                     <Button Classes="window-action-button"
                             WindowDecorationProperties.ElementRole="User"
                             Command="{Binding OpenSettingsCommand}"

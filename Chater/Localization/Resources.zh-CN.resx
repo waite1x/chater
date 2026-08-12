@@ -12,6 +12,9 @@
     <data name="Settings">
         <value>设置</value>
     </data>
+    <data name="AlwaysOnTop">
+        <value>窗口置顶</value>
+    </data>
     <data name="GeneralSettings">
         <value>通用设置</value>
     </data>

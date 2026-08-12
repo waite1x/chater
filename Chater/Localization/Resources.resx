@@ -18,6 +18,9 @@
     <data name="Settings">
         <value>Settings</value>
     </data>
+    <data name="AlwaysOnTop">
+        <value>Always on top</value>
+    </data>
     <data name="GeneralSettings">
         <value>General</value>
     </data>
