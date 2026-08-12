@@ -187,6 +187,14 @@ internal partial class ChatWindow : Window
     private static bool IsSupportedImagePath(string path) => Path.GetExtension(path).ToLowerInvariant() is
         ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" or ".bmp";
 
+    private void OnOpenDraftAttachmentImage(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: AttachmentViewModel attachment })
+        {
+            ImageViewerWindow.Open(this, attachment.FilePath, _viewModel.Localization);
+        }
+    }
+
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)

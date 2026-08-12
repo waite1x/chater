@@ -33,8 +33,12 @@
                                         <DataTemplate x:DataType="conversations:MessageAttachment">
                                             <Border CornerRadius="6" Margin="0,0,6,0"
                                                     Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-                                                <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
-                                                       Width="96" Height="96" Stretch="Uniform"/>
+                                                <Button Classes="transparent-button" Padding="0" Click="OnOpenMessageImage"
+                                                        ToolTip.Tip="{ReflectionBinding DataContext.Localization[ViewImage], RelativeSource={RelativeSource AncestorType=local:ConversationMessagesView}}"
+                                                        AutomationProperties.Name="{ReflectionBinding DataContext.Localization[ViewImage], RelativeSource={RelativeSource AncestorType=local:ConversationMessagesView}}">
+                                                    <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
+                                                           Width="96" Height="96" Stretch="Uniform"/>
+                                                </Button>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

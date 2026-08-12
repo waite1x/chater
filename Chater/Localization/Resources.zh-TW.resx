@@ -342,4 +342,25 @@
     <data name="RemoveAttachment">
         <value>移除</value>
     </data>
+    <data name="ViewImage">
+        <value>檢視圖片</value>
+    </data>
+    <data name="ImagePreviewTitle">
+        <value>圖片預覽 - {0}</value>
+    </data>
+    <data name="ZoomIn">
+        <value>放大</value>
+    </data>
+    <data name="ZoomOut">
+        <value>縮小</value>
+    </data>
+    <data name="ActualSize">
+        <value>原始大小</value>
+    </data>
+    <data name="FitToWindow">
+        <value>符合視窗</value>
+    </data>
+    <data name="Close">
+        <value>關閉</value>
+    </data>
 </root>

@@ -163,8 +163,12 @@
                             <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                                     CornerRadius="6" Padding="4" Margin="0,0,6,0">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
-                                           Width="40" Height="40" Stretch="Uniform"/>
+                                    <Button Classes="transparent-button" Padding="0" Click="OnOpenDraftAttachmentImage"
+                                            ToolTip.Tip="{Binding $parent[Window].DataContext.Localization[ViewImage]}"
+                                            AutomationProperties.Name="{Binding $parent[Window].DataContext.Localization[ViewImage]}">
+                                        <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
+                                               Width="40" Height="40" Stretch="Uniform"/>
+                                    </Button>
                                     <Button Classes="transparent-button" Padding="2" VerticalAlignment="Center"
                                             Command="{Binding $parent[Window].DataContext.RemoveAttachmentCommand}"
                                             CommandParameter="{Binding}"

@@ -6,6 +6,8 @@ using Avalonia.Interactivity;
 using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Chater.AI.Conversations;
+using Chater.Localization;
 using Chater.ViewModels;
 
 namespace Chater.Views;
@@ -121,6 +123,17 @@ public partial class ConversationMessagesView : UserControl
         if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
         {
             await clipboard.SetTextAsync(text);
+        }
+    }
+
+    private void OnOpenMessageImage(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: MessageAttachment attachment })
+        {
+            ImageViewerWindow.Open(
+                TopLevel.GetTopLevel(this) as Avalonia.Controls.Window,
+                attachment.FilePath,
+                (DataContext as ChatWindowViewModel)?.Localization ?? new LocalizationService());
         }
     }
 

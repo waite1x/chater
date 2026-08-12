@@ -348,4 +348,25 @@
     <data name="RemoveAttachment">
         <value>Remove</value>
     </data>
+    <data name="ViewImage">
+        <value>View image</value>
+    </data>
+    <data name="ImagePreviewTitle">
+        <value>Image preview - {0}</value>
+    </data>
+    <data name="ZoomIn">
+        <value>Zoom in</value>
+    </data>
+    <data name="ZoomOut">
+        <value>Zoom out</value>
+    </data>
+    <data name="ActualSize">
+        <value>Actual size</value>
+    </data>
+    <data name="FitToWindow">
+        <value>Fit to window</value>
+    </data>
+    <data name="Close">
+        <value>Close</value>
+    </data>
 </root>
