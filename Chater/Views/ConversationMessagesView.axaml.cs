@@ -25,6 +25,8 @@ public partial class ConversationMessagesView : UserControl
 
     public IEnumerable? ItemsSource { get => GetValue(ItemsSourceProperty); set => SetValue(ItemsSourceProperty, value); }
 
+    public LocalizationService? Localization => (DataContext as ChatWindowViewModel)?.Localization;
+
     public ConversationMessagesView()
     {
         InitializeComponent();

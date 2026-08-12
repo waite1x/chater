@@ -106,6 +106,9 @@ public sealed partial class HistorySettingsViewModel : SettingsViewModelBase
         SelectedHistoryConversation = conversation;
         HistoryMessages.Clear();
         foreach (var message in await _messageRepository.GetByConversationAsync(conversation.Id).ConfigureAwait(false))
-            HistoryMessages.Add(new ChatMessageViewModel(message.Role, message.Content));
+            HistoryMessages.Add(CreateHistoryMessage(message));
     }
+
+    internal static ChatMessageViewModel CreateHistoryMessage(Message message) =>
+        new(message.Role, message.Content, message.Attachments);
 }

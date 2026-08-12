@@ -22,6 +22,5 @@ sealed class Program
                 // instead of Avalonia's default "Avalonia Application".
                 DisableSetProcessName = true
             })
-            .WithInterFont()
             .LogToTrace();
 }

@@ -2,7 +2,7 @@
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
-        <Version>0.1.13</Version>
+        <Version>0.1.14</Version>
         <RuntimeIdentifiers>win-x64;win-arm64;osx-x64;osx-arm64</RuntimeIdentifiers>
         <Nullable>enable</Nullable>
         <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -22,6 +22,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishAot>true</PublishAot>
         <PublishTrimmed>true</PublishTrimmed>
+        <OptimizationPreference>Size</OptimizationPreference>
         <DebugSymbols>false</DebugSymbols>
         <DebugType>None</DebugType>
         <NativeDebugSymbols>false</NativeDebugSymbols>
@@ -42,7 +43,11 @@
     </Target>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <!-- Only embed assets that are read by the running UI. The macOS .icns
+             file is copied into the app bundle by the release workflow. -->
+        <AvaloniaResource Include="Assets\chater.ico" />
+        <AvaloniaResource Include="Assets\chater-tray.png" />
+        <AvaloniaResource Include="Assets\chater-tray-light.png" />
         <EmbeddedResource Include="Data\Migrations\*.sql" />
         <EmbeddedResource Update="Localization\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
@@ -57,7 +62,6 @@
         <PackageReference Include="Avalonia.Controls.ColorPicker" />
         <PackageReference Include="Avalonia.Desktop" />
         <PackageReference Include="Avalonia.Themes.Fluent" />
-        <PackageReference Include="Avalonia.Fonts.Inter" />
         <PackageReference Include="LiveMarkdown.Avalonia" />
         <PackageReference Include="Markdig" />
         <PackageReference Include="Material.Icons.Avalonia" />
