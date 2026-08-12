@@ -1,3 +1,5 @@
+using Chater.Services;
+
 namespace Chater.Tests;
 
 public sealed class BuildSmokeTests
@@ -7,6 +9,6 @@ public sealed class BuildSmokeTests
     {
         var assembly = typeof(App).Assembly;
 
-        Assert.Equal("Chater", assembly.GetName().Name);
+        Assert.Equal(AppIdentity.ApplicationName, assembly.GetName().Name);
     }
 }

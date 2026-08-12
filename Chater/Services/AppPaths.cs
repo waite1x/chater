@@ -2,7 +2,7 @@ namespace Chater.Services;
 
 public sealed class AppPaths
 {
-    public const string ApplicationName = "Chater";
+    public const string ApplicationName = AppIdentity.ApplicationName;
 
     public AppPaths(string applicationDataDirectory)
     {

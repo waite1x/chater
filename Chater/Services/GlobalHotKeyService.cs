@@ -39,10 +39,11 @@ public sealed class GlobalHotKeyService(ChatWindowManager chatWindowManager)
             return true;
         }
 
-        // Ask the same native provider that libuiohook uses when creating the
-        // event tap. AXIsProcessTrusted alone can disagree with the actual hook
-        // result after a bundle update or when the permission entry is stale.
-        if (OperatingSystem.IsMacOS() && !UioHookProvider.Instance.IsAxApiEnabled(false))
+        // AXIsProcessTrusted is macOS' authoritative check for the current
+        // process. Do not use libuiohook's preflight here: it can retain a
+        // stale result after the user changes the Accessibility setting, which
+        // made a granted release build open System Settings on every launch.
+        if (OperatingSystem.IsMacOS() && !MacAccessibility.IsTrusted())
         {
             LastError = "macOS 未授予 Chater 的辅助功能权限，无法启用全局快捷键。请在系统设置 > 隐私与安全性 > 辅助功能中重新启用 Chater，然后重启应用。";
             if (!_reportedMissingMacAccessibility)
@@ -56,6 +57,10 @@ public sealed class GlobalHotKeyService(ChatWindowManager chatWindowManager)
 
         try
         {
+            // We own the permission UX above. Suppress libuiohook's native
+            // prompt so it cannot reopen Accessibility settings after a
+            // successful system-level permission check.
+            UioHookProvider.Instance.PromptUserIfAxApiDisabled = false;
             UioHookProvider.Instance.KeyTypedEnabled = false;
             _hook = new EventLoopGlobalHook(GlobalHookType.Keyboard);
             _hook.KeyPressed += OnKeyPressed;

@@ -18,8 +18,10 @@ namespace Chater;
 
 public partial class App : Application
 {
-    private const string DarkTrayIconUri = "avares://Chater/Assets/chater-tray.png";
-    private const string LightTrayIconUri = "avares://Chater/Assets/chater-tray-light.png";
+    // The development build deliberately has a different assembly identity.
+    // Resolve tray assets from the current assembly so both identities work.
+    private static readonly Uri DarkTrayIconUri = CreateAssetUri("Assets/chater-tray.png");
+    private static readonly Uri LightTrayIconUri = CreateAssetUri("Assets/chater-tray-light.png");
     private ServiceProvider? _services;
     private ILogger<App>? _logger;
     private IPlatformSettings? _platformSettings;
@@ -160,9 +162,11 @@ public partial class App : Application
         // Native trays do not inherit Avalonia brushes. Use the OS theme rather than the application's selected theme.
         var systemTheme = _platformSettings?.GetColorValues().ThemeVariant;
         var iconUri = systemTheme == PlatformThemeVariant.Dark ? LightTrayIconUri : DarkTrayIconUri;
-        using var stream = AssetLoader.Open(new Uri(iconUri));
+        using var stream = AssetLoader.Open(iconUri);
         _trayIcon.Icon = new WindowIcon(new Bitmap(stream));
     }
+
+    private static Uri CreateAssetUri(string path) => new($"avares://{typeof(App).Assembly.GetName().Name}/{path}");
 
     private async Task CheckForUpdatesAsync(IUpdateService updateService)
     {

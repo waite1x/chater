@@ -25,7 +25,25 @@ public sealed class ChatWindowManager
         if (window == null)
         {
             ShowNew();
+            return;
         }
+
+        // The global "show chat" shortcut must also restore an existing
+        // window. Previously it was a no-op whenever a chat window existed
+        // (including a minimized or hidden one), which was most visible on
+        // macOS because the app normally remains resident in the menu bar.
+        if (window.WindowState == Avalonia.Controls.WindowState.Minimized)
+        {
+            window.WindowState = Avalonia.Controls.WindowState.Normal;
+        }
+
+        if (!window.IsVisible)
+        {
+            window.Show();
+        }
+
+        window.Activate();
+        window.Focus();
     }
 
     public void ShowNew()

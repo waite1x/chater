@@ -11,8 +11,6 @@ namespace Chater.Services;
 
 public sealed class StartupService : IStartupService
 {
-    private const string ApplicationName = "Chater";
-    private const string MacLaunchAgentId = "com.chater.app";
     private const string WindowsRunKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 
     public bool IsEnabled()
@@ -97,7 +95,7 @@ public sealed class StartupService : IStartupService
     private static bool IsWindowsStartupEnabled()
     {
         using var key = Registry.CurrentUser.OpenSubKey(WindowsRunKey, writable: false);
-        return key?.GetValue(ApplicationName) is string value && !string.IsNullOrWhiteSpace(value);
+        return key?.GetValue(AppIdentity.ApplicationName) is string value && !string.IsNullOrWhiteSpace(value);
     }
 
     [SupportedOSPlatform("windows")]
@@ -108,11 +106,11 @@ public sealed class StartupService : IStartupService
 
         if (enabled)
         {
-            key.SetValue(ApplicationName, Quote(Environment.ProcessPath ?? throw new InvalidOperationException("The process path is unavailable.")));
+            key.SetValue(AppIdentity.ApplicationName, Quote(Environment.ProcessPath ?? throw new InvalidOperationException("The process path is unavailable.")));
         }
         else
         {
-            key.DeleteValue(ApplicationName, throwOnMissingValue: false);
+            key.DeleteValue(AppIdentity.ApplicationName, throwOnMissingValue: false);
         }
     }
 
@@ -137,7 +135,7 @@ public sealed class StartupService : IStartupService
                 new XAttribute("version", "1.0"),
                 new XElement("dict",
                     new XElement("key", "Label"),
-                    new XElement("string", MacLaunchAgentId),
+                    new XElement("string", AppIdentity.MacBundleIdentifier),
                     new XElement("key", "ProgramArguments"),
                     new XElement("array", new XElement("string", executablePath)),
                     new XElement("key", "RunAtLoad"),
@@ -162,12 +160,12 @@ public sealed class StartupService : IStartupService
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var executablePath = Environment.ProcessPath ?? throw new InvalidOperationException("The process path is unavailable.");
-        File.WriteAllText(path, $"[Desktop Entry]{Environment.NewLine}Type=Application{Environment.NewLine}Name={ApplicationName}{Environment.NewLine}Exec={Quote(executablePath)}{Environment.NewLine}X-GNOME-Autostart-enabled=true{Environment.NewLine}");
+        File.WriteAllText(path, $"[Desktop Entry]{Environment.NewLine}Type=Application{Environment.NewLine}Name={AppIdentity.ApplicationName}{Environment.NewLine}Exec={Quote(executablePath)}{Environment.NewLine}X-GNOME-Autostart-enabled=true{Environment.NewLine}");
     }
 
     private static string GetMacLaunchAgentPath() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        "Library", "LaunchAgents", $"{MacLaunchAgentId}.plist");
+        "Library", "LaunchAgents", $"{AppIdentity.MacBundleIdentifier}.plist");
 
     private static string GetLinuxAutostartPath() => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),

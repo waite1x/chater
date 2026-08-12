@@ -90,6 +90,10 @@ jobs:
           - os: macos-15-intel
             rid: osx-x64
     runs-on: ${{ matrix.os }}
+    env:
+      MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -152,6 +156,26 @@ jobs:
           EOF
           chmod +x "$app_dir/Contents/MacOS/Chater"
           rm -rf "$publish_dir"
+      - name: Import macOS code-signing certificate
+        if: startsWith(matrix.rid, 'osx-') && env.MACOS_CERTIFICATE_BASE64 != '' && env.MACOS_CERTIFICATE_PASSWORD != ''
+        shell: bash
+        run: |
+          certificate_path="$RUNNER_TEMP/chater-signing-certificate.p12"
+          keychain_path="$RUNNER_TEMP/chater-signing.keychain-db"
+          echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode > "$certificate_path"
+          security create-keychain -p "$MACOS_CERTIFICATE_PASSWORD" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$MACOS_CERTIFICATE_PASSWORD" "$keychain_path"
+          security import "$certificate_path" -k "$keychain_path" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security list-keychain -d user -s "$keychain_path"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$MACOS_CERTIFICATE_PASSWORD" "$keychain_path"
+      - name: Sign macOS application bundle
+        if: startsWith(matrix.rid, 'osx-') && env.MACOS_CERTIFICATE_BASE64 != '' && env.MACOS_CERTIFICATE_PASSWORD != '' && env.MACOS_SIGNING_IDENTITY != ''
+        shell: bash
+        run: |
+          app_dir="artifacts/${{ matrix.rid }}/Chater.app"
+          codesign --force --deep --options runtime --timestamp --sign "$MACOS_SIGNING_IDENTITY" "$app_dir"
+          codesign --verify --deep --strict --verbose=2 "$app_dir"
       - name: Package macOS application
         if: startsWith(matrix.rid, 'osx-')
         shell: bash

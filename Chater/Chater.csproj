@@ -12,6 +12,13 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
+    <!-- Make local output and metadata visibly distinct from release builds. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <AssemblyName>Chater-dev</AssemblyName>
+        <AssemblyTitle>Chater-dev</AssemblyTitle>
+        <Product>Chater-dev</Product>
+    </PropertyGroup>
+
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishAot>true</PublishAot>
         <PublishTrimmed>true</PublishTrimmed>
