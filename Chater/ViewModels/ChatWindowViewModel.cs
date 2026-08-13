@@ -11,6 +11,7 @@ using Chater.AI;
 using Chater.AI.Conversations;
 using Chater.AI.Providers;
 using Chater.AI.Skills;
+using Chater.AI.Tools;
 using Chater.Data;
 using Chater.Localization;
 using Chater.Logging;
@@ -41,6 +42,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     private readonly LocalizationService _localization;
     private readonly IGlobalHotKeyService? _globalHotKeys;
     private readonly AppPaths _appPaths;
+    private readonly ChatWorkspace _workspace;
     private IStorageProvider? _storageProvider;
     private Conversation? _conversation;
     private CancellationTokenSource? _sendCancellation;
@@ -54,6 +56,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         MessageRepository messageRepository,
         AppState appState,
         ChatWindowManager chatWindowManager,
+        ChatWorkspace workspace,
         IWindowNavigationService? navigation = null,
         IGlobalHotKeyService? globalHotKeys = null,
         LocalizationService? localization = null,
@@ -70,6 +73,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _localization = localization ?? new LocalizationService();
         _globalHotKeys = globalHotKeys;
         _appPaths = appPaths ?? AppPaths.CreateDefault();
+        _workspace = workspace;
         Attachments.CollectionChanged += OnAttachmentsChanged;
         // Re-validate the dropdown selection whenever the shared skills list is
         // reloaded (e.g. after editing skills in the settings window).
@@ -90,6 +94,11 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     public ObservableCollection<ChatMessageViewModel> Messages { get; } = [];
 
     public ObservableCollection<AttachmentViewModel> Attachments { get; } = [];
+
+    public ObservableCollection<WorkspaceEntryViewModel> WorkspaceEntries { get; } = [];
+
+    /// <summary>Raised when a newly sent message should bring the conversation view back to its latest entry.</summary>
+    public event EventHandler? ScrollMessagesToEndRequested;
 
     // ── Chat-bound selections ────────────────────────────────────────────
 
@@ -123,6 +132,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     public bool ShowAddAttachmentButton =>
         SelectedProvider is not null && SelectedModelId is not null && SelectedProvider.MultimodalModelIds.Contains(SelectedModelId);
 
+    public bool HasWorkspaceEntries => WorkspaceEntries.Count > 0;
+
     /// <summary>Called by ChatWindow code-behind after DataContext is set, to provide the file picker.</summary>
     public void AttachStorageProvider(IStorageProvider? storageProvider) => _storageProvider = storageProvider;
 
@@ -141,6 +152,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _conversation = null;
         SelectedConversation = null;
         Messages.Clear();
+        ClearWorkspace();
         SelectedSkill = AppState.Skills.FirstOrDefault();
         StatusMessage = T("NewConversationStatus");
     }
@@ -155,6 +167,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _conversation = null;
         SelectedConversation = null;
         Messages.Clear();
+        ClearWorkspace();
         if (AppState.Skills.Count > 0)
         {
             SelectedSkill = AppState.Skills[0];
@@ -171,6 +184,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _conversation = null;
         SelectedConversation = null;
         Messages.Clear();
+        ClearWorkspace();
     }
 
     // ── Attachment management ─────────────────────────────────────────────
@@ -270,6 +284,87 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         }
     }
 
+    // ── Workspace management ───────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task AddWorkspaceFilesAsync()
+    {
+        if (_storageProvider is null) return;
+        try
+        {
+            var files = await _storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = T("SelectWorkspaceFiles"),
+                AllowMultiple = true
+            });
+            AddWorkspaceEntries(files
+                .Select(file => file.TryGetLocalPath())
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => new WorkspaceEntry(path!, IsDirectory: false)));
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Failed to select workspace files");
+            StatusMessage = exception.Message;
+        }
+    }
+
+    [RelayCommand]
+    private async Task AddWorkspaceFoldersAsync()
+    {
+        if (_storageProvider is null) return;
+        try
+        {
+            var folders = await _storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = T("SelectWorkspaceFolders"),
+                AllowMultiple = true
+            });
+            AddWorkspaceEntries(folders
+                .Select(folder => folder.TryGetLocalPath())
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(path => new WorkspaceEntry(path!, IsDirectory: true)));
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Failed to select workspace folders");
+            StatusMessage = exception.Message;
+        }
+    }
+
+    public void AddWorkspaceEntries(IEnumerable<WorkspaceEntry> entries)
+    {
+        _workspace.Replace(_workspace.Entries.Concat(entries));
+        RefreshWorkspaceEntries();
+    }
+
+    [RelayCommand]
+    private void RemoveWorkspaceEntry(WorkspaceEntryViewModel? entry)
+    {
+        if (entry is null) return;
+        _workspace.Replace(_workspace.Entries.Where(item =>
+            !string.Equals(item.Path, entry.Path,
+                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)));
+        RefreshWorkspaceEntries();
+    }
+
+    private void RefreshWorkspaceEntries()
+    {
+        WorkspaceEntries.Clear();
+        foreach (var entry in _workspace.Entries)
+        {
+            WorkspaceEntries.Add(new WorkspaceEntryViewModel(entry.Path, entry.IsDirectory));
+        }
+
+        OnPropertyChanged(nameof(HasWorkspaceEntries));
+    }
+
+    private void ClearWorkspace()
+    {
+        _workspace.Clear();
+        RefreshWorkspaceEntries();
+    }
+
     // ── Send / stop ──────────────────────────────────────────────────────
     [RelayCommand(CanExecute = nameof(CanSend))]
     private async Task SendAsync()
@@ -296,13 +391,15 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         // the next message while a response is still streaming.
         Attachments.Clear();
         var assistant = new ChatMessageViewModel(MessageRole.Assistant, string.Empty);
+        assistant.SetResponseProgress(T("PreparingRequest"));
         Messages.Add(new ChatMessageViewModel(MessageRole.User, text, attachments));
         Messages.Add(assistant);
+        ScrollMessagesToEndRequested?.Invoke(this, EventArgs.Empty);
         _sendCancellation = new CancellationTokenSource();
         IsSending = true;
         StatusMessage = T("Generating");
 
-        var channel = Channel.CreateBounded<string>(new BoundedChannelOptions(256)
+        var channel = Channel.CreateBounded<ChatStreamUpdate>(new BoundedChannelOptions(256)
         {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
@@ -334,7 +431,31 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             var lastRenderAt = Environment.TickCount64;
             await foreach (var update in channel.Reader.ReadAllAsync(_sendCancellation.Token))
             {
-                pendingContent.Append(update);
+                if (update.Kind == ChatStreamUpdateKind.Progress && update.Content is { Length: > 0 } progressKey)
+                {
+                    assistant.SetResponseProgress(T(progressKey));
+                    continue;
+                }
+
+                if (update.Kind == ChatStreamUpdateKind.ToolStarted &&
+                    update.ToolCallId is { } startedCallId && update.Content is { Length: > 0 } notice)
+                {
+                    assistant.AddToolNotice(startedCallId, notice);
+                    continue;
+                }
+
+                if (update.Kind == ChatStreamUpdateKind.ToolCompleted && update.ToolCallId is { } completedCallId)
+                {
+                    assistant.CompleteToolNotice(completedCallId, update.Content);
+                    continue;
+                }
+
+                if (update.Kind != ChatStreamUpdateKind.Text || string.IsNullOrEmpty(update.Content))
+                {
+                    continue;
+                }
+
+                pendingContent.Append(update.Content);
                 var now = Environment.TickCount64;
                 if (now - lastRenderAt >= 50)
                 {
@@ -367,6 +488,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         }
         finally
         {
+            assistant.DismissToolNoticesAfterDelay();
             _sendCancellation.Dispose();
             _sendCancellation = null;
             IsSending = false;
@@ -435,6 +557,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         var conversation = await _conversationRepository.GetByIdAsync(conversationId, cancellationToken)
             .ConfigureAwait(false);
         if (conversation is null) return;
+        if (_conversation?.Id != conversation.Id) ClearWorkspace();
         if (AppState.Conversations.All(item => item.Id != conversation.Id))
             AppState.Conversations.Insert(0, conversation);
         SelectedConversation = conversation;
@@ -453,6 +576,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _openingConversation = true;
         try
         {
+            if (_conversation?.Id != conversation.Id) ClearWorkspace();
             _conversation = conversation;
             var provider = AppState.Providers.FirstOrDefault(item => item.Id == conversation.ProviderId);
             if (provider is not null) SelectedProvider = provider;
@@ -576,6 +700,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _sendCancellation = null;
 
         Messages.Clear();
+        ClearWorkspace();
 
         _conversation = null;
         _openingConversation = false;

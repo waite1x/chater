@@ -19,6 +19,7 @@ public partial class ConversationMessagesView : UserControl
     private bool _scrollPending;
     private ChatMessageViewModel? _contextMessage;
     private MarkdownView? _contextMarkdownView;
+    private ChatWindowViewModel? _viewModel;
 
     public static readonly StyledProperty<IEnumerable?> ItemsSourceProperty =
         AvaloniaProperty.Register<ConversationMessagesView, IEnumerable?>(nameof(ItemsSource));
@@ -31,6 +32,29 @@ public partial class ConversationMessagesView : UserControl
     {
         InitializeComponent();
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, true);
+        DataContextChanged += OnDataContextChanged;
+    }
+
+    private void OnDataContextChanged(object? sender, EventArgs e)
+    {
+        if (_viewModel is not null)
+        {
+            _viewModel.ScrollMessagesToEndRequested -= OnScrollMessagesToEndRequested;
+        }
+
+        _viewModel = DataContext as ChatWindowViewModel;
+        if (_viewModel is not null)
+        {
+            _viewModel.ScrollMessagesToEndRequested += OnScrollMessagesToEndRequested;
+        }
+    }
+
+    private void OnScrollMessagesToEndRequested(object? sender, EventArgs e)
+    {
+        // A newly sent user message intentionally resumes tail following, even if
+        // the user had previously scrolled up to inspect conversation history.
+        _followTail = true;
+        RequestScrollToEnd();
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -137,6 +161,17 @@ public partial class ConversationMessagesView : UserControl
                 attachment.FilePath,
                 (DataContext as ChatWindowViewModel)?.Localization ?? new LocalizationService());
         }
+    }
+
+    protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+    {
+        if (_viewModel is not null)
+        {
+            _viewModel.ScrollMessagesToEndRequested -= OnScrollMessagesToEndRequested;
+            _viewModel = null;
+        }
+
+        base.OnDetachedFromVisualTree(e);
     }
 
 }

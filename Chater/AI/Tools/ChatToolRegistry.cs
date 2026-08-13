@@ -56,10 +56,10 @@ public sealed class ChatToolRegistry
         var args = toolCall.Arguments;
         if (args is { Count: > 0 })
         {
-            var argsText = string.Join("\n>   ", args.Select(kv => $"{kv.Key}: {kv.Value}"));
-            return $"\n\n> 🔧 正在调用工具：`{toolCall.Name}`\n>   {argsText}\n\n";
+            var argsText = string.Join(", ", args.Select(kv => $"{kv.Key}: {kv.Value}"));
+            return $"正在调用工具 {toolCall.Name}（{argsText}）…";
         }
 
-        return $"\n\n> 🔧 正在调用工具：`{toolCall.Name}`…\n\n";
+        return $"正在调用工具 {toolCall.Name}…";
     }
 }

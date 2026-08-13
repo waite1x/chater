@@ -136,14 +136,26 @@ public sealed class MarkdownView : UserControl
 
     private static void OnLinkClick(object? sender, LinkClickedEventArgs e)
     {
-        if (e.HRef is not { Scheme: "http" or "https" } uri)
+        if (e.HRef is not { } uri)
         {
             return;
         }
 
         try
         {
-            Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+            if (uri.Scheme is "http" or "https")
+            {
+                Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+            }
+            else if (uri.IsFile && (File.Exists(uri.LocalPath) || Directory.Exists(uri.LocalPath)))
+            {
+                Process.Start(new ProcessStartInfo(uri.LocalPath) { UseShellExecute = true });
+            }
+            else
+            {
+                return;
+            }
+
             e.Handled = true;
         }
         catch (Exception exception)
@@ -161,7 +173,7 @@ public sealed class MarkdownView : UserControl
             return;
         }
 
-        var markdown = change.NewValue is string value ? value : string.Empty;
+        var markdown = change.NewValue is string value ? LocalPathMarkdownLinkifier.Linkify(value) : string.Empty;
         if (markdown.StartsWith(_renderedMarkdown, StringComparison.Ordinal))
         {
             _builder.Append(markdown[_renderedMarkdown.Length..]);

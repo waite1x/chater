@@ -4,6 +4,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using Chater.AI.Tools;
 using Chater.Logging;
 using Chater.Services;
 using Chater.ViewModels;
@@ -192,6 +193,44 @@ internal partial class ChatWindow : Window
         if (sender is Button { DataContext: AttachmentViewModel attachment })
         {
             ImageViewerWindow.Open(this, attachment.FilePath, _viewModel.Localization);
+        }
+    }
+
+    private void OnWorkspaceDragOver(object? sender, DragEventArgs e)
+    {
+        // Only advertise a drop target for native files/folders; text and URLs retain
+        // their normal drag behavior and never become implicit workspace permissions.
+        if (e.DataTransfer.TryGetFiles() is { Length: > 0 })
+        {
+            e.DragEffects = DragDropEffects.Copy;
+            e.Handled = true;
+            return;
+        }
+
+        e.DragEffects = DragDropEffects.None;
+    }
+
+    private void OnWorkspaceDrop(object? sender, DragEventArgs e)
+    {
+        var droppedEntries = e.DataTransfer.TryGetFiles()?
+            .Select(item => item.TryGetLocalPath())
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(path => new WorkspaceEntry(path!, Directory.Exists(path!)))
+            .ToArray();
+        if (droppedEntries is not { Length: > 0 })
+        {
+            return;
+        }
+
+        try
+        {
+            _viewModel.AddWorkspaceEntries(droppedEntries);
+            e.Handled = true;
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(ChatWindow), "Failed to add dropped workspace entries");
+            _viewModel.StatusMessage = exception.Message;
         }
     }
 

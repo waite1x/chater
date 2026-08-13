@@ -195,6 +195,18 @@
     <data name="Generating">
         <value>Generating response…</value>
     </data>
+    <data name="PreparingRequest">
+        <value>Preparing request…</value>
+    </data>
+    <data name="WaitingForModelResponse">
+        <value>Waiting for model response…</value>
+    </data>
+    <data name="CallingTools">
+        <value>Calling tools…</value>
+    </data>
+    <data name="ProcessingToolResults">
+        <value>Processing tool results…</value>
+    </data>
     <data name="Completed">
         <value>Completed.</value>
     </data>
@@ -344,6 +356,18 @@
     </data>
     <data name="AddImage">
         <value>Add image</value>
+    </data>
+    <data name="SelectWorkspace">
+        <value>Select chat workspace</value>
+    </data>
+    <data name="SelectWorkspaceFiles">
+        <value>Select workspace files</value>
+    </data>
+    <data name="SelectWorkspaceFolders">
+        <value>Select workspace folders</value>
+    </data>
+    <data name="RemoveWorkspaceEntry">
+        <value>Remove from workspace</value>
     </data>
     <data name="RemoveAttachment">
         <value>Remove</value>

@@ -18,7 +18,7 @@ public sealed class ChatServiceTests : IDisposable
         var database = new SqliteDatabase(_path);
         await new DatabaseMigrator(database).MigrateAsync();
         await SeedConversationAsync(database);
-        var service = new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([]));
+        var service = new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([]), new ChatWorkspace());
 
         await Assert.ThrowsAsync<NotSupportedException>(async () =>
         {
@@ -80,7 +80,7 @@ public sealed class ChatServiceTests : IDisposable
         var database = new SqliteDatabase(_path);
         await new DatabaseMigrator(database).MigrateAsync();
         await SeedConversationAsync(database);
-        var service = new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([]));
+        var service = new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([]), new ChatWorkspace());
         var dirPath = Path.Combine(Path.GetTempPath(), "Chater.Tests");
         var imagePath = Path.Combine(dirPath, $"{Guid.NewGuid():N}.png");
         try

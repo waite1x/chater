@@ -10,7 +10,7 @@ public static class ChaterAiExtensions
 {
     public static IServiceCollection AddChaterAi(this IServiceCollection services)
     {
-        services.AddSingleton<ChatService>()
+        services.AddScoped<ChatService>()
             .AddChaterTools()
             .AddChaterAiConversations()
             .AddChaterAiProviders()

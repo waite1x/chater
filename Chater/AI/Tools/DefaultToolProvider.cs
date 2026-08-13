@@ -43,10 +43,10 @@ public class DefaultToolProvider : IChatToolProvider
                     && args.TryGetValue("url", out var url)
                     && url?.ToString() is { Length: > 0 } urlStr)
                 {
-                    return $"\n\n> 🔧正在获取网页: {urlStr}\n\n";
+                    return $"正在获取网页：{urlStr}";
                 }
 
-                return $"\n\n> 🔧 正在获取网页…\n\n";
+                return "正在获取网页…";
             });
     }
 }

@@ -12,7 +12,10 @@
         x:DataType="vm:ChatWindowViewModel"
         Icon="/Assets/chater.ico"
         Title="{Binding Localization[AppTitle]}" Width="520" Height="700" MinWidth="420" MinHeight="500"
-        WindowDecorations="None" ExtendClientAreaToDecorationsHint="True">
+        WindowDecorations="None" ExtendClientAreaToDecorationsHint="True"
+        DragDrop.AllowDrop="True"
+        DragDrop.DragOver="OnWorkspaceDragOver"
+        DragDrop.Drop="OnWorkspaceDrop">
     <Grid x:Name="WindowLayout" RowDefinitions="28,*">
         <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                 WindowDecorationProperties.ElementRole="TitleBar">
@@ -140,6 +143,19 @@
                         AutomationProperties.Name="{Binding Localization[AddImage]}">
                     <materialIcons:MaterialIcon Kind="FileImage" Width="18" Height="18"/>
                 </Button>
+                <Button DockPanel.Dock="Left" Classes="transparent-button" Width="32" Height="32" Padding="0"
+                        ToolTip.Tip="{Binding Localization[SelectWorkspace]}"
+                        AutomationProperties.Name="{Binding Localization[SelectWorkspace]}">
+                    <materialIcons:MaterialIcon Kind="FolderOpen" Width="18" Height="18"/>
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="{Binding Localization[SelectWorkspaceFiles]}"
+                                      Command="{Binding AddWorkspaceFilesCommand}"/>
+                            <MenuItem Header="{Binding Localization[SelectWorkspaceFolders]}"
+                                      Command="{Binding AddWorkspaceFoldersCommand}"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
                 <TextBlock HorizontalAlignment="Stretch"
                            VerticalAlignment="Center"
                            Text="{Binding StatusMessage}"
@@ -151,6 +167,38 @@
             </DockPanel>
 
             <StackPanel DockPanel.Dock="Bottom" Spacing="6">
+                <ItemsControl ItemsSource="{Binding WorkspaceEntries}"
+                              IsVisible="{Binding HasWorkspaceEntries}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WorkspaceEntryViewModel">
+                            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                    CornerRadius="6" Padding="7,4" Margin="0,0,6,0"
+                                    ToolTip.Tip="{Binding Path}">
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <materialIcons:MaterialIcon Kind="FolderOutline" Width="14" Height="14"
+                                                                VerticalAlignment="Center"
+                                                                IsVisible="{Binding IsDirectory}"/>
+                                    <materialIcons:MaterialIcon Kind="FileDocumentOutline" Width="14" Height="14"
+                                                                VerticalAlignment="Center"
+                                                                IsVisible="{Binding IsFile}"/>
+                                    <TextBlock Text="{Binding DisplayName}" MaxWidth="160"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    <Button Classes="transparent-button" Padding="1"
+                                            Command="{Binding $parent[Window].DataContext.RemoveWorkspaceEntryCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{Binding $parent[Window].DataContext.Localization[RemoveWorkspaceEntry]}">
+                                        <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
                 <ItemsControl ItemsSource="{Binding Attachments}"
                               IsVisible="{Binding HasAttachments}">
                     <ItemsControl.ItemsPanel>
@@ -185,7 +233,10 @@
                              TextChanged="OnDraftTextChanged"
                              PlaceholderText="{Binding Localization[InputPlaceholder]}"
                              AcceptsReturn="True"
-                             TextWrapping="Wrap" />
+                             TextWrapping="Wrap"
+                             VerticalContentAlignment="Center"
+                             Padding="8,2" MinHeight="32"
+                             CaretBrush="{DynamicResource SystemControlForegroundBaseHighBrush}" />
                     <Button Classes="primary-button" Grid.Column="1" Command="{Binding SendOrStopCommand}"
                             ToolTip.Tip="{Binding SendButtonText}" AutomationProperties.Name="{Binding SendButtonText}"
                             Padding="10,8" MinWidth="42">

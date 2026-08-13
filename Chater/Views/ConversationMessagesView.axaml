@@ -14,7 +14,7 @@
                                 IsVisible="{Binding IsUser}"
                                 HorizontalAlignment="Right"
                                 Margin="48,0,0,10" Padding="12,9"
-                                MaxWidth="520">
+                                MaxWidth="720">
                             <Border.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Click="OnCopySelectedText"/>
@@ -46,19 +46,30 @@
                                 <local:MarkdownView Markdown="{Binding Content}"/>
                             </StackPanel>
                         </Border>
-                        <Border Classes="chat-bubble chat-bubble-assistant"
-                                IsVisible="{Binding IsAssistant}"
-                                HorizontalAlignment="Left"
-                                Margin="0,0,48,10" Padding="12,9"
-                                MaxWidth="520">
-                            <Border.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Click="OnCopySelectedText"/>
-                                    <MenuItem Click="OnCopyMarkdown"/>
-                                </ContextMenu>
-                            </Border.ContextMenu>
-                            <local:MarkdownView Markdown="{Binding Content}"/>
-                        </Border>
+                        <StackPanel IsVisible="{Binding IsAssistant}"
+                                    HorizontalAlignment="Left"
+                                    Margin="0,0,48,10" MaxWidth="720"
+                                    Spacing="4">
+                            <Border Classes="chat-bubble chat-bubble-assistant" Padding="12,9">
+                                <Border.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Click="OnCopySelectedText"/>
+                                        <MenuItem Click="OnCopyMarkdown"/>
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+                                <local:MarkdownView Markdown="{Binding Content}"/>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding ToolNotices}"
+                                          IsVisible="{Binding HasToolNotices}" Margin="8,0,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ToolNoticeViewModel">
+                                        <TextBlock Text="{Binding Text}" ToolTip.Tip="{Binding Text}"
+                                                   FontSize="12" Opacity="0.75" Margin="0,2,0,0"
+                                                   TextWrapping="Wrap"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </Grid>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>

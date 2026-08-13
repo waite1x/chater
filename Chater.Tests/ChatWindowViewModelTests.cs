@@ -187,24 +187,53 @@ public sealed class ChatWindowViewModelTests : IDisposable
         Assert.True(viewModel.SendCommand.CanExecute(null));
     }
 
+    [Fact]
+    public async Task WorkspaceSelection_IsScopedToCurrentChatAndClearedForNewConversation()
+    {
+        var database = new SqliteDatabase(_path);
+        await new DatabaseMigrator(database).MigrateAsync();
+        var workspace = new ChatWorkspace();
+        var viewModel = CreateViewModel(database, workspace: workspace);
+        var folder = Path.Combine(Path.GetTempPath(), "Chater.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            viewModel.AddWorkspaceEntries([new WorkspaceEntry(folder, IsDirectory: true)]);
+
+            Assert.True(viewModel.HasWorkspaceEntries);
+            Assert.Single(workspace.Entries);
+
+            viewModel.NewConversationCommand.Execute(null);
+
+            Assert.False(viewModel.HasWorkspaceEntries);
+            Assert.Empty(workspace.Entries);
+        }
+        finally
+        {
+            Directory.Delete(folder);
+        }
+    }
+
     public void Dispose()
     {
         if (File.Exists(_path))
             File.Delete(_path);
     }
 
-    private static ChatWindowViewModel CreateViewModel(SqliteDatabase database, IWindowNavigationService? navigation = null, AppPaths? appPaths = null)
+    private static ChatWindowViewModel CreateViewModel(SqliteDatabase database, IWindowNavigationService? navigation = null, AppPaths? appPaths = null, ChatWorkspace? workspace = null)
     {
         using var services = new ServiceCollection().BuildServiceProvider();
         var appState = new AppState(new LazyServiceProvider(services));
         var chatWindowManager = new ChatWindowManager(services.GetRequiredService<IServiceScopeFactory>(), appState);
+        workspace ??= new ChatWorkspace();
         return new ChatWindowViewModel(
             new ConversationService(new ConversationRepository(database)),
-            new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([])),
+            new ChatService(new MessageRepository(database), new ConversationRepository(database), new ApiProviderRepository(database), new SessionRunLock(), new ChatToolRegistry([]), workspace),
             new ConversationRepository(database),
             new MessageRepository(database),
             appState,
             chatWindowManager,
+            workspace,
             navigation,
             appPaths: appPaths ?? new AppPaths(Path.Combine(Path.GetTempPath(), "Chater.Tests", $"{Guid.NewGuid():N}")));
     }
