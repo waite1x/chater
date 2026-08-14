@@ -14,9 +14,9 @@ namespace Chater.AI.Tools;
 public sealed partial class WebContentTool : IDisposable
 {
     // Limits prevent a tool call from consuming unbounded memory or injecting excessive text into the model context.
-    private const int MaximumResponseBytes = 512 * 1024 * 1024;
-    private const int MaximumTextLength = 12_000;
-    private const int MaximumRedirects = 5;
+    private const int MaximumResponseBytes = 20 * 1024 * 1024;
+    private const int MaximumTextLength = 200_000;
+    private const int MaximumRedirects = 3;
     private readonly HttpClient _httpClient;
 
     /// <summary>Creates a fetcher that follows redirects manually so every destination can be security-checked.</summary>
