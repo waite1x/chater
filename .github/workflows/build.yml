@@ -156,10 +156,27 @@ jobs:
           EOF
           chmod +x "$app_dir/Contents/MacOS/Chater"
           rm -rf "$publish_dir"
-      - name: Import macOS code-signing certificate
-        if: startsWith(matrix.rid, 'osx-') && env.MACOS_CERTIFICATE_BASE64 != '' && env.MACOS_CERTIFICATE_PASSWORD != ''
+      - name: Validate macOS code-signing configuration
+        if: startsWith(matrix.rid, 'osx-')
         shell: bash
         run: |
+          set -euo pipefail
+          missing=()
+          for variable in MACOS_CERTIFICATE_BASE64 MACOS_CERTIFICATE_PASSWORD MACOS_SIGNING_IDENTITY; do
+            if [[ -z "${!variable:-}" ]]; then
+              missing+=("$variable")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::macOS releases must be signed so privacy permissions survive app updates. Missing secrets: ${missing[*]}"
+            exit 1
+          fi
+      - name: Import macOS code-signing certificate
+        if: startsWith(matrix.rid, 'osx-')
+        shell: bash
+        run: |
+          set -euo pipefail
           certificate_path="$RUNNER_TEMP/chater-signing-certificate.p12"
           keychain_path="$RUNNER_TEMP/chater-signing.keychain-db"
           echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode > "$certificate_path"
@@ -169,13 +186,34 @@ jobs:
           security import "$certificate_path" -k "$keychain_path" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security list-keychain -d user -s "$keychain_path"
           security set-key-partition-list -S apple-tool:,apple: -s -k "$MACOS_CERTIFICATE_PASSWORD" "$keychain_path"
+          if ! security find-identity -v -p codesigning "$keychain_path" | grep -Fq "\"$MACOS_SIGNING_IDENTITY\""; then
+            echo "::error::The configured signing identity was not found in the imported certificate: $MACOS_SIGNING_IDENTITY"
+            exit 1
+          fi
       - name: Sign macOS application bundle
-        if: startsWith(matrix.rid, 'osx-') && env.MACOS_CERTIFICATE_BASE64 != '' && env.MACOS_CERTIFICATE_PASSWORD != '' && env.MACOS_SIGNING_IDENTITY != ''
+        if: startsWith(matrix.rid, 'osx-')
         shell: bash
         run: |
+          set -euo pipefail
           app_dir="artifacts/${{ matrix.rid }}/Chater.app"
           codesign --force --deep --options runtime --timestamp --sign "$MACOS_SIGNING_IDENTITY" "$app_dir"
-          codesign --verify --deep --strict --verbose=2 "$app_dir"
+          signature_info="$(codesign -dvvv -r- "$app_dir" 2>&1)"
+          echo "$signature_info"
+
+          if grep -q '^Signature=adhoc$' <<< "$signature_info"; then
+            echo "::error::Refusing to publish an ad-hoc signed macOS application."
+            exit 1
+          fi
+          if ! grep -q '^Identifier=com\.chater\.app$' <<< "$signature_info"; then
+            echo "::error::The signed application identifier is not com.chater.app."
+            exit 1
+          fi
+          if ! grep -Eq '^TeamIdentifier=[A-Z0-9]+$' <<< "$signature_info"; then
+            echo "::error::The signed application does not have a stable Apple Team ID."
+            exit 1
+          fi
+
+          codesign --verify --deep --strict --verbose=4 "$app_dir"
       - name: Package macOS application
         if: startsWith(matrix.rid, 'osx-')
         shell: bash
