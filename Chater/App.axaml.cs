@@ -13,6 +13,8 @@ using Chater.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Chater.Views;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Chater;
 
@@ -90,11 +92,32 @@ public partial class App : Application
                 AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
                 TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
                 Dispatcher.UIThread.UnhandledException -= OnDispatcherUnhandledException;
-                _services.GetRequiredService<IGlobalHotKeyService>().Dispose();
-                _services.Dispose();
-                ExceptionLogger.Configure(null);
-                _services = null;
-                _logger = null;
+                try
+                {
+                    _services.GetRequiredService<IGlobalHotKeyService>().Dispose();
+                    _services.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    _logger?.LogWarning(exception, "An error occurred while disposing application services");
+                }
+                finally
+                {
+                    ExceptionLogger.Configure(null);
+                    _services = null;
+                    _logger = null;
+                }
+
+                // Avalonia NativeAOT currently releases its native dispatcher from
+                // a C++ static destructor after the .NET runtime has begun shutting
+                // down. That callback crosses into an already stopped runtime and
+                // aborts the process on macOS. All managed resources are disposed
+                // above, so bypass the faulty atexit/static-destructor phase only
+                // for macOS NativeAOT builds.
+                if (OperatingSystem.IsMacOS() && !RuntimeFeature.IsDynamicCodeSupported)
+                {
+                    ExitImmediately(0);
+                }
             };
         }
 
@@ -291,4 +314,7 @@ public partial class App : Application
     {
         _logger?.LogCritical(eventArgs.Exception, "An unhandled UI-thread exception occurred");
     }
+
+    [DllImport("/usr/lib/libSystem.B.dylib", EntryPoint = "_exit")]
+    private static extern void ExitImmediately(int status);
 }
