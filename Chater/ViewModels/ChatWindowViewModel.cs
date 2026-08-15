@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
+using System.Diagnostics;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -127,8 +128,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     [NotifyCanExecuteChangedFor(nameof(SendCommand), nameof(SendOrStopCommand))]
     private string _draft = string.Empty;
 
-    [ObservableProperty] private string _statusMessage = "Loading...";
-
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendCommand), nameof(SendOrStopCommand))]
     private bool _isSending;
@@ -168,7 +167,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         ClearWorkspace();
         ResetSessionToolSelection();
         SelectedSkill = AppState.Skills.FirstOrDefault();
-        StatusMessage = T("NewConversationStatus");
     }
 
     /// <summary>
@@ -321,7 +319,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         catch (Exception exception)
         {
             ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Failed to select workspace files");
-            StatusMessage = exception.Message;
         }
     }
 
@@ -344,7 +341,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         catch (Exception exception)
         {
             ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Failed to select workspace folders");
-            StatusMessage = exception.Message;
         }
     }
 
@@ -362,6 +358,51 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             !string.Equals(item.Path, entry.Path,
                 OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)));
         RefreshWorkspaceEntries();
+    }
+
+    [RelayCommand]
+    private void OpenWorkspaceEntry(WorkspaceEntryViewModel? entry)
+    {
+        if (entry is null) return;
+
+        try
+        {
+            var path = entry.Path;
+            if (!File.Exists(path) && !Directory.Exists(path))
+                throw new FileNotFoundException("The workspace entry no longer exists.", path);
+
+            if (OperatingSystem.IsWindows())
+            {
+                var startInfo = new ProcessStartInfo("explorer.exe") { UseShellExecute = true };
+                if (entry.IsFile)
+                    startInfo.Arguments = $"/select,\"{path}\"";
+                else
+                    startInfo.ArgumentList.Add(path);
+                Process.Start(startInfo);
+                return;
+            }
+
+            if (OperatingSystem.IsMacOS())
+            {
+                var startInfo = new ProcessStartInfo("open") { UseShellExecute = false };
+                if (entry.IsFile) startInfo.ArgumentList.Add("-R");
+                startInfo.ArgumentList.Add(path);
+                Process.Start(startInfo);
+                return;
+            }
+
+            var directory = entry.IsDirectory ? path : Path.GetDirectoryName(path);
+            if (!string.IsNullOrWhiteSpace(directory))
+                Process.Start(new ProcessStartInfo("xdg-open")
+                {
+                    UseShellExecute = false,
+                    ArgumentList = { directory }
+                });
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Failed to open workspace entry");
+        }
     }
 
     private void RefreshWorkspaceEntries()
@@ -387,7 +428,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     {
         if (SelectedProvider is null)
         {
-            StatusMessage = T("SelectProviderFirst");
             return;
         }
 
@@ -413,7 +453,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         ScrollMessagesToEndRequested?.Invoke(this, EventArgs.Empty);
         _sendCancellation = new CancellationTokenSource();
         IsSending = true;
-        StatusMessage = T("Generating");
 
         var channel = Channel.CreateBounded<ChatStreamUpdate>(new BoundedChannelOptions(256)
         {
@@ -484,7 +523,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
 
             if (pendingContent.Length > 0) assistant.Content += pendingContent.ToString();
             await producerTask;
-            StatusMessage = T("Completed");
             await RefreshConversationHistoryAsync();
         }
         catch (OperationCanceledException exception)
@@ -492,7 +530,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Chat request cancelled", LogLevel.Information);
             if (string.IsNullOrWhiteSpace(assistant.Content))
                 assistant.Content = "The response was cancelled.";
-            StatusMessage = T("Stopped");
             await RefreshConversationHistoryAsync();
         }
         catch (Exception exception)
@@ -500,7 +537,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             ExceptionLogger.Log(exception, nameof(ChatWindowViewModel), "Chat request failed");
             assistant.Content =
                 string.IsNullOrWhiteSpace(assistant.Content) ? $"Error: {exception.Message}" : assistant.Content;
-            StatusMessage = exception.Message;
             await RefreshConversationHistoryAsync();
         }
         finally
@@ -660,7 +696,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
                          .ConfigureAwait(false))
                 Messages.Add(new ChatMessageViewModel(message.Role, message.Content, message.Attachments));
 
-            StatusMessage = $"Opened: {conversation.Title}";
         }
         finally
         {

@@ -417,6 +417,9 @@
     <data name="RemoveWorkspaceEntry">
         <value>Remove from workspace</value>
     </data>
+    <data name="OpenWorkspaceEntry">
+        <value>Open workspace location</value>
+    </data>
     <data name="RemoveAttachment">
         <value>Remove</value>
     </data>

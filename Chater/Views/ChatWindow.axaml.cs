@@ -60,14 +60,12 @@ internal partial class ChatWindow : Window
             // Register global hotkeys after the ViewModel has loaded its shortcut settings.
             if (!_globalHotKeys.Start(_viewModel.ChatShortcut, _viewModel.NewChatWindowShortcut) && _globalHotKeys.LastError is not null)
             {
-                _viewModel.StatusMessage = _globalHotKeys.LastError;
                 _logger.LogWarning("Global hotkey registration failed: {Error}", _globalHotKeys.LastError);
             }
         }
         catch (Exception exception)
         {
             ExceptionLogger.Log(exception, nameof(ChatWindow), "Failed to initialize a chat window");
-            _viewModel.StatusMessage = exception.Message;
         }
         finally
         {
@@ -172,7 +170,6 @@ internal partial class ChatWindow : Window
         catch (Exception exception)
         {
             ExceptionLogger.Log(exception, nameof(ChatWindow), "Failed to paste clipboard content");
-            _viewModel.StatusMessage = exception.Message;
         }
     }
 
@@ -230,7 +227,6 @@ internal partial class ChatWindow : Window
         catch (Exception exception)
         {
             ExceptionLogger.Log(exception, nameof(ChatWindow), "Failed to add dropped workspace entries");
-            _viewModel.StatusMessage = exception.Message;
         }
     }
 

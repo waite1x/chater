@@ -65,11 +65,11 @@
         </Border>
         <DockPanel Grid.Row="1" Margin="10,2,10,10" LastChildFill="True" VerticalSpacing="8">
             <DockPanel DockPanel.Dock="Top" LastChildFill="True" HorizontalSpacing="4">
-                <Button Classes="model-selector-button" HorizontalAlignment="Left" Padding="0" Margin="0"
+                <Button HorizontalAlignment="Left" Padding="0" Margin="0"
                         DockPanel.Dock="Left">
                     <Button.Content>
                         <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                BorderThickness="1" Padding="6,2" CornerRadius="4">
+                                BorderThickness="1" Padding="6,4" CornerRadius="4">
                             <StackPanel Spacing="0">
                                 <TextBlock Text="{Binding SelectedProviderDisplayName}" FontSize="12"
                                            FontWeight="SemiBold" />
@@ -182,22 +182,15 @@
                         </Flyout>
                     </Button.Flyout>
                 </Button>
-                <TextBlock HorizontalAlignment="Stretch"
-                           VerticalAlignment="Center"
-                           Text="{Binding StatusMessage}"
-                           ToolTip.Tip="{Binding StatusMessage}"
-                           TextWrapping="NoWrap"
-                           TextTrimming="CharacterEllipsis"
-                           TextAlignment="Right"
-                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-            </DockPanel>
-
-            <StackPanel DockPanel.Dock="Bottom" Spacing="6">
-                <ItemsControl ItemsSource="{Binding WorkspaceEntries}"
-                              IsVisible="{Binding HasWorkspaceEntries}">
+                <ItemsControl DockPanel.Dock="Right"
+                              ItemsSource="{Binding WorkspaceEntries}"
+                              IsVisible="{Binding HasWorkspaceEntries}"
+                              MaxWidth="280"
+                              HorizontalAlignment="Right"
+                              ToolTip.Tip="{Binding Localization[SelectWorkspace]}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel />
+                            <WrapPanel HorizontalAlignment="Right" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -206,14 +199,21 @@
                                     CornerRadius="6" Padding="7,4" Margin="0,0,6,0"
                                     ToolTip.Tip="{Binding Path}">
                                 <StackPanel Orientation="Horizontal" Spacing="5">
-                                    <materialIcons:MaterialIcon Kind="FolderOutline" Width="14" Height="14"
-                                                                VerticalAlignment="Center"
-                                                                IsVisible="{Binding IsDirectory}" />
-                                    <materialIcons:MaterialIcon Kind="FileDocumentOutline" Width="14" Height="14"
-                                                                VerticalAlignment="Center"
-                                                                IsVisible="{Binding IsFile}" />
-                                    <TextBlock Text="{Binding DisplayName}" MaxWidth="160"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                    <Button Classes="transparent-button" Padding="0"
+                                            Command="{Binding $parent[Window].DataContext.OpenWorkspaceEntryCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{Binding $parent[Window].DataContext.Localization[OpenWorkspaceEntry]}">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <materialIcons:MaterialIcon Kind="FolderOutline" Width="14" Height="14"
+                                                                        VerticalAlignment="Center"
+                                                                        IsVisible="{Binding IsDirectory}" />
+                                            <materialIcons:MaterialIcon Kind="FileDocumentOutline" Width="14" Height="14"
+                                                                        VerticalAlignment="Center"
+                                                                        IsVisible="{Binding IsFile}" />
+                                            <TextBlock Text="{Binding DisplayName}" MaxWidth="120"
+                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
                                     <Button Classes="transparent-button" Padding="1"
                                             Command="{Binding $parent[Window].DataContext.RemoveWorkspaceEntryCommand}"
                                             CommandParameter="{Binding}"
@@ -225,6 +225,9 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+            </DockPanel>
+
+            <StackPanel DockPanel.Dock="Bottom" Spacing="6">
                 <ItemsControl ItemsSource="{Binding Attachments}"
                               IsVisible="{Binding HasAttachments}">
                     <ItemsControl.ItemsPanel>
