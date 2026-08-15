@@ -186,11 +186,12 @@
                               ItemsSource="{Binding WorkspaceEntries}"
                               IsVisible="{Binding HasWorkspaceEntries}"
                               MaxWidth="280"
+                              VerticalAlignment="Stretch"
                               HorizontalAlignment="Right"
                               ToolTip.Tip="{Binding Localization[SelectWorkspace]}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel HorizontalAlignment="Right" />
+                            <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Center" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>

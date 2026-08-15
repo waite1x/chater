@@ -411,7 +411,7 @@
     <data name="RemoveWorkspaceEntry">
         <value>从工作空间移除</value>
     </data>
-    <data name="OpenWorkspaceEntry">
+        <data name="OpenWorkspaceEntry">
         <value>打开工作区位置</value>
     </data>
     <data name="RemoveAttachment">
