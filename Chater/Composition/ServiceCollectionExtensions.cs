@@ -54,6 +54,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<GeneralSettingsViewModel>();
         services.AddScoped<ShortcutSettingsViewModel>();
         services.AddScoped<SkillSettingsViewModel>();
+        services.AddScoped<ToolSettingsViewModel>();
         services.AddScoped<HistorySettingsViewModel>();
         services.AddScoped<AboutSettingsViewModel>();
 

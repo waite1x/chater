@@ -20,8 +20,21 @@ public sealed class ChatToolRegistry
 
     public async Task<IList<AITool>> GetTools()
     {
-        var registrations = await _registrations.Value;
+        return await GetTools(null).ConfigureAwait(false);
+    }
+
+    public async Task<IList<AITool>> GetTools(IReadOnlySet<string>? enabledToolNames)
+    {
+        var registrations = await GetRegistrations(enabledToolNames).ConfigureAwait(false);
         return [.. registrations.Select(r => r.Tool)];
+    }
+
+    public async Task<IReadOnlyList<ChatToolRegistration>> GetRegistrations(IReadOnlySet<string>? enabledToolNames = null)
+    {
+        var registrations = await _registrations.Value;
+        return enabledToolNames is null
+            ? registrations
+            : registrations.Where(registration => enabledToolNames.Contains(registration.Name)).ToArray();
     }
 
     private async Task<List<ChatToolRegistration>> GetAiToolsInternal()

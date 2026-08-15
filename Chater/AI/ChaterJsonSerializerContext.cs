@@ -9,6 +9,7 @@ namespace Chater.AI;
 [JsonSerializable(typeof(ProviderSnapshot))]
 [JsonSerializable(typeof(UpdateService.GitHubRelease))]
 [JsonSerializable(typeof(MessageAttachment[]))]
+[JsonSerializable(typeof(string[]))]
 [JsonSerializable(typeof(AgentRequestMessageSourceAttribution))]
 internal sealed partial class ChaterJsonSerializerContext : JsonSerializerContext;
 

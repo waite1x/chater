@@ -50,7 +50,23 @@ public sealed class ChatService(
     /// Only one invocation may run for a conversation at a time. Failed and cancelled runs are persisted before the
     /// exception is rethrown so the UI and recovery flow can render an accurate status.
     /// </remarks>
-    public async IAsyncEnumerable<ChatStreamUpdate> SendStreamingAsync(string conversationId, string message, IReadOnlyList<MessageAttachment>? attachments = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ChatStreamUpdate> SendStreamingAsync(
+        string conversationId,
+        string message,
+        IReadOnlyList<MessageAttachment>? attachments = null,
+        CancellationToken cancellationToken = default) =>
+        SendStreamingAsync(conversationId, message, attachments, null, cancellationToken);
+
+    /// <summary>Streams a response with the tool subset selected for the current chat session.</summary>
+    public IAsyncEnumerable<ChatStreamUpdate> SendStreamingAsync(
+        string conversationId,
+        string message,
+        IReadOnlyList<MessageAttachment>? attachments,
+        IReadOnlySet<string>? enabledToolNames,
+        CancellationToken cancellationToken = default) =>
+        SendStreamingCoreAsync(conversationId, message, attachments, enabledToolNames, cancellationToken);
+
+    private async IAsyncEnumerable<ChatStreamUpdate> SendStreamingCoreAsync(string conversationId, string message, IReadOnlyList<MessageAttachment>? attachments, IReadOnlySet<string>? enabledToolNames, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var lease = await sessionLock.AcquireAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var conversation = await conversations.GetByIdAsync(conversationId, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException($"Conversation '{conversationId}' does not exist.");
@@ -98,7 +114,7 @@ public sealed class ChatService(
                 throw new InvalidOperationException("The saved session no longer matches its provider configuration. Create a new conversation to continue.");
             }
 
-            agent = await CreateAgent(provider, snapshot.SystemPrompt).ConfigureAwait(false);
+            agent = await CreateAgent(provider, snapshot.SystemPrompt, enabledToolNames).ConfigureAwait(false);
             session = await RestoreOrCreateSessionAsync(agent, conversation, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException exception) when (cancellationToken.IsCancellationRequested)
@@ -255,7 +271,7 @@ public sealed class ChatService(
             ?? throw new InvalidOperationException("Conversation provider snapshot is invalid.");
     }
 
-    private async Task<AIAgent> CreateAgent(ApiProvider provider, string? instructions)
+    private async Task<AIAgent> CreateAgent(ApiProvider provider, string? instructions, IReadOnlySet<string>? enabledToolNames)
     {
         if (provider.ProviderType is ProviderType.Anthropic)
         {
@@ -297,7 +313,7 @@ public sealed class ChatService(
             ChatOptions = new ChatOptions
             {
                 Instructions = instructions,
-                Tools = await toolRegistry.GetTools()
+                Tools = await toolRegistry.GetTools(enabledToolNames)
             },
             // Chater exposes its own path-authorized file tools. Keep the harness file
             // memory disabled so it cannot create a second, broader file-access route.

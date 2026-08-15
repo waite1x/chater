@@ -24,6 +24,54 @@
     <data name="Skills">
         <value>提示詞</value>
     </data>
+    <data name="Tools">
+        <value>工具</value>
+    </data>
+    <data name="ToolSettings">
+        <value>工具設定</value>
+    </data>
+    <data name="ToolSettingsDescription">
+        <value>選擇模型在對話中可以使用的工具。</value>
+    </data>
+    <data name="ToolSettingsSaved">
+        <value>勾選狀態會自動儲存。</value>
+    </data>
+    <data name="ToolFetchWebpage">
+        <value>取得網頁內容</value>
+    </data>
+    <data name="ToolFetchWebpageDescription">
+        <value>讀取公開網頁並擷取可讀文字。</value>
+    </data>
+    <data name="ToolGetWorkspaceEntries">
+        <value>取得工作區項目</value>
+    </data>
+    <data name="ToolGetWorkspaceEntriesDescription">
+        <value>列出目前對話明確選取的檔案和資料夾。</value>
+    </data>
+    <data name="ToolReadWorkspaceFile">
+        <value>讀取工作區檔案</value>
+    </data>
+    <data name="ToolReadWorkspaceFileDescription">
+        <value>讀取已選取工作區中的 UTF-8 文字檔案。</value>
+    </data>
+    <data name="ToolWriteWorkspaceFile">
+        <value>寫入工作區檔案</value>
+    </data>
+    <data name="ToolWriteWorkspaceFileDescription">
+        <value>在已選取的工作區中建立或更新文字檔案。</value>
+    </data>
+    <data name="ToolCreateWorkspaceDirectory">
+        <value>建立工作區資料夾</value>
+    </data>
+    <data name="ToolCreateWorkspaceDirectoryDescription">
+        <value>在已選取的工作區資料夾中建立目錄。</value>
+    </data>
+    <data name="ToolListWorkspaceDirectory">
+        <value>列出工作區目錄</value>
+    </data>
+    <data name="ToolListWorkspaceDirectoryDescription">
+        <value>列出已選取工作區目錄中的檔案和資料夾。</value>
+    </data>
     <data name="Shortcut">
         <value>快捷鍵</value>
     </data>

@@ -14,6 +14,7 @@ public sealed class AppSettingsService(AppSettingRepository repository)
     public const string LanguageKey = "language";
     public const string ChatShortcutKey = "chat.shortcut";
     public const string NewChatWindowShortcutKey = "chat.new-window-shortcut";
+    public const string EnabledToolsKey = "ai.enabled-tools";
     public const string DefaultTheme = "system";
     public const string DefaultAccentColor = "#0EA5E9";
     public const string DefaultLanguage = "zh-CN";

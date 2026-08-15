@@ -24,7 +24,7 @@ public sealed class StartupService : IStartupService
 
             return GetStartupPath() switch
             {
-                StartupPath.MacOS => File.Exists(GetMacLaunchAgentPath()),
+                StartupPath.MacOs => File.Exists(GetMacLaunchAgentPath()),
                 StartupPath.Linux => File.Exists(GetLinuxAutostartPath()),
                 _ => false
             };
@@ -48,7 +48,7 @@ public sealed class StartupService : IStartupService
 
             switch (GetStartupPath())
             {
-                case StartupPath.MacOS:
+                case StartupPath.MacOs:
                     SetMacStartupEnabled(enabled);
                     break;
                 case StartupPath.Linux:
@@ -58,7 +58,7 @@ public sealed class StartupService : IStartupService
                     return false;
             }
 
-            return GetStartupPath() is StartupPath.MacOS or StartupPath.Linux;
+            return GetStartupPath() is StartupPath.MacOs or StartupPath.Linux;
         }
         catch (Exception exception) when (exception is UnauthorizedAccessException or IOException or SecurityException or InvalidOperationException)
         {
@@ -76,7 +76,7 @@ public sealed class StartupService : IStartupService
                 case StartupPath.Windows:
                     OpenUri("ms-settings:startupapps");
                     break;
-                case StartupPath.MacOS:
+                case StartupPath.MacOs:
                     OpenUri("x-apple.systempreferences:com.apple.LoginItems-Settings.extension");
                     break;
                 case StartupPath.Linux:
@@ -173,7 +173,7 @@ public sealed class StartupService : IStartupService
 
     private static StartupPath GetStartupPath() =>
         OperatingSystem.IsWindows() ? StartupPath.Windows :
-        OperatingSystem.IsMacOS() ? StartupPath.MacOS :
+        OperatingSystem.IsMacOS() ? StartupPath.MacOs :
         OperatingSystem.IsLinux() ? StartupPath.Linux : StartupPath.Unsupported;
 
     private static void OpenUri(string uri)
@@ -191,7 +191,7 @@ public sealed class StartupService : IStartupService
     {
         Unsupported,
         Windows,
-        MacOS,
+        MacOs,
         Linux
     }
 }

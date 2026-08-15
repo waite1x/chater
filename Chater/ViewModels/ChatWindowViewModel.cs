@@ -75,6 +75,10 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _appPaths = appPaths ?? AppPaths.CreateDefault();
         _workspace = workspace;
         Attachments.CollectionChanged += OnAttachmentsChanged;
+        AppState.Tools.CollectionChanged += OnToolsCollectionChanged;
+        foreach (var tool in AppState.Tools)
+            tool.PropertyChanged += OnAppToolPropertyChanged;
+        RebuildSessionTools();
         // Re-validate the dropdown selection whenever the shared skills list is
         // reloaded (e.g. after editing skills in the settings window).
         AppState.Skills.CollectionChanged += OnSkillsCollectionChanged;
@@ -96,6 +100,15 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     public ObservableCollection<AttachmentViewModel> Attachments { get; } = [];
 
     public ObservableCollection<WorkspaceEntryViewModel> WorkspaceEntries { get; } = [];
+
+    /// <summary>Tools enabled in application settings and selected for this chat session.</summary>
+    public ObservableCollection<SessionToolSelection> SessionTools { get; } = [];
+
+    public bool HasSessionTools => SessionTools.Count > 0;
+
+    public IReadOnlySet<string> SelectedToolNames => SessionTools.Where(static tool => tool.IsSelected)
+        .Select(static tool => tool.Name)
+        .ToHashSet(StringComparer.Ordinal);
 
     /// <summary>Raised when a newly sent message should bring the conversation view back to its latest entry.</summary>
     public event EventHandler? ScrollMessagesToEndRequested;
@@ -153,6 +166,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         SelectedConversation = null;
         Messages.Clear();
         ClearWorkspace();
+        ResetSessionToolSelection();
         SelectedSkill = AppState.Skills.FirstOrDefault();
         StatusMessage = T("NewConversationStatus");
     }
@@ -168,6 +182,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         SelectedConversation = null;
         Messages.Clear();
         ClearWorkspace();
+        ResetSessionToolSelection();
         if (AppState.Skills.Count > 0)
         {
             SelectedSkill = AppState.Skills[0];
@@ -185,6 +200,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         SelectedConversation = null;
         Messages.Clear();
         ClearWorkspace();
+        ResetSessionToolSelection();
     }
 
     // ── Attachment management ─────────────────────────────────────────────
@@ -410,7 +426,8 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         {
             try
             {
-                await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, attachments, _sendCancellation.Token)
+                var selectedTools = SelectedToolNames;
+                await foreach (var update in _chat.SendStreamingAsync(_conversation.Id, text, attachments, selectedTools, _sendCancellation.Token)
                                    .ConfigureAwait(false))
                     await channel.Writer.WriteAsync(update, _sendCancellation.Token).ConfigureAwait(false);
                 channel.Writer.TryComplete();
@@ -514,6 +531,52 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     private bool CanStop() => IsSending;
     private bool CanSendOrStop() => IsSending || !string.IsNullOrWhiteSpace(Draft) || Attachments.Count > 0;
 
+    private void RebuildSessionTools()
+    {
+        var hadSessionTools = SessionTools.Count > 0;
+        var selectedToolNames = SessionTools.Where(static tool => tool.IsSelected)
+            .Select(static tool => tool.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var tool in SessionTools)
+            tool.PropertyChanged -= OnSessionToolPropertyChanged;
+        SessionTools.Clear();
+        foreach (var tool in AppState.AvailableTools)
+        {
+            var selection = new SessionToolSelection(
+                tool.Name,
+                tool.DisplayName,
+                tool.Description,
+                !hadSessionTools || selectedToolNames.Contains(tool.Name));
+            selection.PropertyChanged += OnSessionToolPropertyChanged;
+            SessionTools.Add(selection);
+        }
+        OnPropertyChanged(nameof(HasSessionTools));
+        OnPropertyChanged(nameof(SelectedToolNames));
+    }
+
+    private void ResetSessionToolSelection()
+    {
+        foreach (var tool in SessionTools)
+            tool.IsSelected = true;
+    }
+
+    private void OnToolsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        Dispatcher.UIThread.Post(RebuildSessionTools);
+
+    private void OnAppToolPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ToolAvailability.IsEnabled)
+            or nameof(ToolAvailability.DisplayName)
+            or nameof(ToolAvailability.Description))
+            Dispatcher.UIThread.Post(RebuildSessionTools);
+    }
+
+    private void OnSessionToolPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SessionToolSelection.IsSelected))
+            OnPropertyChanged(nameof(SelectedToolNames));
+    }
+
     // ── Navigation ───────────────────────────────────────────────────────
 
     [RelayCommand]
@@ -576,7 +639,11 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         _openingConversation = true;
         try
         {
-            if (_conversation?.Id != conversation.Id) ClearWorkspace();
+            if (_conversation?.Id != conversation.Id)
+            {
+                ClearWorkspace();
+                ResetSessionToolSelection();
+            }
             _conversation = conversation;
             var provider = AppState.Providers.FirstOrDefault(item => item.Id == conversation.ProviderId);
             if (provider is not null) SelectedProvider = provider;
@@ -694,6 +761,11 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     public override void Dispose()
     {
         AppState.Skills.CollectionChanged -= OnSkillsCollectionChanged;
+        AppState.Tools.CollectionChanged -= OnToolsCollectionChanged;
+        foreach (var tool in AppState.Tools)
+            tool.PropertyChanged -= OnAppToolPropertyChanged;
+        foreach (var tool in SessionTools)
+            tool.PropertyChanged -= OnSessionToolPropertyChanged;
         AppState.PropertyChanged -= OnAppStatePropertyChanged;
         _sendCancellation?.Cancel();
         _sendCancellation?.Dispose();

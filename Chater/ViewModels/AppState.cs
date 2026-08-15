@@ -1,3 +1,9 @@
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Text.Json;
+using Chater.AI.Tools;
+using Chater.Localization;
 using Chater.Logging;
 using Chater.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,17 +20,34 @@ namespace Chater.ViewModels;
 public sealed partial class AppState : ObservableObject
 {
     private readonly LazyServiceProvider _lazyServiceProvider;
+    private readonly LocalizationService _localization;
     private Func<CancellationToken, Task<AppUpdateInfo?>>? _checkForUpdates;
 
-    public AppState(LazyServiceProvider lazyServiceProvider)
+    public AppState(LazyServiceProvider lazyServiceProvider, LocalizationService? localization = null)
     {
         _lazyServiceProvider = lazyServiceProvider;
+        _localization = localization ?? new LocalizationService();
+        _localization.PropertyChanged += OnLocalizationPropertyChanged;
         CheckForUpdatesCommand = new AsyncRelayCommand(CheckForUpdatesAsync);
+        Tools.CollectionChanged += OnToolsCollectionChanged;
+        EnsureToolsInitialized();
     }
 
     private AppSettingsService AppSettingsService => _lazyServiceProvider.GetRequiredService<AppSettingsService>();
     
     public IAsyncRelayCommand CheckForUpdatesCommand { get; }
+
+    /// <summary>All known tools and their process-wide availability.</summary>
+    public ObservableCollection<ToolAvailability> Tools { get; } = [];
+
+    /// <summary>Alias used by consumers that treat each entry as a tool state.</summary>
+    public ObservableCollection<ToolAvailability> ToolStates => Tools;
+
+    public IReadOnlyList<ToolAvailability> AvailableTools => Tools.Where(static tool => tool.IsEnabled).ToArray();
+
+    public IReadOnlySet<string> EnabledToolNames => Tools.Where(static tool => tool.IsEnabled)
+        .Select(static tool => tool.Name)
+        .ToHashSet(StringComparer.Ordinal);
 
     [ObservableProperty] private string _themeKey = AppSettingsService.DefaultTheme;
 
@@ -79,7 +102,97 @@ public sealed partial class AppState : ObservableObject
                                                .GetAsync(AppSettingsService.NewChatWindowShortcutKey, cancellationToken)
                                                .ConfigureAwait(false)
                                            ?? AppSettingsService.DefaultNewChatWindowShortcut;
+            await LoadToolStateAsync(cancellationToken).ConfigureAwait(false);
             SettingsLoaded = true;
+        }
+    }
+
+    /// <summary>Ensures consumers can bind the tool list even before startup loading completes.</summary>
+    public void EnsureToolsInitialized()
+    {
+        if (Tools.Count > 0) return;
+        foreach (var definition in ChatToolCatalog.All)
+        {
+            Tools.Add(new ToolAvailability(definition.Name, definition.DisplayNameKey, definition.DescriptionKey, _localization));
+        }
+    }
+
+    private void OnLocalizationPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        foreach (var tool in Tools)
+            tool.RefreshLocalization(_localization);
+    }
+
+    private async Task LoadToolStateAsync(CancellationToken cancellationToken)
+    {
+        EnsureToolsInitialized();
+        var raw = await AppSettingsService.GetAsync(AppSettingsService.EnabledToolsKey, cancellationToken)
+            .ConfigureAwait(false);
+        HashSet<string>? enabled = null;
+        if (!string.IsNullOrWhiteSpace(raw))
+        {
+            try
+            {
+                enabled = JsonSerializer.Deserialize(raw, Chater.AI.ChaterJsonSerializerContext.Default.StringArray)
+                    ?.ToHashSet(StringComparer.Ordinal);
+            }
+            catch (JsonException exception)
+            {
+                ExceptionLogger.Log(exception, nameof(AppState), "Enabled tool settings are invalid");
+            }
+        }
+
+        _loadingTools = true;
+        try
+        {
+            foreach (var tool in Tools)
+                tool.IsEnabled = enabled is null || enabled.Contains(tool.Name);
+        }
+        finally
+        {
+            _loadingTools = false;
+        }
+        OnPropertyChanged(nameof(AvailableTools));
+        OnPropertyChanged(nameof(EnabledToolNames));
+    }
+
+    private bool _loadingTools;
+
+    private void OnToolsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is not null)
+        {
+            foreach (ToolAvailability tool in e.NewItems)
+                tool.PropertyChanged += OnToolPropertyChanged;
+        }
+        if (e.OldItems is not null)
+        {
+            foreach (ToolAvailability tool in e.OldItems)
+                tool.PropertyChanged -= OnToolPropertyChanged;
+        }
+        OnPropertyChanged(nameof(AvailableTools));
+        OnPropertyChanged(nameof(EnabledToolNames));
+    }
+
+    private void OnToolPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(ToolAvailability.IsEnabled)) return;
+        OnPropertyChanged(nameof(AvailableTools));
+        OnPropertyChanged(nameof(EnabledToolNames));
+        if (!_loadingTools) _ = PersistToolStateAsync();
+    }
+
+    private async Task PersistToolStateAsync()
+    {
+        try
+        {
+            var value = JsonSerializer.Serialize(Tools.Where(static tool => tool.IsEnabled)
+                .Select(static tool => tool.Name).ToArray(), Chater.AI.ChaterJsonSerializerContext.Default.StringArray);
+            await AppSettingsService.SaveAsync(AppSettingsService.EnabledToolsKey, value).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            ExceptionLogger.Log(exception, nameof(AppState), "Failed to persist enabled tools");
         }
     }
 

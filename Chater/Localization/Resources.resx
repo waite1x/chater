@@ -30,6 +30,54 @@
     <data name="Skills">
         <value>Prompts</value>
     </data>
+    <data name="Tools">
+        <value>Tools</value>
+    </data>
+    <data name="ToolSettings">
+        <value>Tool settings</value>
+    </data>
+    <data name="ToolSettingsDescription">
+        <value>Choose which tools models can use in chat.</value>
+    </data>
+    <data name="ToolSettingsSaved">
+        <value>Changes are saved automatically.</value>
+    </data>
+    <data name="ToolFetchWebpage">
+        <value>Fetch webpage content</value>
+    </data>
+    <data name="ToolFetchWebpageDescription">
+        <value>Read and extract text from a public webpage.</value>
+    </data>
+    <data name="ToolGetWorkspaceEntries">
+        <value>Get workspace entries</value>
+    </data>
+    <data name="ToolGetWorkspaceEntriesDescription">
+        <value>List files and folders explicitly selected for this chat.</value>
+    </data>
+    <data name="ToolReadWorkspaceFile">
+        <value>Read workspace file</value>
+    </data>
+    <data name="ToolReadWorkspaceFileDescription">
+        <value>Read a UTF-8 text file inside the selected workspace.</value>
+    </data>
+    <data name="ToolWriteWorkspaceFile">
+        <value>Write workspace file</value>
+    </data>
+    <data name="ToolWriteWorkspaceFileDescription">
+        <value>Create or update a text file inside the selected workspace.</value>
+    </data>
+    <data name="ToolCreateWorkspaceDirectory">
+        <value>Create workspace folder</value>
+    </data>
+    <data name="ToolCreateWorkspaceDirectoryDescription">
+        <value>Create a directory inside a selected workspace folder.</value>
+    </data>
+    <data name="ToolListWorkspaceDirectory">
+        <value>List workspace directory</value>
+    </data>
+    <data name="ToolListWorkspaceDirectoryDescription">
+        <value>List files and folders inside a selected workspace directory.</value>
+    </data>
     <data name="Shortcut">
         <value>Shortcuts</value>
     </data>

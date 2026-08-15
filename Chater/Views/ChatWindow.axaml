@@ -88,7 +88,8 @@
                                     <Setter Property="Header" Value="{Binding Name}" />
                                     <Setter Property="ItemsSource">
                                         <Setter.Value>
-                                            <MultiBinding Converter="{x:Static vm:AiProviderMenuDataConverter.Instance}">
+                                            <MultiBinding
+                                                Converter="{x:Static vm:AiProviderMenuDataConverter.Instance}">
                                                 <Binding Path=""></Binding>
                                                 <Binding Path="$parent[Window].DataContext"></Binding>
                                             </MultiBinding>
@@ -141,19 +142,44 @@
                         IsVisible="{Binding ShowAddAttachmentButton}"
                         ToolTip.Tip="{Binding Localization[AddImage]}"
                         AutomationProperties.Name="{Binding Localization[AddImage]}">
-                    <materialIcons:MaterialIcon Kind="FileImage" Width="18" Height="18"/>
+                    <materialIcons:MaterialIcon Kind="FileImage" Width="18" Height="18" />
                 </Button>
                 <Button DockPanel.Dock="Left" Classes="transparent-button" Width="32" Height="32" Padding="0"
                         ToolTip.Tip="{Binding Localization[SelectWorkspace]}"
                         AutomationProperties.Name="{Binding Localization[SelectWorkspace]}">
-                    <materialIcons:MaterialIcon Kind="FolderOpen" Width="18" Height="18"/>
+                    <materialIcons:MaterialIcon Kind="FolderOpen" Width="18" Height="18" />
                     <Button.Flyout>
-                        <MenuFlyout>
+                        <MenuFlyout  Placement="TopEdgeAlignedLeft">
                             <MenuItem Header="{Binding Localization[SelectWorkspaceFiles]}"
-                                      Command="{Binding AddWorkspaceFilesCommand}"/>
+                                      Command="{Binding AddWorkspaceFilesCommand}" />
                             <MenuItem Header="{Binding Localization[SelectWorkspaceFolders]}"
-                                      Command="{Binding AddWorkspaceFoldersCommand}"/>
+                                      Command="{Binding AddWorkspaceFoldersCommand}" />
                         </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+                <Button DockPanel.Dock="Left" Classes="transparent-button" Width="32" Height="32" Padding="0"
+                        IsEnabled="{Binding HasSessionTools}"
+                        ToolTip.Tip="{Binding Localization[Tools]}"
+                        AutomationProperties.Name="{Binding Localization[Tools]}">
+                    <materialIcons:MaterialIcon Kind="WrenchOutline" Width="18" Height="18" />
+                    <Button.Flyout>
+                        <!-- A regular Flyout keeps its content open while checkboxes are toggled. -->
+                        <Flyout Placement="TopEdgeAlignedLeft">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{Binding Localization[Tools]}"
+                                           FontWeight="SemiBold" Margin="2,0,0,2" />
+                                <ItemsControl ItemsSource="{Binding SessionTools}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:SessionToolSelection">
+                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                      Content="{Binding DisplayName}"
+                                                      ToolTip.Tip="{Binding Description}"
+                                                      Padding="4,3" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Flyout>
                     </Button.Flyout>
                 </Button>
                 <TextBlock HorizontalAlignment="Stretch"
@@ -171,7 +197,7 @@
                               IsVisible="{Binding HasWorkspaceEntries}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel/>
+                            <WrapPanel />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -182,17 +208,17 @@
                                 <StackPanel Orientation="Horizontal" Spacing="5">
                                     <materialIcons:MaterialIcon Kind="FolderOutline" Width="14" Height="14"
                                                                 VerticalAlignment="Center"
-                                                                IsVisible="{Binding IsDirectory}"/>
+                                                                IsVisible="{Binding IsDirectory}" />
                                     <materialIcons:MaterialIcon Kind="FileDocumentOutline" Width="14" Height="14"
                                                                 VerticalAlignment="Center"
-                                                                IsVisible="{Binding IsFile}"/>
+                                                                IsVisible="{Binding IsFile}" />
                                     <TextBlock Text="{Binding DisplayName}" MaxWidth="160"
-                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
                                     <Button Classes="transparent-button" Padding="1"
                                             Command="{Binding $parent[Window].DataContext.RemoveWorkspaceEntryCommand}"
                                             CommandParameter="{Binding}"
                                             ToolTip.Tip="{Binding $parent[Window].DataContext.Localization[RemoveWorkspaceEntry]}">
-                                        <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                        <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12" />
                                     </Button>
                                 </StackPanel>
                             </Border>
@@ -203,7 +229,7 @@
                               IsVisible="{Binding HasAttachments}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel/>
+                            <WrapPanel />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -214,14 +240,15 @@
                                     <Button Classes="transparent-button" Padding="0" Click="OnOpenDraftAttachmentImage"
                                             ToolTip.Tip="{Binding $parent[Window].DataContext.Localization[ViewImage]}"
                                             AutomationProperties.Name="{Binding $parent[Window].DataContext.Localization[ViewImage]}">
-                                        <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
-                                               Width="40" Height="40" Stretch="Uniform"/>
+                                        <Image
+                                            Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
+                                            Width="40" Height="40" Stretch="Uniform" />
                                     </Button>
                                     <Button Classes="transparent-button" Padding="2" VerticalAlignment="Center"
                                             Command="{Binding $parent[Window].DataContext.RemoveAttachmentCommand}"
                                             CommandParameter="{Binding}"
                                             ToolTip.Tip="{Binding $parent[Window].DataContext.Localization[RemoveAttachment]}">
-                                        <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12"/>
+                                        <materialIcons:MaterialIcon Kind="Close" Width="12" Height="12" />
                                     </Button>
                                 </StackPanel>
                             </Border>
