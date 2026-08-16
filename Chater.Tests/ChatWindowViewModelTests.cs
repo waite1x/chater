@@ -6,6 +6,7 @@ using Chater.AI.Tools;
 using Chater.Data;
 using Chater.Services;
 using Chater.ViewModels;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Chater.Tests;
@@ -27,6 +28,25 @@ public sealed class ChatWindowViewModelTests : IDisposable
 
         Assert.Equal("provider", viewModel.SelectedProvider?.Id);
         Assert.Equal("builtin-chat", viewModel.SelectedSkill?.Id);
+    }
+
+    [Fact]
+    public async Task ReloadingSelectedSkill_UsesTheUpdatedPromptObject()
+    {
+        var database = new SqliteDatabase(_path);
+        await new DatabaseMigrator(database).MigrateAsync();
+        var viewModel = CreateViewModel(database);
+        var original = CreateSkill();
+        viewModel.AppState.Skills.Add(original);
+        viewModel.PrepareNewSession();
+
+        var updated = original with { SystemPrompt = "Answer only in Spanish.", Version = original.Version + 1 };
+        viewModel.AppState.Skills.Clear();
+        viewModel.AppState.Skills.Add(updated);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.Same(updated, viewModel.SelectedSkill);
+        Assert.Equal(updated.SystemPrompt, viewModel.SelectedSkill?.SystemPrompt);
     }
 
     [Fact]

@@ -134,7 +134,10 @@ public sealed partial class SkillSettingsViewModel : SettingsViewModelBase
         foreach (var skill in await _skills.GetEnabledAsync(cancellationToken).ConfigureAwait(false))
             Skills.Add(skill);
         
-        _ =  _appState.ReloadAiSkillsAsync(cancellationToken);
+        // Keep the chat window's live skill selection in sync before reporting
+        // that the prompt was saved. Otherwise a newly selected prompt can race
+        // the background reload and capture the previous SystemPrompt.
+        await _appState.ReloadAiSkillsAsync(cancellationToken).ConfigureAwait(false);
     }
 
     partial void OnSelectedSkillChanged(Skill? value)

@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Chater.AI.Conversations;
 using Chater.AI.Providers;
@@ -66,7 +67,12 @@ public sealed class ChatService(
         CancellationToken cancellationToken = default) =>
         SendStreamingCoreAsync(conversationId, message, attachments, enabledToolNames, cancellationToken);
 
-    private async IAsyncEnumerable<ChatStreamUpdate> SendStreamingCoreAsync(string conversationId, string message, IReadOnlyList<MessageAttachment>? attachments, IReadOnlySet<string>? enabledToolNames, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    private async IAsyncEnumerable<ChatStreamUpdate> SendStreamingCoreAsync(
+        string conversationId,
+        string message, 
+        IReadOnlyList<MessageAttachment>? attachments, 
+        IReadOnlySet<string>? enabledToolNames, 
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var lease = await sessionLock.AcquireAsync(conversationId, cancellationToken).ConfigureAwait(false);
         var conversation = await conversations.GetByIdAsync(conversationId, cancellationToken).ConfigureAwait(false) ?? throw new InvalidOperationException($"Conversation '{conversationId}' does not exist.");

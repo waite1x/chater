@@ -48,6 +48,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
     private Conversation? _conversation;
     private CancellationTokenSource? _sendCancellation;
     private bool _openingConversation;
+    private bool _restoringSkillSelection;
     private string? _lastSelectedSkillId;
 
     public ChatWindowViewModel(
@@ -435,7 +436,13 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         if (text.Length == 0 && Attachments.Count == 0) return;
 
         var selectedProvider = SelectedProvider with { ModelId = SelectedModelId ?? SelectedProvider.ModelId };
-        _conversation ??= await _conversations.CreateAsync(selectedProvider, SelectedSkill);
+        // Resolve the selected prompt from the shared collection at send time.
+        // Settings can replace immutable Skill records while this window is open;
+        // using the live record prevents a stale object from being snapshotted.
+        var selectedSkill = SelectedSkill is { } currentSkill
+            ? AppState.Skills.FirstOrDefault(skill => skill.Id == currentSkill.Id) ?? currentSkill
+            : null;
+        _conversation ??= await _conversations.CreateAsync(selectedProvider, selectedSkill);
         if (AppState.Conversations.All(item => item.Id != _conversation.Id))
             AppState.Conversations.Insert(0, _conversation);
 
@@ -733,18 +740,27 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
 
     partial void OnSelectedSkillChanged(Skill? value)
     {
-        // Changing the selected skill (including when the Skills list is reloaded
-        // from the settings window) must NOT reset the active conversation — only
-        // the dropdown selection is affected.
-        if (value is not null)
+        if (value is null)
         {
-            _lastSelectedSkillId = value.Id;
+            // The selection can briefly become null while AppState replaces the
+            // collection after a prompt is edited. The posted restore below will
+            // select the replacement object once the collection is populated.
+            if (!_restoringSkillSelection)
+                RestoreSkillSelection();
             return;
         }
 
-        // The selection was dropped, e.g. because the previously selected skill
-        // was removed during a Skills reload. Restore it, or fall back to first.
-        RestoreSkillSelection();
+        var previousId = _lastSelectedSkillId;
+        _lastSelectedSkillId = value.Id;
+
+        // A user changing prompts starts a fresh conversation, as it did before
+        // the shared skills list was made reloadable. Replacing the object for the
+        // same prompt after an edit must not reset the active conversation.
+        if (!_openingConversation && !_restoringSkillSelection &&
+            previousId is not null && !string.Equals(previousId, value.Id, StringComparison.Ordinal))
+        {
+            ResetConversation();
+        }
     }
 
     /// <summary>
@@ -772,9 +788,22 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
             ? AppState.Skills[0]
             : AppState.Skills.FirstOrDefault(skill => skill.Id == _lastSelectedSkillId) ?? AppState.Skills[0];
 
-        if (SelectedSkill?.Id != next.Id)
+        // AppState reloads records as new immutable objects. Compare by reference
+        // rather than ID so an edited prompt replaces the stale selected object
+        // even though its identity is unchanged.
+        if (ReferenceEquals(SelectedSkill, next))
+        {
+            return;
+        }
+
+        _restoringSkillSelection = true;
+        try
         {
             SelectedSkill = next;
+        }
+        finally
+        {
+            _restoringSkillSelection = false;
         }
     }
 
