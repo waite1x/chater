@@ -37,7 +37,7 @@
                                                         ToolTip.Tip="{Binding $parent[local:ConversationMessagesView].Localization[ViewImage]}"
                                                         AutomationProperties.Name="{Binding $parent[local:ConversationMessagesView].Localization[ViewImage]}">
                                                     <Image Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
-                                                           Width="96" Height="96" Stretch="Uniform"/>
+                                                           Width="96" Height="96" Stretch="UniformToFill"/>
                                                 </Button>
                                             </Border>
                                         </DataTemplate>

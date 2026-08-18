@@ -246,7 +246,7 @@
                                             AutomationProperties.Name="{Binding $parent[Window].DataContext.Localization[ViewImage]}">
                                         <Image
                                             Source="{Binding FilePath, Converter={x:Static local:ImagePathToBitmapConverter.Instance}}"
-                                            Width="40" Height="40" Stretch="Uniform" />
+                                            Width="40" Height="40" Stretch="UniformToFill" />
                                     </Button>
                                     <Button Classes="transparent-button" Padding="2" VerticalAlignment="Center"
                                             Command="{Binding $parent[Window].DataContext.RemoveAttachmentCommand}"
