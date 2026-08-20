@@ -72,10 +72,8 @@
         <PackageReference Include="CommunityToolkit.Mvvm" />
         <PackageReference Include="SharpHook" />
         <PackageReference Include="Microsoft.Data.Sqlite" />
-        <PackageReference Include="Microsoft.Agents.AI" />
         <PackageReference Include="Microsoft.Agents.AI.Harness" />
         <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
-        <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Microsoft.Extensions.Logging" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
