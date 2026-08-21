@@ -454,7 +454,6 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         // the next message while a response is still streaming.
         Attachments.Clear();
         var assistant = new ChatMessageViewModel(MessageRole.Assistant, string.Empty);
-        assistant.SetResponseProgress(T("PreparingRequest"));
         Messages.Add(new ChatMessageViewModel(MessageRole.User, text, attachments));
         Messages.Add(assistant);
         ScrollMessagesToEndRequested?.Invoke(this, EventArgs.Empty);
@@ -490,26 +489,24 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
 
         try
         {
-            var pendingContent = new StringBuilder();
-            var lastRenderAt = Environment.TickCount64;
             await foreach (var update in channel.Reader.ReadAllAsync(_sendCancellation.Token))
             {
-                if (update.Kind == ChatStreamUpdateKind.Progress && update.Content is { Length: > 0 } progressKey)
+                if (update.Kind == ChatStreamUpdateKind.Reasoning && !string.IsNullOrEmpty(update.Content))
                 {
-                    assistant.SetResponseProgress(T(progressKey));
+                    assistant.AppendReasoning(update.Content, T("Thinking"));
                     continue;
                 }
 
                 if (update.Kind == ChatStreamUpdateKind.ToolStarted &&
-                    update.ToolCallId is { } startedCallId && update.Content is { Length: > 0 } notice)
+                    update.Content is { Length: > 0 } notice)
                 {
-                    assistant.AddToolNotice(startedCallId, notice);
+                    assistant.AppendToolCall(notice, T("CallingTools"));
                     continue;
                 }
 
-                if (update.Kind == ChatStreamUpdateKind.ToolCompleted && update.ToolCallId is { } completedCallId)
+                if (update.Kind == ChatStreamUpdateKind.ToolCompleted)
                 {
-                    assistant.CompleteToolNotice(completedCallId, update.Content);
+                    assistant.CompleteThinking();
                     continue;
                 }
 
@@ -518,17 +515,9 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
                     continue;
                 }
 
-                pendingContent.Append(update.Content);
-                var now = Environment.TickCount64;
-                if (now - lastRenderAt >= 50)
-                {
-                    assistant.Content += pendingContent.ToString();
-                    pendingContent.Clear();
-                    lastRenderAt = now;
-                }
+                assistant.AppendText(update.Content);
             }
 
-            if (pendingContent.Length > 0) assistant.Content += pendingContent.ToString();
             await producerTask;
             await RefreshConversationHistoryAsync();
         }
@@ -548,7 +537,7 @@ public sealed partial class ChatWindowViewModel : ViewModelBase
         }
         finally
         {
-            assistant.DismissToolNoticesAfterDelay();
+            assistant.CompleteResponse();
             _sendCancellation.Dispose();
             _sendCancellation = null;
             IsSending = false;

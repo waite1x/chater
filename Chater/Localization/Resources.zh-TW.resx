@@ -234,8 +234,8 @@
     <data name="NewConversationStatus">
         <value>將於首次傳送時建立新對話。</value>
     </data>
-    <data name="Generating">
-        <value>正在產生回覆…</value>
+    <data name="Thinking">
+        <value>思考過程</value>
     </data>
     <data name="Completed">
         <value>已完成。</value>

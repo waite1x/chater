@@ -57,18 +57,10 @@
                                         <MenuItem Click="OnCopyMarkdown"/>
                                     </ContextMenu>
                                 </Border.ContextMenu>
-                                <local:MarkdownView Markdown="{Binding Content}"/>
+                                <local:MarkdownView Markdown="{Binding Content}"
+                                                     ThinkingStatus="{Binding ThinkingStatus}"
+                                                     ThinkingHeader="{Binding $parent[local:ConversationMessagesView].Localization[Thinking]}"/>
                             </Border>
-                            <ItemsControl ItemsSource="{Binding ToolNotices}"
-                                          IsVisible="{Binding HasToolNotices}" Margin="8,0,0,0">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:ToolNoticeViewModel">
-                                        <TextBlock Text="{Binding Text}" ToolTip.Tip="{Binding Text}"
-                                                   FontSize="12" Opacity="0.75" Margin="0,2,0,0"
-                                                   TextWrapping="Wrap"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>

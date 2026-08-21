@@ -6,7 +6,7 @@ namespace Chater.Data;
 /// <summary>Applies embedded SQLite migrations exactly once and in version order.</summary>
 public sealed class DatabaseMigrator
 {
-    private const int LatestVersion = 3;
+    private const int LatestVersion = 6;
     private readonly SqliteDatabase _database;
 
     public DatabaseMigrator(SqliteDatabase database) => _database = database;
@@ -31,7 +31,11 @@ public sealed class DatabaseMigrator
                 continue;
             }
 
-            await ExecuteAsync(connection, transaction, await ReadMigrationAsync(version, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+            if (version != 5 || !await HasColumnAsync(connection, transaction, "Messages", "Reasoning", cancellationToken).ConfigureAwait(false))
+            {
+                await ExecuteAsync(connection, transaction, await ReadMigrationAsync(version, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+            }
+
             await ExecuteAsync(connection, transaction, "INSERT INTO SchemaMigrations (Version, AppliedAt) VALUES ($version, $appliedAt);", cancellationToken, ("$version", version), ("$appliedAt", DateTimeOffset.UtcNow.ToString("O"))).ConfigureAwait(false);
         }
 
@@ -44,6 +48,16 @@ public sealed class DatabaseMigrator
         command.Transaction = transaction;
         command.CommandText = "SELECT EXISTS(SELECT 1 FROM SchemaMigrations WHERE Version = $version);";
         command.Parameters.AddWithValue("$version", version);
+        return Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)) == 1;
+    }
+
+    private static async Task<bool> HasColumnAsync(SqliteConnection connection, SqliteTransaction transaction, string table, string column, CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT EXISTS(SELECT 1 FROM pragma_table_info($table) WHERE name = $column);";
+        command.Parameters.AddWithValue("$table", table);
+        command.Parameters.AddWithValue("$column", column);
         return Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)) == 1;
     }
 
@@ -67,6 +81,9 @@ public sealed class DatabaseMigrator
             1 => "InitialSchema",
             2 => "ProviderModels",
             3 => "ProviderModelsMultimodal",
+            4 => "MessageReasoning",
+            5 => "EnsureMessageReasoning",
+            6 => "MergeLegacyReasoning",
             _ => throw new InvalidOperationException($"Unknown migration version '{version}'.")
         };
         var resource = $"Chater.Data.Migrations.{version:0000}_{name}.sql";

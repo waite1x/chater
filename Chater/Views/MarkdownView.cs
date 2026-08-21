@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
+using Chater.AI;
 using Chater.Logging;
 using LiveMarkdown.Avalonia;
 using Markdig;
@@ -24,18 +25,32 @@ public sealed class MarkdownView : UserControl
 {
     public static readonly StyledProperty<string?> MarkdownProperty =
         AvaloniaProperty.Register<MarkdownView, string?>(nameof(Markdown));
+    public static readonly StyledProperty<string?> ThinkingHeaderProperty =
+        AvaloniaProperty.Register<MarkdownView, string?>(nameof(ThinkingHeader));
+    public static readonly StyledProperty<string?> ThinkingStatusProperty =
+        AvaloniaProperty.Register<MarkdownView, string?>(nameof(ThinkingStatus));
 
     private readonly ObservableStringBuilder _builder = new();
     private readonly MarkdownRenderer _renderer;
     private string _renderedMarkdown = string.Empty;
 
-    static MarkdownView()
+    static MarkdownView() => ConfigurePipeline();
+
+    internal static void ConfigurePipeline()
     {
+        if (Interlocked.Exchange(ref _pipelineConfigured, 1) != 0)
+        {
+            return;
+        }
+
+        MarkdownNode.Register<ThinkingBlockNode>();
         MarkdownRenderer.ConfigurePipeline += builder => builder.UseAutoLinks(new AutoLinkOptions
         {
             UseHttpsForWWWLinks = true
         });
     }
+
+    private static int _pipelineConfigured;
 
     public MarkdownView()
     {
@@ -54,6 +69,18 @@ public sealed class MarkdownView : UserControl
     {
         get => GetValue(MarkdownProperty);
         set => SetValue(MarkdownProperty, value);
+    }
+
+    public string? ThinkingHeader
+    {
+        get => GetValue(ThinkingHeaderProperty);
+        set => SetValue(ThinkingHeaderProperty, value);
+    }
+
+    public string? ThinkingStatus
+    {
+        get => GetValue(ThinkingStatusProperty);
+        set => SetValue(ThinkingStatusProperty, value);
     }
 
     public async Task CopySelectionWithFormattingAsync()
@@ -170,10 +197,22 @@ public sealed class MarkdownView : UserControl
         base.OnPropertyChanged(change);
         if (change.Property != MarkdownProperty)
         {
+            if (change.Property == ThinkingHeaderProperty)
+            {
+                UpdateThinkingHeaders();
+            }
+            else if (change.Property == ThinkingStatusProperty)
+            {
+                UpdateThinkingActivity();
+            }
+
             return;
         }
 
-        var markdown = change.NewValue is string value ? LocalPathMarkdownLinkifier.Linkify(value) : string.Empty;
+        var previousExpansionStates = CaptureThinkingExpansionStates();
+        var markdown = change.NewValue is string value
+            ? LocalPathMarkdownLinkifier.Linkify(ThinkingMarkdown.NormalizeForRendering(value))
+            : string.Empty;
         if (markdown.StartsWith(_renderedMarkdown, StringComparison.Ordinal))
         {
             _builder.Append(markdown[_renderedMarkdown.Length..]);
@@ -185,5 +224,46 @@ public sealed class MarkdownView : UserControl
         }
 
         _renderedMarkdown = markdown;
+        UpdateThinkingHeaders();
+        RestoreThinkingExpansionStates(previousExpansionStates);
+        UpdateThinkingActivity();
+    }
+
+    private void UpdateThinkingHeaders()
+    {
+        if (string.IsNullOrWhiteSpace(ThinkingHeader))
+        {
+            return;
+        }
+
+        foreach (var expander in _renderer.GetVisualDescendants().OfType<ThinkingBlockControl>())
+        {
+            expander.SetDefaultHeader(ThinkingHeader);
+        }
+    }
+
+    private IReadOnlyList<bool> CaptureThinkingExpansionStates() =>
+        _renderer.GetVisualDescendants()
+            .OfType<ThinkingBlockControl>()
+            .Select(expander => expander.IsExpanded)
+            .ToArray();
+
+    private void RestoreThinkingExpansionStates(IReadOnlyList<bool> states)
+    {
+        var expanders = _renderer.GetVisualDescendants().OfType<ThinkingBlockControl>().ToList();
+        for (var index = 0; index < expanders.Count; index++)
+        {
+            expanders[index].IsExpanded = index < states.Count && states[index];
+        }
+    }
+
+    private void UpdateThinkingActivity()
+    {
+        var expanders = _renderer.GetVisualDescendants().OfType<ThinkingBlockControl>().ToList();
+        for (var index = 0; index < expanders.Count; index++)
+        {
+            var active = index == expanders.Count - 1 && !string.IsNullOrWhiteSpace(ThinkingStatus);
+            expanders[index].SetActive(active, ThinkingStatus);
+        }
     }
 }

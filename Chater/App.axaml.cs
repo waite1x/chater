@@ -33,6 +33,7 @@ public partial class App : Application
     internal bool IsExiting { get; private set; }
     public override void Initialize()
     {
+        MarkdownView.ConfigurePipeline();
         AvaloniaXamlLoader.Load(this);
 #if DEBUG
         this.AttachDeveloperTools();

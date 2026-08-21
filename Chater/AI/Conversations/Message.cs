@@ -14,4 +14,5 @@ public sealed record Message(
 {
     /// <summary>Attached image metadata, persisted as JSON in the Messages.Attachments column.</summary>
     public IReadOnlyList<MessageAttachment> Attachments { get; init; } = [];
+
 }

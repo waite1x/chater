@@ -234,20 +234,11 @@
     <data name="NewConversationStatus">
         <value>将于首次发送时创建新会话。</value>
     </data>
-    <data name="Generating">
-        <value>正在生成回复…</value>
-    </data>
-    <data name="PreparingRequest">
-        <value>正在准备请求…</value>
-    </data>
-    <data name="WaitingForModelResponse">
-        <value>正在等待模型响应…</value>
+    <data name="Thinking">
+        <value>思考过程</value>
     </data>
     <data name="CallingTools">
         <value>正在调用工具…</value>
-    </data>
-    <data name="ProcessingToolResults">
-        <value>正在处理工具结果…</value>
     </data>
     <data name="Completed">
         <value>已完成。</value>

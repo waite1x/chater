@@ -122,6 +122,7 @@ public sealed class ChatService(
 
             agent = await CreateAgent(provider, snapshot.SystemPrompt, enabledToolNames).ConfigureAwait(false);
             session = await RestoreOrCreateSessionAsync(agent, conversation, cancellationToken).ConfigureAwait(false);
+            RemoveThinkingFromSession(session);
         }
         catch (OperationCanceledException exception) when (cancellationToken.IsCancellationRequested)
         {
@@ -138,8 +139,6 @@ public sealed class ChatService(
         }
 
         ChatMessage chatMessage;
-        yield return ChatStreamUpdate.Progress("WaitingForModelResponse");
-        var responseHasText = false;
         try
         {
             chatMessage = BuildUserMessage(message, attachments);
@@ -181,58 +180,64 @@ public sealed class ChatService(
                 }
 
                 var update = updates.Current;
-
-                // Tool calls are streamed as transient UI state. They are deliberately
-                // excluded from `content`, which is the only value written to the database.
-                foreach (var toolCall in update.Contents.OfType<FunctionCallContent>())
+                var emittedText = false;
+                foreach (var item in update.Contents)
                 {
-                    if (!activeToolCalls.TryAdd(toolCall.CallId, toolCall.Name))
+                    switch (item)
                     {
-                        continue;
-                    }
+                        case TextReasoningContent reasoningContent when !string.IsNullOrEmpty(reasoningContent.Text):
+                            content = ThinkingMarkdown.AppendReasoning(content, reasoningContent.Text);
+                            await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                            yield return ChatStreamUpdate.Reasoning(reasoningContent.Text);
+                            break;
 
-                    string toolNotice;
-                    try
-                    {
-                        toolNotice = await toolRegistry.FormatNotice(toolCall);
-                    }
-                    catch (Exception exception)
-                    {
-                        ExceptionLogger.Log(exception, nameof(ChatService), "Chat tool result could not be formatted");
-                        content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Failed, "tool_error", exception.Message).ConfigureAwait(false);
-                        throw;
-                    }
+                        case FunctionCallContent toolCall:
+                            if (!activeToolCalls.TryAdd(toolCall.CallId, toolCall.Name))
+                            {
+                                break;
+                            }
 
-                    yield return ChatStreamUpdate.Progress("CallingTools");
-                    yield return ChatStreamUpdate.ToolStarted(toolCall.CallId, toolNotice.Trim());
+                            string toolNotice;
+                            try
+                            {
+                                toolNotice = await toolRegistry.FormatNotice(toolCall);
+                            }
+                            catch (Exception exception)
+                            {
+                                ExceptionLogger.Log(exception, nameof(ChatService), "Chat tool result could not be formatted");
+                                content = await PersistTerminalMessageAsync(assistantMessageId, content, MessageStatus.Failed, "tool_error", exception.Message).ConfigureAwait(false);
+                                throw;
+                            }
+
+                            toolNotice = toolNotice.Trim();
+                            if (toolNotice.Length > 0)
+                            {
+                                content = ThinkingMarkdown.AppendBlock(content, toolNotice);
+                                await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                                yield return ChatStreamUpdate.ToolStarted(toolCall.CallId, toolNotice);
+                            }
+
+                            break;
+
+                        case FunctionResultContent toolResult when activeToolCalls.Remove(toolResult.CallId):
+                            yield return ChatStreamUpdate.ToolCompleted(toolResult.CallId);
+                            break;
+
+                        case TextContent textContent when !string.IsNullOrEmpty(textContent.Text):
+                            emittedText = true;
+                            content += textContent.Text;
+                            await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                            yield return ChatStreamUpdate.Text(textContent.Text);
+                            break;
+                    }
                 }
 
-                foreach (var toolResult in update.Contents.OfType<FunctionResultContent>())
+                if (!emittedText && update.Text is { Length: > 0 } fallbackText)
                 {
-                    if (activeToolCalls.Remove(toolResult.CallId, out var toolName))
-                    {
-                        yield return ChatStreamUpdate.Progress("ProcessingToolResults");
-                        var completionNotice = toolName == "write_workspace_file"
-                            ? toolResult.Result?.ToString()
-                            : null;
-                        yield return ChatStreamUpdate.ToolCompleted(toolResult.CallId, completionNotice);
-                    }
+                    content += fallbackText;
+                    await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: CancellationToken.None).ConfigureAwait(false);
+                    yield return ChatStreamUpdate.Text(fallbackText);
                 }
-
-                if (string.IsNullOrEmpty(update.Text))
-                {
-                    continue;
-                }
-
-                if (!responseHasText)
-                {
-                    responseHasText = true;
-                    yield return ChatStreamUpdate.Progress("Generating");
-                }
-
-                content += update.Text;
-                await messages.UpdateContentAndStatusAsync(assistantMessageId, content, MessageStatus.Streaming, cancellationToken: CancellationToken.None).ConfigureAwait(false);
-                yield return ChatStreamUpdate.Text(update.Text);
             }
 
             foreach (var callId in activeToolCalls.Keys)
@@ -245,6 +250,7 @@ public sealed class ChatService(
         finally
         {
             // Persist even after cancellation or provider failure; the provider may have advanced its session.
+            RemoveThinkingFromSession(session);
             var serializedSession = await agent.SerializeSessionAsync(session, cancellationToken: CancellationToken.None).ConfigureAwait(false);
             var serializedSessionText = serializedSession.GetRawText();
             await conversations.SaveAsync(conversation with
@@ -319,6 +325,7 @@ public sealed class ChatService(
             ChatOptions = new ChatOptions
             {
                 Instructions = instructions,
+                Reasoning = new ReasoningOptions { Output = ReasoningOutput.Full },
                 Tools = await toolRegistry.GetTools(enabledToolNames)
             },
             // Chater exposes its own path-authorized file tools. Keep the harness file
@@ -348,6 +355,39 @@ public sealed class ChatService(
 
         using var document = JsonDocument.Parse(conversation.SessionState);
         return await agent.DeserializeSessionAsync(document.RootElement, cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Removes UI-only thinking content from the in-memory agent history to save context tokens.</summary>
+    private static void RemoveThinkingFromSession(AgentSession session)
+    {
+        if (!session.TryGetInMemoryChatHistory(out var history, jsonSerializerOptions: ChaterJsonSerializerOptions.AgentSession))
+        {
+            return;
+        }
+
+        foreach (var message in history)
+        {
+            foreach (var reasoning in message.Contents.OfType<TextReasoningContent>().ToArray())
+            {
+                message.Contents.Remove(reasoning);
+            }
+
+            if (message.Role != ChatRole.Assistant)
+            {
+                continue;
+            }
+
+            foreach (var text in message.Contents.OfType<TextContent>().ToArray())
+            {
+                text.Text = ThinkingMarkdown.RemoveThinkingBlocks(text.Text);
+                if (string.IsNullOrEmpty(text.Text))
+                {
+                    message.Contents.Remove(text);
+                }
+            }
+        }
+
+        session.SetInMemoryChatHistory(history, jsonSerializerOptions: ChaterJsonSerializerOptions.AgentSession);
     }
 }
 

@@ -1,100 +1,65 @@
+using Chater.AI;
 using Chater.AI.Conversations;
-using System.Collections.ObjectModel;
-using Avalonia.Threading;
 
 namespace Chater.ViewModels;
 
-public sealed partial class ChatMessageViewModel(MessageRole role, string content, IReadOnlyList<MessageAttachment>? attachments = null) : ViewModelBase
+public sealed partial class ChatMessageViewModel(
+    MessageRole role,
+    string content,
+    IReadOnlyList<MessageAttachment>? attachments = null) : ViewModelBase
 {
-    private const string ResponseProgressNoticeId = "__response_progress";
     public MessageRole Role { get; } = role;
     public bool IsUser => Role == MessageRole.User;
     public bool IsAssistant => Role == MessageRole.Assistant;
     public IReadOnlyList<MessageAttachment> Attachments { get; } = attachments ?? [];
     public bool HasAttachments => Attachments.Count > 0;
-    public ObservableCollection<ToolNoticeViewModel> ToolNotices { get; } = [];
-    public bool HasToolNotices => ToolNotices.Count > 0;
-
     [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
     private string _content = content;
 
-    public void AddToolNotice(string callId, string text)
+    [CommunityToolkit.Mvvm.ComponentModel.ObservableProperty]
+    private string? _thinkingStatus;
+
+    public bool HasReasoning => ThinkingMarkdown.ContainsReasoning(Content);
+
+    public void AppendReasoning(string text, string status)
     {
-        if (ToolNotices.Any(item => item.CallId == callId))
+        if (string.IsNullOrEmpty(text))
         {
             return;
         }
 
-        ToolNotices.Add(new ToolNoticeViewModel(callId, text));
-        OnPropertyChanged(nameof(HasToolNotices));
+        Content = ThinkingMarkdown.AppendReasoning(Content, text);
+        ThinkingStatus = status;
     }
 
-    /// <summary>Updates the one transient notice that describes the model response lifecycle.</summary>
-    public void SetResponseProgress(string text)
+    public void AppendToolCall(string text, string status)
     {
-        var notice = ToolNotices.FirstOrDefault(item => item.CallId == ResponseProgressNoticeId);
-        if (notice is null)
-        {
-            AddToolNotice(ResponseProgressNoticeId, text);
-            return;
-        }
-
-        notice.Text = text;
-    }
-
-    public void RemoveToolNotice(string callId)
-    {
-        var notice = ToolNotices.FirstOrDefault(item => item.CallId == callId);
-        if (notice is not null)
-        {
-            ToolNotices.Remove(notice);
-            OnPropertyChanged(nameof(HasToolNotices));
-        }
-    }
-
-    public void CompleteToolNotice(string callId, string? completionText)
-    {
-        var notice = ToolNotices.FirstOrDefault(item => item.CallId == callId);
-        if (notice is null)
+        if (string.IsNullOrEmpty(text))
         {
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(completionText))
-        {
-            notice.Text = completionText;
-        }
-
-        ScheduleToolNoticeRemoval(callId);
+        Content = ThinkingMarkdown.AppendBlock(Content, text);
+        ThinkingStatus = status;
     }
 
-    public void DismissToolNoticesAfterDelay()
+    public void AppendText(string text)
     {
-        foreach (var callId in ToolNotices.Select(static item => item.CallId).ToArray())
-        {
-            ScheduleToolNoticeRemoval(callId);
-        }
-    }
-
-    private void ScheduleToolNoticeRemoval(string callId)
-    {
-        _ = RemoveToolNoticeAfterDelayAsync(callId);
-    }
-
-    private async Task RemoveToolNoticeAfterDelayAsync(string callId)
-    {
-        await Task.Delay(TimeSpan.FromMilliseconds(1400)).ConfigureAwait(false);
-        Dispatcher.UIThread.Post(() => RemoveToolNotice(callId));
-    }
-
-    public void ClearToolNotices()
-    {
-        if (ToolNotices.Count == 0)
+        if (string.IsNullOrEmpty(text))
         {
             return;
         }
 
-        ToolNotices.Clear();
-        OnPropertyChanged(nameof(HasToolNotices));
+        Content += text;
+        ThinkingStatus = null;
     }
+
+    public void CompleteThinking() => ThinkingStatus = null;
+
+    public void CompleteResponse()
+    {
+        ThinkingStatus = null;
+    }
+
+    partial void OnContentChanged(string value) => OnPropertyChanged(nameof(HasReasoning));
 }
