@@ -1,7 +1,10 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media;
 using LiveMarkdown.Avalonia;
 using Markdig.Syntax;
+using Material.Icons;
+using Material.Icons.Avalonia;
 
 namespace Chater.Views;
 
@@ -55,70 +58,91 @@ public sealed class ThinkingBlockNode : BlockNode<FencedCodeBlock>
 }
 
 /// <summary>
-/// Hosts a concrete <see cref="Expander"/> so Avalonia's theme applies its control template.
-/// Theme type selectors do not automatically apply an Expander template to subclasses.
+/// A compact, header-clickable container for model reasoning and tool notices.
 /// </summary>
 public sealed class ThinkingBlockControl : Border
 {
-    private readonly Expander _expander;
-    private readonly TextBlock _indicator = new()
+    private readonly Border _header;
+    private readonly Border _content;
+    private readonly MaterialIcon _indicator = new()
     {
-        Text = "▸",
-        FontSize = 11,
-        Width = 14,
-        TextAlignment = Avalonia.Media.TextAlignment.Center,
-        Opacity = 0.68
+        Kind = MaterialIconKind.ChevronRight,
+        Width = 12,
+        Height = 12,
+        Opacity = 0.64,
+        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
     };
-    private readonly TextBlock _header = new()
+    private readonly TextBlock _headerText = new()
     {
-        FontSize = 11,
+        FontSize = 14,
         FontWeight = FontWeight.Medium,
         Opacity = 0.68,
         Margin = new Avalonia.Thickness(0)
     };
     private string _defaultHeader = "Thinking";
+    private bool _isExpanded;
 
     public ThinkingBlockControl(MarkdownRenderer renderer)
     {
-        _header.Text = _defaultHeader;
-        _expander = new Expander
+        _headerText.Text = _defaultHeader;
+
+        _header = new Border
         {
-            Header = new StackPanel
+            Padding = new Avalonia.Thickness(2, 1),
+            Background = Brushes.Transparent,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Child = new StackPanel
             {
                 Orientation = Avalonia.Layout.Orientation.Horizontal,
-                Spacing = 3,
+                Spacing = 4,
                 Margin = new Avalonia.Thickness(0),
-                Children = { _indicator, _header }
-            },
-            IsExpanded = false,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Top,
-            Padding = new Avalonia.Thickness(0),
-            Content = new Border
-            {
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                Child = renderer
+                Children = { _indicator, _headerText }
             }
         };
-        _expander.Classes.Add("thinking-block");
+
+        _content = new Border
+        {
+            IsVisible = false,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            Child = renderer
+        };
 
         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
         renderer.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
-        Child = _expander;
-        _expander.Expanded += OnExpanded;
-        _expander.Collapsed += OnCollapsed;
+        Child = new StackPanel
+        {
+            Spacing = 0,
+            Children = { _header, _content }
+        };
+        _header.PointerPressed += OnHeaderPointerPressed;
     }
 
     public bool IsExpanded
     {
-        get => _expander.IsExpanded;
-        set => _expander.IsExpanded = value;
+        get => _isExpanded;
+        set
+        {
+            if (_isExpanded == value)
+            {
+                return;
+            }
+
+            _isExpanded = value;
+            _content.IsVisible = value;
+            _indicator.Kind = value ? MaterialIconKind.ChevronDown : MaterialIconKind.ChevronRight;
+        }
     }
 
-    private void OnExpanded(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _indicator.Text = "▾";
+    private void OnHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(_header).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
 
-    private void OnCollapsed(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => _indicator.Text = "▸";
+        IsExpanded = !IsExpanded;
+        e.Handled = true;
+    }
 
     public void SetDefaultHeader(string? header)
     {
@@ -127,9 +151,9 @@ public sealed class ThinkingBlockControl : Border
             _defaultHeader = header;
         }
 
-        if (!_expander.Classes.Contains("thinking-active"))
+        if (!Classes.Contains("thinking-active"))
         {
-            _header.Text = _defaultHeader;
+            _headerText.Text = _defaultHeader;
         }
     }
 
@@ -137,12 +161,12 @@ public sealed class ThinkingBlockControl : Border
     {
         if (active && !string.IsNullOrWhiteSpace(status))
         {
-            _expander.Classes.Add("thinking-active");
-            _header.Text = status.EndsWith('…') ? status : status + "…";
+            Classes.Add("thinking-active");
+            _headerText.Text = status.EndsWith('…') ? status : status + "…";
             return;
         }
 
-        _expander.Classes.Remove("thinking-active");
-        _header.Text = _defaultHeader;
+        Classes.Remove("thinking-active");
+        _headerText.Text = _defaultHeader;
     }
 }

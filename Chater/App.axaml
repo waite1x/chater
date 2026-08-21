@@ -77,12 +77,6 @@
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
         </Style>
-        <Style Selector="Expander.thinking-block">
-            <Setter Property="IsExpanded" Value="False" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Padding" Value="0" />
-        </Style>
     </Application.Styles>
     <Application.Resources>
         <ResourceDictionary>

@@ -1,4 +1,3 @@
-using Avalonia.Controls;
 using Chater.AI.Conversations;
 using Chater.AI;
 using Chater.ViewModels;
@@ -11,19 +10,18 @@ namespace Chater.Tests;
 public sealed class ChatMessageViewModelTests
 {
     [Fact]
-    public void ThinkingBlock_UsesConcreteExpanderForThemeTemplate()
+    public void ThinkingBlock_UsesCompactMaterialIconAndDoesNotDependOnExpanderTemplate()
     {
         const string markdown = "````thinking\n分析请求\n````\n";
         var parsed = Markdown.Parse(markdown);
         var fencedBlock = Assert.IsType<FencedCodeBlock>(Assert.Single(parsed));
         Assert.Equal("thinking", fencedBlock.Info?.ToString().Trim());
 
-        var expanderField = typeof(ThinkingBlockControl).GetField(
-            "_expander",
+        var indicatorField = typeof(ThinkingBlockControl).GetField(
+            "_indicator",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-        Assert.NotNull(expanderField);
-        Assert.Equal(typeof(Expander), expanderField.FieldType);
-        Assert.False(typeof(Expander).IsAssignableFrom(typeof(ThinkingBlockControl)));
+        Assert.NotNull(indicatorField);
+        Assert.Equal(typeof(Material.Icons.Avalonia.MaterialIcon), indicatorField.FieldType);
     }
 
     [Fact]
